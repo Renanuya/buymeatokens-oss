@@ -1,0 +1,47 @@
+name: Feature proposal
+description: Propose a concrete, well-scoped change. Early ideas belong in Discussions → Ideas.
+labels: ["type: feature", "status: needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Got a rough idea? Start in [Discussions → Ideas](https://github.com/Renanuya/buymeatokens-oss/discussions/categories/ideas)
+        so others can vote on it. Popular, clear ideas become issues.
+
+        Please **don't open a pull request** for a feature until a maintainer labels the issue `status: accepted`.
+        That way, nobody spends time on something we can't merge.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve, and for whom?
+      description: Creators, supporters or maintainers? What do they have to do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What should change?
+      description: Describe the behavior you'd like. Sketches and examples from other products help.
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you considered
+  - type: dropdown
+    id: roadmap
+    attributes:
+      label: Is this on the roadmap?
+      description: See ROADMAP.md.
+      options:
+        - "Yes, it's part of a roadmap item"
+        - "No"
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: help
+    attributes:
+      label: Contribution
+      options:
+        - label: I'd like to build this once it's accepted.

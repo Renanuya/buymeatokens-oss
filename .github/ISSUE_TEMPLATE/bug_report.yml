@@ -1,0 +1,82 @@
+name: Bug report
+description: Something on buymeatokens.com or in this code doesn't work as it should.
+labels: ["type: bug", "status: needs triage"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this.
+
+        **Security problems go to [private reporting](https://github.com/Renanuya/buymeatokens-oss/security/advisories/new), never here.**
+        Don't paste API keys, wallet keys, session cookies or other people's personal data.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened?
+      description: Describe the bug. Include the URL or page if you can.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Go to ...
+        2. Click ...
+        3. See ...
+    validations:
+      required: true
+  - type: dropdown
+    id: where
+    attributes:
+      label: Where did it happen?
+      options:
+        - buymeatokens.com
+        - Local development
+        - Both / not sure
+    validations:
+      required: true
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part of the product?
+      options:
+        - Creator page
+        - Dashboard or setup
+        - Payments (Stripe)
+        - Payments (PayPal)
+        - Payments (USDC)
+        - Subscription and billing
+        - Login
+        - Emails
+        - README badge
+        - Blog or website
+        - Something else
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Browser and OS
+      placeholder: e.g. Chrome 140 on Windows 11, Safari on iOS 19
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error messages
+      description: Paste text output here. Screenshots can go in the description above.
+      render: shell
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Before you submit
+      options:
+        - label: I searched the existing issues and this isn't a duplicate.
+          required: true
+        - label: This report contains no secrets or personal data.
+          required: true

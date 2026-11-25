@@ -1,0 +1,33 @@
+# dependencies
+node_modules/
+
+# build output
+.next/
+out/
+next-env.d.ts
+*.tsbuildinfo
+
+# local databases
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# secrets: only .env.example is ever committed
+.env
+.env*
+!.env.example
+*.pem
+*.key
+
+# deployment
+.vercel/
+
+# tooling
+.DS_Store
+Thumbs.db
+npm-debug.log*
+coverage/
+playwright-report/
+test-results/
+.claude/settings.local.json

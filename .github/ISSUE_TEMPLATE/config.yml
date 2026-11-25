@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Feature idea
+    url: https://github.com/Renanuya/buymeatokens-oss/discussions/new?category=ideas
+    about: Share an early idea and let the community vote on it.
+  - name: Question or help with local setup
+    url: https://github.com/Renanuya/buymeatokens-oss/discussions/new?category=q-a
+    about: Ask how something works.
+  - name: Security vulnerability
+    url: https://github.com/Renanuya/buymeatokens-oss/security/advisories/new
+    about: Report privately. Please don't open a public issue.

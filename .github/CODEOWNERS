@@ -1,0 +1,35 @@
+# Every change needs a maintainer's review. The paths below are listed separately so that, as more maintainers
+# join, the riskiest areas keep a named owner. Later rules override earlier ones.
+*                               @Renanuya
+
+# Database schema
+/src/lib/db.ts                  @Renanuya
+
+# Money: payment rails, reconciliation, billing and access rules
+/src/lib/stripe.ts              @Renanuya
+/src/lib/paypal.ts              @Renanuya
+/src/lib/usdc.ts                @Renanuya
+/src/lib/donations.ts           @Renanuya
+/src/lib/reconcile.ts           @Renanuya
+/src/lib/billing.ts             @Renanuya
+/src/lib/access.ts              @Renanuya
+/src/app/api/paddle/            @Renanuya
+/src/app/api/paypal/            @Renanuya
+
+# Auth, sessions and encryption
+/src/lib/session.ts             @Renanuya
+/src/lib/crypto.ts              @Renanuya
+/src/lib/github.ts              @Renanuya
+/src/app/api/auth/              @Renanuya
+
+# Cron endpoints and operator scripts
+/src/app/api/cron/              @Renanuya
+/scripts/                       @Renanuya
+
+# Project policy and automation
+/.github/                       @Renanuya
+/LICENSE                        @Renanuya
+/SECURITY.md                    @Renanuya
+/GOVERNANCE.md                  @Renanuya
+/TRADEMARKS.md                  @Renanuya
+/docs/adr/                      @Renanuya

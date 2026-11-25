@@ -1,0 +1,15 @@
+# gitleaks configuration: the default rules plus an allowlist for values that are public by design.
+# Never allowlist a real secret here. Rotate it and remove it from history instead.
+
+[extend]
+useDefault = true
+
+[[allowlists]]
+description = "Search engine and IndexNow verification keys are meant to be served publicly."
+paths = ['''^public/[0-9a-f]{32}\.txt$''']
+
+[[allowlists]]
+description = "The IndexNow key is public by design: the same value is served at /<key>.txt."
+condition = "AND"
+paths = ['''^scripts/indexnow\.ts$''']
+regexes = ['''^[0-9a-f]{32}$''']

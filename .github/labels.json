@@ -1,0 +1,27 @@
+[
+  { "name": "type: bug", "color": "d73a4a", "description": "Something doesn't work as intended" },
+  { "name": "type: feature", "color": "1d76db", "description": "New behavior for creators, supporters or maintainers" },
+  { "name": "type: docs", "color": "0075ca", "description": "Documentation only" },
+  { "name": "type: chore", "color": "cfd3d7", "description": "Tooling, dependencies, refactors, project housekeeping" },
+  { "name": "type: security", "color": "b60205", "description": "Hardening or a fix for a security weakness (report vulnerabilities privately)" },
+
+  { "name": "area: payments", "color": "c5def5", "description": "Stripe, PayPal, USDC and reconciliation" },
+  { "name": "area: billing", "color": "c5def5", "description": "Paddle subscriptions, lifetime free access, the $5 threshold" },
+  { "name": "area: auth", "color": "c5def5", "description": "GitHub OAuth, sessions, encryption" },
+  { "name": "area: database", "color": "c5def5", "description": "Schema, migrations, queries" },
+  { "name": "area: emails", "color": "c5def5", "description": "Creator emails and the minute worker" },
+  { "name": "area: creator-pages", "color": "c5def5", "description": "Public creator pages, setup and the dashboard" },
+  { "name": "area: badges", "color": "c5def5", "description": "README badges and embeds" },
+  { "name": "area: site", "color": "c5def5", "description": "Home page, blog, SEO, roadmap and other public pages" },
+  { "name": "area: api", "color": "c5def5", "description": "Developer API, webhooks and integrations" },
+  { "name": "area: infra", "color": "c5def5", "description": "CI, deploys, local development, repository settings" },
+
+  { "name": "status: needs triage", "color": "fbca04", "description": "Waiting for a maintainer to look at it" },
+  { "name": "status: accepted", "color": "0e8a16", "description": "Ready to be worked on; PRs welcome" },
+  { "name": "status: needs decision", "color": "f9d0c4", "description": "Needs a product or policy decision first" },
+  { "name": "status: needs design", "color": "d4c5f9", "description": "Needs UX or technical design before building" },
+  { "name": "status: blocked", "color": "e99695", "description": "Waiting on something else; see the issue" },
+
+  { "name": "good first issue", "color": "7057ff", "description": "Small, well-described, good for newcomers" },
+  { "name": "help wanted", "color": "008672", "description": "Maintainers would welcome a contribution" }
+]

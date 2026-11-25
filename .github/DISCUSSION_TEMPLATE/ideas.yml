@@ -1,0 +1,30 @@
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Vote 👍 on the ideas you want most. Maintainers review Ideas every month; popular, clear ones become roadmap issues.
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What's hard or missing today, and who runs into it?
+    validations:
+      required: true
+  - type: textarea
+    id: idea
+    attributes:
+      label: The idea
+      description: How could buymeatokens solve it?
+    validations:
+      required: true
+  - type: dropdown
+    id: who
+    attributes:
+      label: Who benefits most?
+      options:
+        - Creators
+        - Supporters
+        - Both
+        - Maintainers / self-hosters
+    validations:
+      required: true

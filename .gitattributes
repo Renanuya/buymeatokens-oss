@@ -1,0 +1,21 @@
+# Normalize line endings so Windows, macOS and Linux contributors produce the same diffs.
+* text=auto eol=lf
+
+# Binary assets
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.webp binary
+*.ico binary
+*.woff binary
+*.woff2 binary
+*.ttf binary
+*.otf binary
+*.mp3 binary
+*.wav binary
+*.ogg binary
+
+# Keep generated files out of diffs and language stats
+package-lock.json -diff linguist-generated
+src/lib/badge-font.ts linguist-generated
