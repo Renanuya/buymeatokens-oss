@@ -1,0 +1,63 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  merge_group:
+
+# Pull requests from forks run with a read-only token and no secrets. Keep it that way:
+# CI must never need real credentials, and must never use `pull_request_target`.
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: Typecheck, test, build
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      # Until the application code is imported, there is nothing to build.
+      - name: Detect application code
+        id: app
+        run: |
+          if [ -f package.json ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::No package.json yet; skipping typecheck, tests and build."
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.app.outputs.present == 'true'
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+
+      - name: Install
+        if: steps.app.outputs.present == 'true'
+        run: npm ci
+
+      - name: Typecheck
+        if: steps.app.outputs.present == 'true'
+        run: npm run typecheck
+
+      - name: Test
+        if: steps.app.outputs.present == 'true'
+        run: npm test
+
+      - name: Build
+        if: steps.app.outputs.present == 'true'
+        run: npm run build
+        env:
+          # An unreachable database: the build must succeed without one and must never touch real data.
+          POSTGRES_URL: postgres://ci:ci@127.0.0.1:9/none
+          NEXT_TELEMETRY_DISABLED: "1"
