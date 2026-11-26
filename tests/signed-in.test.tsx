@@ -69,7 +69,8 @@ describe("calls to action", () => {
 describe("creator page header link", () => {
   const viewer = (fields: Partial<User>) =>
     ({ id: "me", authId: "github:1", login: "me", username: "me", accessStatus: null, setupProgress: 8, setupDoneAt: 1, ...fields }) as User;
-  const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  // Our own rendered markup, reduced to its visible words.
+  const text = (html: string) => html.split(/<[^>]*>/).join("").split(/\s+/).filter(Boolean).join(" ");
   const render = (v: User | null) => renderToStaticMarkup(<CreatorPageCta viewer={v} creatorId="owner" />);
 
   it("lets the owner edit their page", () => {
