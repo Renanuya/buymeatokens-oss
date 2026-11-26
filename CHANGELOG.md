@@ -6,7 +6,30 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ## [Unreleased]
 
+### Added
+
+- **Analytics** tab in the dashboard (`/dashboard/analytics`). It shows the creator's page visitors over 7 days,
+  30 days or 12 months, and a conversion funnel: visitors, then people who pressed a support button, then
+  confirmed support. It also lists where visitors come from: the README badge, GitHub, X, LinkedIn, Threads,
+  Discord, YouTube, search engines, AI assistants, other sites by domain, and the creator's own tagged links.
+  Support is credited to the source of the visit that led to it.
+  - It's counted without cookies and without storing IP addresses. A visit becomes a one-way mark from a random
+    daily salt, and marks and salts are deleted when the UTC day ends. Only daily totals are kept, and bots and
+    the creator's own visits don't count.
+  - README badge and share-button links now carry `?ref=badge`, `?ref=x` and so on. The page removes the tag
+    from the address bar after reading it.
+  - A "Share links" card gives a ready link for Discord, YouTube and a newsletter, plus one for any place the
+    creator names. These places don't pass on where a visit came from, so without a tagged link their visits
+    would count as Direct. Discord and YouTube are also recognised by their referrer.
+  - The Overview's page card shows the last 30 days' visitors.
+  - The Privacy Policy describes the counting, and the roadmap marks creator analytics as shipped.
+
 ### Changed
+
+- The dashboard Overview shows the creator's Early supporter and Contributor badges under their name instead of
+  at the far right of the header.
+- The compact README badge (`?style=flat`) always shows a count. Before the first support it reads `0M tokens`
+  instead of `support`, so creators see the format their badge will keep.
 
 - `/roadmap` has a shorter layout. Shipped milestones no longer take a full card each: they sit in a compact
   Shipped list, links kept, next to the current priority. A progress bar sits up top and the rest of the plan is a

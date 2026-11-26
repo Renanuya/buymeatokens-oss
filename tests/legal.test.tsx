@@ -108,7 +108,8 @@ describe("/terms and /privacy", () => {
     );
     expect(doc.markdown).toContain("are sent to Groq to draft their project description. No account data is sent with it.");
     expect(doc.markdown).toContain("send you account emails: a welcome and at most one setup reminder");
-    expect(doc.markdown).toContain("- We do not use analytics tools.");
+    expect(doc.markdown).toContain("- We do not use third-party analytics or advertising tools.");
+    expect(doc.markdown).toContain("No cookies are used and no IP address is stored");
     expect(doc.markdown).not.toContain("analytics providers");
     const html = renderToStaticMarkup(<LegalMarkdown>{doc.markdown}</LegalMarkdown>);
     expect(html).toContain("<h1");

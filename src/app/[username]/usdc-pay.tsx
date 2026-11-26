@@ -7,6 +7,7 @@ import { ArrowUpRight } from "@/components/icons";
 import { SupporterPaymentNotice, UsdcNetworkWarning } from "@/components/payment-notices";
 import { legalCopy } from "@/lib/legal/copy";
 import { BASE, MICRO_PER_CENT, txUrl } from "@/lib/usdc";
+import { reportVisit, visitContext } from "@/lib/visit-client";
 import { confirmUsdcPayment, type UsdcResult } from "./actions";
 
 type Eip1193 = { request(args: { method: string; params?: unknown[] }): Promise<unknown> };
@@ -72,7 +73,7 @@ export function UsdcPay({
     setResult(null);
     setStatus("Checking the payment on Base…");
     startTransition(async () => {
-      const res = await confirmUsdcPayment({ username, txHash, name, message });
+      const res = await confirmUsdcPayment({ username, txHash, name, message, visit: visitContext() });
       setStatus(null);
       setResult({ ...res, hash: txHash });
       if (res.ok) {
@@ -83,6 +84,7 @@ export function UsdcPay({
   }
 
   async function payWithWallet() {
+    reportVisit(username, "start");
     const wallet = getWallet();
     if (!wallet) {
       setResult({
@@ -150,6 +152,7 @@ export function UsdcPay({
       <form
         onSubmit={(e) => {
           e.preventDefault();
+          reportVisit(username, "start");
           confirm(hash);
         }}
         className="space-y-2"

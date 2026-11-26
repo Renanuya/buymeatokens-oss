@@ -5,8 +5,9 @@ import { formatTokens } from "@/lib/format";
 import { getUserByUsername } from "@/lib/users";
 
 /**
- * README badge. `?style=flat` gives a 20px shields-style badge and `?style=pill` a medium pill; the default is a
- * larger button. `?theme=light|iris|lilac` picks the colours (default dark).
+ * README badge. `?style=flat` gives a 20px shields-style badge that always shows the count ("0M tokens" before
+ * the first support), and `?style=pill` a medium pill; the default is a larger button. `?theme=light|iris|lilac`
+ * picks the colours (default dark).
  */
 export async function GET(req: Request, { params }: { params: Promise<{ username: string }> }) {
   const username = (await params).username.replace(/\.svg$/i, "");

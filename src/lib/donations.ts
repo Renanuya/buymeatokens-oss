@@ -78,11 +78,13 @@ export async function createPendingDonation(input: {
   supporterName: string;
   message: string;
   method?: "stripe" | "paypal";
+  /** Where the supporter's visit came from, for Analytics (src/lib/visit-source.ts). */
+  visitSource?: string | null;
 }): Promise<string> {
   const id = newId();
   await query(
-    `INSERT INTO donations (id, creator_id, stripe_mode, method, units, amount_cents, currency, supporter_name, message, status, created_at)
-     VALUES (?, ?, ?, ?, ?, ?, 'usd', ?, ?, 'pending', ?)`,
+    `INSERT INTO donations (id, creator_id, stripe_mode, method, units, amount_cents, currency, supporter_name, message, status, created_at, visit_source)
+     VALUES (?, ?, ?, ?, ?, ?, 'usd', ?, ?, 'pending', ?, ?)`,
     [
       id,
       input.creatorId,
@@ -93,6 +95,7 @@ export async function createPendingDonation(input: {
       input.supporterName,
       input.message,
       Date.now(),
+      input.visitSource ?? null,
     ],
   );
   return id;
@@ -131,13 +134,14 @@ export async function recordUsdcDonation(input: {
   amountCents: number;
   supporterName: string;
   message: string;
+  visitSource?: string | null;
 }): Promise<boolean> {
   const now = Date.now();
   const rs = await query(
-    `INSERT INTO donations (id, creator_id, stripe_mode, method, tx_hash, units, amount_cents, currency, supporter_name, message, status, created_at, paid_at)
-     VALUES (?, ?, 'live', 'usdc', ?, ?, ?, 'usd', ?, ?, 'paid', ?, ?)
+    `INSERT INTO donations (id, creator_id, stripe_mode, method, tx_hash, units, amount_cents, currency, supporter_name, message, status, created_at, paid_at, visit_source)
+     VALUES (?, ?, 'live', 'usdc', ?, ?, ?, 'usd', ?, ?, 'paid', ?, ?, ?)
      ON CONFLICT (tx_hash) DO NOTHING`,
-    [newId(), input.creatorId, input.txHash, input.units, input.amountCents, input.supporterName, input.message, now, now],
+    [newId(), input.creatorId, input.txHash, input.units, input.amountCents, input.supporterName, input.message, now, now, input.visitSource ?? null],
   );
   return rs.rowsAffected > 0;
 }
