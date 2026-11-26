@@ -89,6 +89,15 @@ describe("GET /api/badge/[username]", () => {
     expect(suffixed).toContain("<title>Buy me AI tokens: 12M tokens</title>");
   });
 
+  it("shows 0M tokens on the compact badge before the first support", async () => {
+    const empty = await (await getBadge("ghost", "?style=flat")).text();
+    expect(empty).toContain("<title>buy me AI tokens: 0M tokens</title>");
+    expect(empty).not.toContain("support");
+
+    const counted = await (await getBadge("maker", "?style=flat")).text();
+    expect(counted).toContain("<title>buy me AI tokens: 12M tokens</title>");
+  });
+
   it("falls back to the default style for an unknown style", async () => {
     const plain = await (await getBadge("maker")).text();
     const styled = await (await getBadge("maker", "?style=bogus")).text();

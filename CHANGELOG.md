@@ -26,6 +26,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- The compact README badge (`?style=flat`) always shows a count. Before the first support it reads `0M tokens`
+  instead of `support`, so creators see the format their badge will keep.
+
 - `/roadmap` has a shorter layout. Shipped milestones no longer take a full card each: they sit in a compact
   Shipped list, links kept, next to the current priority. A progress bar sits up top and the rest of the plan is a
   grid of smaller cards. The page is about a third shorter on desktop.
