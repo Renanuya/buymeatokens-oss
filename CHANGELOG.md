@@ -8,6 +8,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- `/roadmap` has a shorter layout. Shipped milestones no longer take a full card each: they sit in a compact
+  Shipped list, links kept, next to the current priority. A progress bar sits up top and the rest of the plan is a
+  grid of smaller cards. The page is about a third shorter on desktop.
+
 - Privacy Policy, updated November 26, 2026:
   - It names Groq as the provider behind "Write with AI".
   - It says the creator's email also receives the welcome and the setup reminder.
