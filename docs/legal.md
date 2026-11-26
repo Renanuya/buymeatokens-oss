@@ -3,8 +3,8 @@
 ## Legal values
 
 `src/lib/legal/config.ts` is the one place for the values only the operator of a site can decide: the "last
-updated" date, the contact address, the governing law, how long logs are kept, how fast deleted accounts are
-removed, and the hosting providers named in the Privacy Policy. A value left `null` shows on the pages as a visible
+updated" dates (one for the Terms, one for the Privacy Policy), the contact address, the governing law, how long logs
+are kept, how fast deleted accounts are removed, and the hosting and AI providers named in the Privacy Policy. A value left `null` shows on the pages as a visible
 placeholder such as `[CONTACT_EMAIL]`, so nothing is ever invented. If you run your own copy, these values are
 yours to change.
 
@@ -52,7 +52,7 @@ refused. Payment code logs through `logError` (`src/lib/redact.ts`), which blank
 
 ## What leaves the site
 
-The Privacy Policy names the providers that receive data. When you add a provider, update
-`HOSTING_PROVIDERS_TEXT`. "Write with AI" sends the public details of the creator's repository (name,
+The Privacy Policy names the providers that receive data. When you add one, update `HOSTING_PROVIDERS_TEXT` or
+`AI_PROVIDERS_TEXT`, and `PRIVACY_LAST_UPDATED`. "Write with AI" sends the public details of the creator's repository (name,
 description, topics, main language, website and README) to the configured AI provider, Gemini or Groq. No account
 data goes with it.

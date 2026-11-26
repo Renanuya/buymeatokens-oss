@@ -5,8 +5,10 @@
 // The texts themselves live in content/legal/<language>/*.md.
 
 export type LegalConfig = {
-  /** The "Last updated" date on /terms and /privacy, written as it should appear, e.g. "25 November 2026". */
+  /** The "Last updated" date on /terms, written as it should appear, e.g. "25 November 2026". */
   LEGAL_LAST_UPDATED: string | null;
+  /** The "Last updated" date on /privacy. It moves on its own when only the Privacy Policy changes. */
+  PRIVACY_LAST_UPDATED: string | null;
   /** Address for legal and privacy questions and for account deletion requests. */
   CONTACT_EMAIL: string | null;
   /** Governing law and courts, as confirmed with a lawyer. */
@@ -15,20 +17,25 @@ export type LegalConfig = {
   LOG_RETENTION_DAYS: number | null;
   /** Days within which a deleted account is fully removed, e.g. 30. */
   ACCOUNT_DELETE_DAYS: number | null;
-  /** Hosting, database and analytics providers named in the Privacy Policy. */
+  /** Hosting, database and email providers named in the Privacy Policy. */
   HOSTING_PROVIDERS_TEXT: string | null;
+  /** Who drafts project descriptions for "Write with AI" (src/lib/ai-draft.ts), named in the Privacy Policy. */
+  AI_PROVIDERS_TEXT: string | null;
 };
 
 // The values for buymeatokens.com, chosen by its operator on 2026-11-25. If you run your own copy, these are yours
 // to change: your contact address, your law and your providers.
 export const LEGAL: LegalConfig = {
   LEGAL_LAST_UPDATED: "November 25, 2026",
+  PRIVACY_LAST_UPDATED: "November 26, 2026",
   CONTACT_EMAIL: "privacy@buymeatokens.com",
   GOVERNING_LAW_TEXT:
     "the laws of the Republic of Türkiye; the courts and enforcement offices of Istanbul have jurisdiction. If you are a consumer, this does not take away the protection that the mandatory laws of your country of residence give you",
   LOG_RETENTION_DAYS: 90,
   ACCOUNT_DELETE_DAYS: 30,
-  HOSTING_PROVIDERS_TEXT: "Vercel (hosting), Supabase (database) and Mailjet (email delivery). We do not use analytics tools",
+  HOSTING_PROVIDERS_TEXT: "Vercel (hosting), Supabase (database) and Mailjet (email delivery)",
+  // Gemini is tried first only when GEMINI_API_KEY is set, which it isn't in production. Name Google here if it is.
+  AI_PROVIDERS_TEXT: "Groq",
 };
 
 export type LegalPlaceholder = keyof LegalConfig;

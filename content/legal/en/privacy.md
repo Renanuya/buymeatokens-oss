@@ -1,6 +1,6 @@
 # Privacy Policy
 
-We collect as little as the site needs to work and we never sell personal data. Last updated: [LEGAL_LAST_UPDATED].
+We collect as little as the site needs to work and we never sell personal data. Last updated: [PRIVACY_LAST_UPDATED].
 
 ## 1. Who is responsible
 
@@ -10,7 +10,7 @@ buymeatokens.com is operated by Ali Renan Uyanık, an individual based in Turkey
 
 | Who | Data | Why |
 | --- | --- | --- |
-| Creators | GitHub username, profile name, avatar and email from GitHub login | To sign you in and show your page |
+| Creators | GitHub username, profile name, avatar and email from GitHub login | To sign you in, show your page and send you account emails: a welcome and at most one setup reminder |
 | Creators | Page content you enter: project description, links, payment method details you choose to publish (for example a PayPal link or wallet address) | To display your page and let supporters pay you |
 | Creators | Payment provider connection data you give us, such as a restricted API key | To show and check your payment options |
 | Everyone | Technical data: IP address, browser, device, pages visited, error logs | To run, secure and fix the site |
@@ -22,7 +22,9 @@ We do not see card numbers. Payments are made on the payment provider's own page
 
 - Payment providers (PayPal, Stripe, the Base network and your wallet or exchange) receive the payment details you give them. They are independent controllers under their own privacy policies.
 - Creators see the payments and messages sent to them through their own payment provider, not through us. How a creator treats supporter data is up to that creator and their local law.
-- Hosting, database and analytics providers process data for us under their own terms: [HOSTING_PROVIDERS_TEXT].
+- Hosting, database and email providers process data for us under their own terms: [HOSTING_PROVIDERS_TEXT].
+- If a creator uses "Write with AI", the public details of the GitHub repository they link (its name, description, topics, main language, website and README) are sent to [AI_PROVIDERS_TEXT] to draft their project description. No account data is sent with it.
+- We do not use analytics tools.
 - We share data with authorities only when the law requires it.
 
 Blockchain transfers are public. A USDC transfer on Base shows the sending and receiving wallet addresses to anyone, and we cannot remove it.
