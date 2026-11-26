@@ -52,7 +52,6 @@ Everything else is optional:
 | Repo stats, the Contributor badge | optional `GITHUB_TOKEN` (no permissions needed) to avoid GitHub's anonymous rate limit |
 
 > [!WARNING]
-> ``````
 > `POSTGRES_URL` must point at a database **you can throw away**. The app creates and alters tables on its
 > first connection. Never use a URL you got from a deployment, a teammate or `vercel env pull`. As a safety net,
 > a dev server, a local build or a script refuses to change the schema of a non-local host; a remote development
