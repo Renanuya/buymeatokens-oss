@@ -38,8 +38,8 @@ We'll keep you updated along the way. There is no paid bug bounty at the moment.
 - the encryption and handling of creators' Stripe restricted keys;
 - anything that confirms a payment that didn't happen, or attributes one to the wrong creator
   (Stripe reconciliation, PayPal IPN verification, USDC verification);
-- webhook signature checks (Paddle) and the secrets that protect cron endpoints;
-- access and billing rules: lifetime free access, the $5 threshold and subscriptions;
+- payment notification checks (PayPal IPN) and the secrets that protect cron endpoints;
+- access rules: lifetime free access, the signup gate and admin access;
 - XSS or injection through creator profiles, markdown, badges or emails;
 - reading or changing another user's data, including admin-only pages.
 
@@ -48,7 +48,7 @@ We'll keep you updated along the way. There is no paid bug bounty at the moment.
 - the [documented limitations of the experimental USDC flow](docs/payments.md#usdc-on-base-experimental);
   we already know about these and they are on the roadmap;
 - denial of service, load testing, spam or social engineering;
-- vulnerabilities in Stripe, PayPal, Paddle, GitHub, Supabase or Vercel themselves (report those to them);
+- vulnerabilities in Stripe, PayPal, GitHub, Supabase or Vercel themselves (report those to them);
 - missing security headers, SPF/DMARC settings or version banners without a concrete exploit;
 - reports from automated scanners that haven't been verified.
 

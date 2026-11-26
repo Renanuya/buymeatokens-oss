@@ -1,21 +1,10 @@
-import { FREE_LIMIT_CENTS } from "./billing";
-import { billingEnforced, countTestPaymentsForBilling } from "./config";
 import { decrypt } from "./crypto";
 import { logError } from "./redact";
-import { billableCents, expireStale, listPending, markPaid, markStatus, type Donation } from "./donations";
+import { expireStale, listPending, markPaid, markStatus, type Donation } from "./donations";
 import { retrieveCheckoutSession } from "./stripe";
-import { getUserById, markThresholdReached, type User } from "./users";
+import { getUserById, type User } from "./users";
 
 const WINDOW_MS = 48 * 60 * 60 * 1000;
-
-export async function checkThreshold(creatorId: string) {
-  // Don't start a grace clock while billing is disabled or for a permanently exempt creator.
-  if (!billingEnforced()) return;
-  const creator = await getUserById(creatorId);
-  if (!creator || creator.lifetimeFreeGrantedAt !== null) return;
-  const cents = await billableCents(creatorId, countTestPaymentsForBilling());
-  if (cents > FREE_LIMIT_CENTS) await markThresholdReached(creatorId, Date.now());
-}
 
 /** Asks Stripe (with the creator's key) whether a pending donation was paid. */
 export async function syncDonation(donation: Donation, creator: User): Promise<Donation["status"]> {
@@ -27,7 +16,7 @@ export async function syncDonation(donation: Donation, creator: User): Promise<D
   if (session.metadata?.donation_id !== donation.id) return donation.status;
 
   if (session.payment_status === "paid") {
-    if (await markPaid(donation.id)) await checkThreshold(creator.id);
+    await markPaid(donation.id);
     return "paid";
   }
   if (session.status === "expired") {

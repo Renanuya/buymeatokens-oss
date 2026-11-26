@@ -4,7 +4,7 @@
 
 - [Local development](development.md): set up, run and test buymeatokens on your machine
 - [Architecture](architecture.md): how the app, database, payment rails and crons fit together
-- [Payments](payments.md): Stripe, PayPal, USDC (with its known limitations) and Paddle subscriptions
+- [Payments](payments.md): Stripe, PayPal and USDC (with its known limitations)
 - [Database](database.md): how the schema is applied and the rules for changing it
 - [Emails](emails.md): the creator email flow, delivery guarantees and configuration
 - [Legal pages and creators' data](legal.md): Terms and Privacy, consent, the payment CSV and account deletion

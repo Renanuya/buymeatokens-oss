@@ -6,6 +6,17 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ## [Unreleased]
 
+### Removed
+
+- Paddle subscriptions and everything that only existed for them: the webhook, the Billing page, the $5 threshold
+  with its grace period and paused support button, and the `BILLING_ENABLED`, `BILLING_COUNT_TEST_MODE` and Paddle
+  settings. Billing was never switched on, so no creator is affected. Lifetime free access and the planned pricing on
+  `/about` stay. The code is in v0.1.0 if it's ever needed again.
+
+### Fixed
+
+- A test of account deletion failed about once in a hundred runs.
+
 ## [0.1.0] - 2026-11-26
 
 The open source launch.

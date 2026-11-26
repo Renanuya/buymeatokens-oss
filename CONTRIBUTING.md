@@ -35,8 +35,8 @@ better to hear it before you have written the code.
 
 Follow [docs/development.md](docs/development.md). The one rule that matters most:
 
-> **Use only local or test credentials.** Point `POSTGRES_URL` at your own local database, use Stripe and Paddle
-> test or sandbox modes, and leave `EMAIL_LIVE_ENABLED` off. You never need production access to contribute,
+> **Use only local or test credentials.** Point `POSTGRES_URL` at your own local database, use Stripe in
+> test mode, and leave `EMAIL_LIVE_ENABLED` off. You never need production access to contribute,
 > and maintainers will never ask you for real keys.
 
 ## Making the change
@@ -87,7 +87,7 @@ These areas move money, grant access or guard data. Changes there get a slower, 
 |---|---|
 | Database schema | `src/lib/db.ts` |
 | Payments and reconciliation | `src/lib/stripe.ts`, `paypal.ts`, `usdc.ts`, `donations.ts`, `reconcile.ts`, `src/app/api/paypal/` |
-| Billing and access rules | `src/lib/billing.ts`, `access.ts`, `src/app/api/paddle/` |
+| Access rules | `src/lib/billing.ts`, `access.ts`, `users.ts` (lifetime free access) |
 | Auth, sessions, encryption | `src/lib/session.ts`, `crypto.ts`, `github.ts`, `src/app/api/auth/` |
 | Emails and cron endpoints | `src/lib/email*.ts`, `creator-emails.ts`, `welcome-email.ts`, `src/app/api/cron/` |
 | Personal data and legal texts | `src/lib/account-deletion.ts`, `payment-export.ts`, `consent.ts`, `redact.ts`, `ai-draft.ts`, `src/lib/legal/`, `content/legal/` |

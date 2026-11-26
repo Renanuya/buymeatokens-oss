@@ -36,8 +36,7 @@ async function main() {
     [
       `Account: @${preview.login ?? "?"}  page: ${preview.username ? `/${preview.username}` : "(none)"}`,
       `Removes: profile and page, ${preview.supportRows} support record(s), ${preview.applications} application(s), ${preview.waitlist} waitlist entry(ies)`,
-      `Payment settings: Stripe key ${preview.hasStripeKey ? "yes" : "no"}, PayPal ${preview.hasPaypal ? "yes" : "no"}, wallet ${preview.hasWallet ? "yes" : "no"}`,
-      preview.subscriptionStatus ? `Paddle subscription status: ${preview.subscriptionStatus} (not cancelled by this; cancel it in Paddle)` : "",
+      `Payment settings: Stripe ${preview.hasStripeKey ? "connected" : "no"}, PayPal ${preview.hasPaypal ? "yes" : "no"}, wallet ${preview.hasWallet ? "yes" : "no"}`,
     ]
       .filter(Boolean)
       .join("\n"),

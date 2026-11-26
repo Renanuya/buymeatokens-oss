@@ -246,16 +246,6 @@ export async function earningsHistory(creatorId: string, mode: StripeMode, now =
   return { days, months };
 }
 
-/** Lifetime paid total that counts toward the free limit. */
-export async function billableCents(creatorId: string, includeTestMode: boolean): Promise<number> {
-  const rs = await query(
-    `SELECT COALESCE(SUM(amount_cents), 0) AS cents FROM donations
-     WHERE creator_id = ? AND status = 'paid' AND (stripe_mode = 'live' OR ?::int = 1)`,
-    [creatorId, includeTestMode ? 1 : 0],
-  );
-  return num(rs.rows[0]?.cents) ?? 0;
-}
-
 /** Pending donations with a Stripe session, oldest first. `creatorId = null` means all creators. */
 export async function listPending(creatorId: string | null, since: number, limit: number): Promise<Donation[]> {
   const rs = creatorId

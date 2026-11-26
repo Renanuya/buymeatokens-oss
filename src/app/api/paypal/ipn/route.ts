@@ -1,7 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { getPaypalDonation, markPaypalPaid, markPaypalReversed } from "@/lib/donations";
 import { toCents, verifyIpn } from "@/lib/paypal";
-import { checkThreshold } from "@/lib/reconcile";
 import { logError } from "@/lib/redact";
 import { getUserById } from "@/lib/users";
 
@@ -54,10 +53,7 @@ export async function POST(req: Request) {
 
   const units = Math.max(1, Math.round(cents / creator.unitPriceCents));
   try {
-    if (await markPaypalPaid(donation.id, txnId, cents, units)) {
-      await checkThreshold(creator.id);
-      revalidatePath(`/${creator.username}`);
-    }
+    if (await markPaypalPaid(donation.id, txnId, cents, units)) revalidatePath(`/${creator.username}`);
   } catch (error) {
     // A unique-constraint race on txn_id means another IPN already recorded it.
     logError("[paypal ipn] record", donation.id, error);

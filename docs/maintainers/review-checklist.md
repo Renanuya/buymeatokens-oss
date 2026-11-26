@@ -29,7 +29,7 @@ Go through this part in detail for anything in the [sensitive areas](../../CONTR
 - [ ] **Money:** payments are confirmed with the provider, never trusted from the client. Duplicate webhooks, double
       submits, retries and concurrent requests can't double-count anything; there's a unique constraint or atomic
       claim behind each one.
-- [ ] **Access rules:** lifetime free access can't be removed by mistake, and the $5 / grace-period logic still holds.
+- [ ] **Access rules:** lifetime free access can't be removed by mistake.
 - [ ] **Input:** user content (profiles, markdown, names, URLs) is validated and escaped. No new `dangerouslySetInnerHTML`
       without sanitizing. URLs are checked for `javascript:` and similar schemes.
 - [ ] **Secrets:** no keys, tokens or personal data in code, tests, fixtures, logs or screenshots. New secrets are read

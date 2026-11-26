@@ -5,7 +5,7 @@
 # Database schema
 /src/lib/db.ts                  @Renanuya
 
-# Money: payment rails, reconciliation, billing and access rules
+# Money: payment rails, reconciliation and access rules
 /src/lib/stripe.ts              @Renanuya
 /src/lib/paypal.ts              @Renanuya
 /src/lib/usdc.ts                @Renanuya
@@ -13,7 +13,6 @@
 /src/lib/reconcile.ts           @Renanuya
 /src/lib/billing.ts             @Renanuya
 /src/lib/access.ts              @Renanuya
-/src/app/api/paddle/            @Renanuya
 /src/app/api/paypal/            @Renanuya
 
 # Auth, sessions and encryption

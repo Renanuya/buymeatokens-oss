@@ -23,11 +23,6 @@ export type User = {
   paypalEmail: string | null;
   accessStatus: AccessStatus | null;
   lifetimeFreeGrantedAt: number | null;
-  thresholdReachedAt: number | null;
-  subId: string | null;
-  subStatus: string | null;
-  subPlan: string | null;
-  subPeriodEnd: number | null;
   projectUrl: string | null;
   projectName: string | null;
   tokenUse: string;
@@ -66,11 +61,6 @@ function mapUser(r: Row): User {
     paypalEmail: str(r.paypal_email),
     accessStatus: ((s) => (s === "pending" || s === "approved" || s === "rejected" ? s : null))(str(r.access_status)),
     lifetimeFreeGrantedAt: num(r.lifetime_free_granted_at),
-    thresholdReachedAt: num(r.threshold_reached_at),
-    subId: str(r.sub_id),
-    subStatus: str(r.sub_status),
-    subPlan: str(r.sub_plan),
-    subPeriodEnd: num(r.sub_period_end),
     projectUrl: str(r.project_url),
     projectName: str(r.project_name),
     tokenUse: str(r.token_use) ?? "",
@@ -102,10 +92,6 @@ export function getUserById(id: string) {
 
 export function getUserByUsername(username: string) {
   return findOne("SELECT * FROM users WHERE username = ?", [username.toLowerCase()]);
-}
-
-export function getUserBySubId(subId: string) {
-  return findOne("SELECT * FROM users WHERE sub_id = ?", [subId]);
 }
 
 /** Creates the user on first login, refreshes profile basics afterwards. */
@@ -277,35 +263,4 @@ export async function setPaypalEmail(id: string, email: string | null) {
 /** True when the creator can take at least one kind of payment. */
 export function hasPaymentMethod(user: Pick<User, "stripeKeyEnc" | "usdcAddress" | "paypalEmail">): boolean {
   return Boolean(user.stripeKeyEnc || user.usdcAddress || user.paypalEmail);
-}
-
-/** Records the moment a creator first crossed the free limit (never overwritten). */
-export async function markThresholdReached(id: string, at: number) {
-  const result = await query(
-    "UPDATE users SET threshold_reached_at = COALESCE(threshold_reached_at, ?) WHERE id = ? RETURNING threshold_reached_at",
-    [at, id],
-  );
-  return num(result.rows[0]?.threshold_reached_at);
-}
-
-/** Applies a subscription webhook, ignoring events older than the last one applied. */
-export async function updateSubscription(
-  id: string,
-  sub: { subId: string; status: string; plan: string | null; periodEnd: number | null; eventAt: number },
-) {
-  await run(
-    `UPDATE users SET sub_id = ?, sub_status = ?, sub_plan = COALESCE(?, sub_plan), sub_period_end = ?, sub_event_at = ?
-     WHERE id = ? AND (sub_event_at IS NULL OR sub_event_at <= ?)`,
-    [sub.subId, sub.status, sub.plan, sub.periodEnd, sub.eventAt, id, sub.eventAt],
-  );
-}
-
-/** Development only: fake an active subscription to test the paywall. */
-export async function devSetSubscription(id: string, active: boolean) {
-  await run(
-    "UPDATE users SET sub_id = ?, sub_status = ?, sub_plan = ?, sub_period_end = ?, sub_event_at = NULL WHERE id = ?",
-    active
-      ? ["dev_sub", "active", "monthly", Date.now() + 30 * 86_400_000, id]
-      : [null, null, null, null, id],
-  );
 }

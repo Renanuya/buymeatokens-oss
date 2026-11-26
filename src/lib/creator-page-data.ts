@@ -1,5 +1,4 @@
 import type { CreatorPageModel } from "@/components/creator-page";
-import { getBillingState } from "./billing";
 import { isContributor } from "./contributors";
 import { getStats, listRecentPaid, unitsSince } from "./donations";
 import { repoStats } from "./github";
@@ -11,10 +10,9 @@ export async function loadCreatorPage(creator: User): Promise<CreatorPageModel> 
   const mode = creator.stripeMode ?? "live";
   const hasGoal = creator.goalUnits !== null && creator.goalStartedAt !== null;
   const repo = creator.projectUrl ? githubRepo(creator.projectUrl) : null;
-  const [stats, recent, billing, goalReached, repoInfo, contributor] = await Promise.all([
+  const [stats, recent, goalReached, repoInfo, contributor] = await Promise.all([
     getStats(creator.id, mode),
     listRecentPaid(creator.id, mode, 20),
-    getBillingState(creator),
     hasGoal ? unitsSince(creator.id, mode, creator.goalStartedAt!) : Promise.resolve(0),
     repo ? repoStats(repo) : Promise.resolve(null),
     isContributor(creator.login),
@@ -23,9 +21,7 @@ export async function loadCreatorPage(creator: User): Promise<CreatorPageModel> 
   const name = creator.displayName || creator.username || "";
   const disabledReason = !hasPaymentMethod(creator)
     ? `${name} hasn't connected payments yet. Check back soon!`
-    : billing.state.kind === "locked"
-      ? "Support is paused for now. Check back soon!"
-      : null;
+    : null;
 
   return {
     username: creator.username ?? "",

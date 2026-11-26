@@ -18,7 +18,6 @@ type Props = {
 
 const ERRORS: Record<string, string> = {
   checkout: "We couldn't open checkout. Please try again in a moment.",
-  paused: "Support for this creator is paused right now.",
   setup: "This creator hasn't finished setting up payments yet.",
 };
 

@@ -2,7 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import type { ActionState } from "@/components/form-message";
-import { appUrl, devLoginEnabled } from "@/lib/config";
+import { appUrl } from "@/lib/config";
 import { assertConsent } from "@/lib/consent";
 import { encrypt } from "@/lib/crypto";
 import { logError } from "@/lib/redact";
@@ -21,7 +21,7 @@ import {
   validateTokenUse,
 } from "@/lib/profile";
 import { SOCIAL_NETWORKS, socialsFromForm } from "@/lib/socials";
-import { devSetSubscription, setPaypalEmail, setStripeKey, setUsdcAddress, updateProfile, type ProfileUpdate } from "@/lib/users";
+import { setPaypalEmail, setStripeKey, setUsdcAddress, updateProfile, type ProfileUpdate } from "@/lib/users";
 
 function refresh(username: string) {
   revalidatePath("/dashboard", "layout");
@@ -168,13 +168,5 @@ export async function removeUsdcAddressAction() {
 export async function disconnectStripeAction() {
   const user = await requireCreator();
   await setStripeKey(user.id, null, null);
-  refresh(user.username);
-}
-
-/** Development only: toggle a fake subscription to test the paywall. */
-export async function devSubscriptionAction(formData: FormData) {
-  if (!devLoginEnabled()) return;
-  const user = await requireCreator();
-  await devSetSubscription(user.id, formData.get("active") === "1");
   refresh(user.username);
 }

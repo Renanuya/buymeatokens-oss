@@ -11,8 +11,8 @@ Provider and network fees still apply.
   Sessions.
 - **No webhooks.** We confirm payments by asking Stripe about pending sessions from three places: the thank-you
   page, the creator dashboard and the daily `/api/cron/reconcile` job.
-- Only **live-mode** payments count toward the $5 billing threshold. In development,
-  `BILLING_COUNT_TEST_MODE=true` counts test payments too.
+- Test-mode payments show on the creator's own dashboard and badge while their key is a test key, and never mix
+  with live ones.
 
 ## PayPal
 
@@ -59,18 +59,3 @@ record, a written finality policy, and better wallet UX.
 
 References: [Circle USDC contract addresses](https://developers.circle.com/stablecoins/usdc-contract-addresses),
 [Base transaction finality](https://docs.base.org/base-chain/network-information/transaction-finality).
-
-## Subscriptions (Paddle)
-
-Paddle (merchant of record) handles only the creator's own subscription to buymeatokens, never support payments.
-
-1. Create a sandbox account at [sandbox-vendors.paddle.com](https://sandbox-vendors.paddle.com).
-2. Create a product with two prices, **$1 / month** and **$9 / year**.
-3. *Developer tools → Authentication*: client-side token → `NEXT_PUBLIC_PADDLE_CLIENT_TOKEN`.
-4. Price ids (`pri_…`) → `NEXT_PUBLIC_PADDLE_PRICE_MONTHLY` / `NEXT_PUBLIC_PADDLE_PRICE_YEARLY`.
-5. *Notifications*: add a destination at `https://<your-domain>/api/paddle/webhook` for `subscription.*` events.
-   Put its secret in `PADDLE_WEBHOOK_SECRET`. Locally you need a tunnel such as `cloudflared` or `ngrok`.
-
-Webhook signatures are verified, and events older than the stored state are ignored. Filling in Paddle values
-does **not** turn billing on; only `BILLING_ENABLED=true` does. An existing subscription isn't cancelled
-automatically when billing is switched off.
