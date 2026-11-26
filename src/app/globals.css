@@ -513,11 +513,22 @@ html[data-auth="in"] .auth-in { display: contents; }
   transform-origin: bottom;
   animation: bar-grow 0.7s cubic-bezier(0.2, 0.7, 0.2, 1) both;
 }
+/* Analytics: horizontal bars (sources, conversion steps) grow in from the left. */
+@keyframes bar-grow-x {
+  from {
+    transform: scaleX(0);
+  }
+}
+.bar-grow-x {
+  transform-origin: left center;
+  animation: bar-grow-x 0.8s cubic-bezier(0.2, 0.7, 0.2, 1) both;
+}
 .ring-fill {
   animation: ring-fill 1.2s cubic-bezier(0.2, 0.7, 0.2, 1) 0.2s both;
 }
 @media (prefers-reduced-motion: reduce) {
   .bar-grow,
+  .bar-grow-x,
   .ring-fill {
     animation: none;
   }

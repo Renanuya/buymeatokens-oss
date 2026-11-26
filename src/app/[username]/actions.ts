@@ -12,12 +12,18 @@ import { createDonationCheckout } from "@/lib/stripe";
 import { checkUsdcTransfer, isTxHash } from "@/lib/usdc";
 import { getUserByUsername } from "@/lib/users";
 import { clampInt } from "@/lib/validation";
+import { classifyVisit, encodeSource } from "@/lib/visit-source";
 
 const MAX_UNITS = 100;
 // Only recent transfers can be claimed, so old payments to the same wallet can't be replayed as support.
 const USDC_MAX_AGE_MS = 3 * 86_400_000;
 
 export type UsdcResult = { ok: boolean; message: string };
+
+/** Where the supporter's visit came from (see src/lib/visit-source.ts), stored on the payment for Analytics. */
+function visitSource(ref: unknown, referrer: unknown): string {
+  return encodeSource(classifyVisit({ ref, referrer, ownHosts: [new URL(appUrl()).host] }));
+}
 
 /** Sends the supporter to PayPal to pay the creator directly. The IPN route confirms the payment. */
 export async function startPaypal(formData: FormData) {
@@ -39,6 +45,7 @@ export async function startPaypal(formData: FormData) {
     amountCents,
     supporterName,
     message,
+    visitSource: visitSource(formData.get("visit_ref"), formData.get("visit_referrer")),
   });
 
   const base = appUrl();
@@ -61,6 +68,7 @@ export async function confirmUsdcPayment(input: {
   txHash: string;
   name: string;
   message: string;
+  visit?: { ref?: unknown; referrer?: unknown };
 }): Promise<UsdcResult> {
   const txHash = input.txHash.trim().toLowerCase();
   if (!isTxHash(txHash)) {
@@ -105,6 +113,7 @@ export async function confirmUsdcPayment(input: {
     amountCents: check.amountCents,
     supporterName: String(input.name ?? "").trim().slice(0, 60),
     message: String(input.message ?? "").trim().slice(0, 280),
+    visitSource: visitSource(input.visit?.ref, input.visit?.referrer),
   });
   if (!recorded) return { ok: true, message: "This payment is already counted. Thank you!" };
 
@@ -133,6 +142,7 @@ export async function startCheckout(formData: FormData) {
     amountCents: creator.unitPriceCents * units,
     supporterName,
     message,
+    visitSource: visitSource(formData.get("visit_ref"), formData.get("visit_referrer")),
   });
 
   let checkoutUrl: string | null = null;

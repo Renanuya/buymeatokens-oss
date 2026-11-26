@@ -39,7 +39,8 @@ export function BadgeBuilder({
   const [readme, setReadme] = useState<"light" | "dark">("light");
   const query = badgeQuery(style, theme);
   const src = `/api/badge/${username}${query}`;
-  const markdown = `[![Buy me AI tokens](${base}/api/badge/${username}${query})](${pageUrl})`;
+  // ?ref=badge credits visits from the badge in the creator's Analytics tab.
+  const markdown = `[![Buy me AI tokens](${base}/api/badge/${username}${query})](${pageUrl}?ref=badge)`;
   const dark = readme === "dark";
 
   return (
