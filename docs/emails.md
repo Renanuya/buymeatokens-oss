@@ -45,18 +45,38 @@ Admins can preview every variant at *Admin → Preview emails* (desktop/mobile, 
 | `EMAIL_CRON_SECRET` | protects `/api/cron/emails` |
 
 In development, keep `EMAIL_LIVE_ENABLED=false`. Test sends only go to `EMAIL_TEST_TO`, never enroll existing
-accounts and never use up live delivery slots.
+accounts and never use up live delivery slots. Each design version (`EMAIL_DESIGN` in `creator-emails.ts`) gets
+its own one-time test slot; live slots never change with it.
+
+To check a template in a real inbox, rendered for a real creator:
+
+```bash
+EMAIL_TEST_TO=you@example.com npx tsx scripts/send-welcome-test.ts <username> [welcome|payment|badge]           # dry run
+EMAIL_TEST_TO=you@example.com npx tsx scripts/send-welcome-test.ts <username> [welcome|payment|badge] --apply   # sends
+```
+
+## Deliverability
+
+- Mailjet open and click tracking is turned off per message: no tracking pixel and no redirect links, so the one
+  link goes straight to the site.
+- The sending domain needs SPF and DKIM for the provider, and a DMARC record (`p=none` is enough to start). If the
+  domain also forwards mail, keep **one** SPF record that includes both.
+- `EMAIL_REPLY_TO` should be on the same domain as `EMAIL_FROM` and reach a mailbox someone reads.
 
 ## Scheduler (operators)
 
 Supabase `pg_cron` + `pg_net` POST to `/api/cron/emails` every minute. The daily reconcile cron doesn't send email.
 
-1. `npx tsx scripts/configure-email-cron.ts` creates `EMAIL_CRON_SECRET` if it's missing, stores it in Supabase
-   Vault, and sets up the job **paused**.
+Pass the database explicitly for these commands (`PROD_POSTGRES_URL='postgres://…' npx tsx …`); the script prints
+the host before it does anything, and without `--apply` it only shows the job's current state.
+
+1. `configure-email-cron.ts --apply` creates `EMAIL_CRON_SECRET` if it's missing, stores it and the worker URL in
+   Supabase Vault, and sets up the job **paused**. The URL is `--app-url` (default `https://buymeatokens.com`) plus
+   `/api/cron/emails`.
 2. Add the same secret to the production environment, set `EMAIL_LIVE_ENABLED=true` when you mean it, and deploy.
-3. `npx tsx scripts/configure-email-cron.ts --activate` starts the job. Check `cron.job_run_details` and
-   `net._http_response`. Run the script without `--activate` to pause it again. Setting `EMAIL_LIVE_ENABLED=false`
-   and redeploying stops all automatic sends, including welcomes.
+3. `configure-email-cron.ts --apply --activate` starts the job. Check `cron.job_run_details` and
+   `net._http_response`. Running it with `--apply` but without `--activate` pauses it again. Setting
+   `EMAIL_LIVE_ENABLED=false` and redeploying stops all automatic sends, including welcomes.
 
 References: [Mailjet Send API](https://dev.mailjet.com/email/guides/send-api-v31/),
 [Supabase scheduling](https://supabase.com/docs/guides/functions/schedule-functions),

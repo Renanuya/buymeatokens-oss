@@ -48,11 +48,15 @@ Everything else is optional:
 | Subscriptions | Paddle sandbox values and `BILLING_ENABLED=true` (see [payments.md](payments.md#subscriptions-paddle)) |
 | USDC | optional `BASE_RPC_URL` if the public RPC rate-limits you |
 | Emails | a test inbox in `EMAIL_TEST_TO`; live sending stays off (see [emails.md](emails.md)) |
-| The admin page | your GitHub login in `ADMIN_GITHUB_LOGINS` |
+| The admin page | your GitHub login in `ADMIN_GITHUB_LOGINS` (GitHub sign-in only; the development login is never an admin) |
+| "Write with AI" | a free `GROQ_API_KEY` or `GEMINI_API_KEY`; without one the button is hidden |
+| Repo stats, the Contributor badge | optional `GITHUB_TOKEN` (no permissions needed) to avoid GitHub's anonymous rate limit |
 
 > [!WARNING]
 > `POSTGRES_URL` must point at a database **you can throw away**. The app creates and alters tables on its
-> first connection. Never use a URL you got from a deployment, a teammate or `vercel env pull`.
+> first connection. Never use a URL you got from a deployment, a teammate or `vercel env pull`. As a safety net,
+> a dev server, a local build or a script refuses to change the schema of a non-local host; a remote development
+> database of your own needs `ALLOW_REMOTE_SCHEMA=1` ([database.md](database.md)).
 
 ## 3. Run it
 
@@ -98,3 +102,4 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build
 | Start over with an empty database | `docker compose down -v && docker compose up -d db` |
 | "That's a publishable key" | Stripe needs a **restricted** key (`rk_…`), not `pk_…` or `sk_…`. |
 | GitHub login loops back | Make sure the OAuth app's callback URL matches `APP_URL` exactly. |
+| "Refusing to apply the schema to …" | `POSTGRES_URL` points at a remote host. Use the local database; see [database.md](database.md). |

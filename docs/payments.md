@@ -20,6 +20,7 @@ Provider and network fees still apply.
   "Buy Now" link (`cmd=_xclick`), so the money goes straight to the creator and no platform PayPal account is needed.
 - The link carries a `notify_url`. PayPal posts an IPN to `/api/paypal/ipn`, and we post the message back with
   `_notify-validate`. A payment counts only if PayPal confirms it **and** the receiver email and USD amount match.
+- Refunds and reversals arrive as IPNs too, and stop the payment from counting.
 - PayPal considers this method legacy. If it's shut down, moving to the Orders API needs a platform PayPal account.
 
 ## USDC on Base (experimental)
@@ -29,6 +30,13 @@ Provider and network fees still apply.
 - The server reads the receipt from a Base RPC (`BASE_RPC_URL` is optional) and adds up the official USDC
   contract's `Transfer` logs to the creator's address. Only transfers from the last three days are accepted, and
   each transaction hash can be recorded once.
+
+For PayPal and USDC the amount that counts is what actually arrived, not what the supporter picked on the page:
+payments under $1 aren't counted, and the token count is the amount divided by the creator's bundle price, rounded,
+with a minimum of one bundle.
+
+Creators can download their own confirmed support as a CSV from *Dashboard → Account*
+(`/api/creators/<username>/payments.csv`). Anyone else asking for that file gets a 404.
 
 ### Known limitations
 

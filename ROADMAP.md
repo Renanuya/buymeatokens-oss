@@ -53,7 +53,7 @@ Milestone: [v0.2][m2].
 
 | | Item | Notes |
 |---|---|---|
-| [#16] | Legal groundwork: terms, privacy, receipts and the lifetime free commitment | Needs research |
+| [#16] | Legal groundwork: terms, privacy, receipts and the lifetime free commitment | Partly built: Terms, Privacy, consent, CSV export, account deletion |
 | [#17] | A sturdier USDC flow: payment records, sender verification, finality | Fixes the [known limitations](docs/payments.md#known-limitations) |
 | [#18] | Link to the Paddle customer portal (cancel, change card) | |
 | [#19] | Notify creators about new support by email and optionally Discord | |
