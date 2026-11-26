@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useState, type FormEvent, type ReactNode } from "react";
 import { Avatar } from "@/components/avatar";
 import { Glyph, PaymentMark } from "@/components/glyph";
 import { ArrowUpRight } from "@/components/icons";
 import { SupporterPaymentNotice } from "@/components/payment-notices";
 import { SubmitButton } from "@/components/submit-button";
 import { formatUsd, shortName } from "@/lib/format";
+import { reportVisit, visitContext } from "@/lib/visit-client";
 import { startCheckout, startPaypal } from "./actions";
 import { UsdcPay } from "./usdc-pay";
 
@@ -67,8 +68,18 @@ export function SupportForm({
       <input type="hidden" name="units" value={units} />
       <input type="hidden" name="name" value={name} />
       <input type="hidden" name="message" value={message} />
+      <input type="hidden" name="visit_ref" defaultValue="" />
+      <input type="hidden" name="visit_referrer" defaultValue="" />
     </>
   );
+  // Pressing pay counts as starting support, and the payment remembers where the visit came from.
+  const onPay = (e: FormEvent<HTMLFormElement>) => {
+    const visit = visitContext();
+    const fields = e.currentTarget.elements;
+    (fields.namedItem("visit_ref") as HTMLInputElement).value = visit.ref;
+    (fields.namedItem("visit_referrer") as HTMLInputElement).value = visit.referrer;
+    reportVisit(username, "start");
+  };
   const payClass = "btn-iris group mt-5 w-full py-4 text-[15px]";
   const arrow = <ArrowUpRight className="size-3.5 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />;
 
@@ -201,7 +212,7 @@ export function SupportForm({
           message={message}
         />
       ) : method === "paypal" ? (
-        <form action={startPaypal}>
+        <form action={startPaypal} onSubmit={onPay}>
           {hidden}
           <SubmitButton pendingText="Opening PayPal…" className={payClass}>
             Pay {formatUsd(amountCents)} with PayPal {arrow}
@@ -209,7 +220,7 @@ export function SupportForm({
           <SecureNote>Straight to {firstName}&apos;s PayPal, by balance or card.</SecureNote>
         </form>
       ) : (
-        <form action={startCheckout}>
+        <form action={startCheckout} onSubmit={onPay}>
           {hidden}
           <SubmitButton pendingText="Opening secure checkout…" className={payClass}>
             Support with {formatUsd(amountCents)} {arrow}
