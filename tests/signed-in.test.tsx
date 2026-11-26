@@ -1,6 +1,8 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
+import { CreatorPageCta } from "../src/components/creator-page-cta";
 import { SiteHeader } from "../src/components/site-header";
+import type { User } from "../src/lib/users";
 import { StartCta } from "../src/components/start-cta";
 import { SIGNED_IN_PATTERN, SIGNED_IN_SCRIPT } from "../src/lib/signed-in-hint";
 
@@ -61,5 +63,37 @@ describe("calls to action", () => {
     expect(inn).toContain('href="/dashboard"');
     expect(inn).toContain("Go to your dashboard");
     expect(inn).not.toMatch(/Create your page|\/api\/auth\/github/);
+  });
+});
+
+describe("creator page header link", () => {
+  const viewer = (fields: Partial<User>) =>
+    ({ id: "me", authId: "github:1", login: "me", username: "me", accessStatus: null, setupProgress: 8, setupDoneAt: 1, ...fields }) as User;
+  const text = (html: string) => html.replace(/<[^>]+>/g, "").replace(/\s+/g, " ").trim();
+  const render = (v: User | null) => renderToStaticMarkup(<CreatorPageCta viewer={v} creatorId="owner" />);
+
+  it("lets the owner edit their page", () => {
+    const html = render(viewer({ id: "owner" }));
+    expect(html).toContain('href="/dashboard/settings"');
+    expect(text(html)).toBe("Edit your page");
+  });
+
+  it("sends another signed-in creator to their own page", () => {
+    const html = render(viewer({}));
+    expect(html).toContain('href="/me"');
+    expect(text(html)).toContain("View your page");
+    expect(html).not.toMatch(/Edit|Get your/);
+  });
+
+  it("sends someone still in setup back to it", () => {
+    const html = render(viewer({ username: null, setupProgress: 0, setupDoneAt: null }));
+    expect(html).toContain('href="/onboarding"');
+    expect(text(html)).toBe("Finish your page");
+  });
+
+  it("invites visitors who aren't signed in to get a page", () => {
+    const html = render(null);
+    expect(html).toContain('href="/apply"');
+    expect(text(html)).toContain("Get your own page");
   });
 });
