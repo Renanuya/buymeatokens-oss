@@ -72,7 +72,9 @@ export function normalizeProjectUrl(input: string): { url: string | null } | { e
 /** "owner/repo" for GitHub links, otherwise null. */
 export function githubRepo(url: string | null): string | null {
   const m = url ? GITHUB_REPO.exec(url) : null;
-  return m ? `${m[1]}/${m[2]}` : null;
+  // "." and ".." match the pattern but aren't names; in an API path they would walk up a level.
+  if (!m || [m[1], m[2]].some((part) => part === "." || part === "..")) return null;
+  return `${m[1]}/${m[2]}`;
 }
 
 /** A sensible project name from its link: the repo name, or the site's host. */

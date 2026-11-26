@@ -43,3 +43,20 @@ describe("isAdmin", () => {
     expect(isAdmin({ login: "octo-admin", authId: "dev:octo-admin" })).toBe(false);
   });
 });
+
+describe("githubRepo", () => {
+  it("reads owner and repo from a GitHub link", async () => {
+    const { githubRepo } = await import("../src/lib/profile");
+    expect(githubRepo("https://github.com/octocat/hello-world")).toBe("octocat/hello-world");
+    expect(githubRepo("https://github.com/octocat/hello-world.git")).toBe("octocat/hello-world");
+    expect(githubRepo("https://example.com/octocat/hello-world")).toBeNull();
+  });
+
+  it("never returns a path that walks up a level", async () => {
+    const { githubRepo } = await import("../src/lib/profile");
+    expect(githubRepo("https://github.com/../..")).toBeNull();
+    expect(githubRepo("https://github.com/octocat/..")).toBeNull();
+    expect(githubRepo("https://github.com/./repo")).toBeNull();
+    expect(githubRepo("https://github.com/octocat/.github")).toBe("octocat/.github");
+  });
+});
