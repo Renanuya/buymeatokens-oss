@@ -5,6 +5,7 @@ import type { CSSProperties } from "react";
 import { Glyph } from "@/components/glyph";
 import { TokenTile } from "@/components/icons";
 import { BadgeBuilder } from "@/components/badge-builder";
+import { badgeNameFor } from "@/lib/visit-source";
 import { LinkField } from "@/components/copy-field";
 import { ShareButtons } from "@/components/share-buttons";
 import { appUrl } from "@/lib/config";
@@ -75,7 +76,7 @@ export default async function SetupDonePage() {
 
       <div className="mt-6">
         <p className="label">README badge</p>
-        <BadgeBuilder username={user.username!} pageUrl={pageUrl} base={base} />
+        <BadgeBuilder username={user.username!} pageUrl={pageUrl} base={base} defaultName={badgeNameFor(user.projectUrl)} />
       </div>
 
       {skipped.length > 0 && (

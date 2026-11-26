@@ -4,6 +4,7 @@ import { useState } from "react";
 import { CopyButton } from "@/components/copy-field";
 import { Glyph } from "@/components/glyph";
 import { badgeQuery, type BadgeStyle, type BadgeTheme } from "@/lib/badge-options";
+import { badgeRef, tagName } from "@/lib/visit-source";
 
 const STYLES: { key: BadgeStyle; label: string }[] = [
   { key: "button", label: "Button" },
@@ -20,27 +21,31 @@ const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
 
 /**
  * Pick a README badge: shape and colours, previewed on a light or a dark README (GitHub's dark background), then
- * copy its Markdown. The badge always shows the live token count.
+ * copy its Markdown. The badge always shows the live token count. Its link carries `?ref=badge-<repo>`, so the
+ * Analytics tab shows visits from each README separately.
  */
 export function BadgeBuilder({
   username,
   pageUrl,
   base,
+  defaultName = "",
   className = "",
 }: {
   username: string;
   pageUrl: string;
   base: string;
+  /** The repo the badge is for, from the creator's project link. They can change it per README. */
+  defaultName?: string;
   /** `flex flex-col` lets the preview area grow to fill a taller card. */
   className?: string;
 }) {
   const [style, setStyle] = useState<BadgeStyle>("button");
   const [theme, setTheme] = useState<BadgeTheme>("dark");
   const [readme, setReadme] = useState<"light" | "dark">("light");
+  const [name, setName] = useState(defaultName);
   const query = badgeQuery(style, theme);
   const src = `/api/badge/${username}${query}`;
-  // ?ref=badge credits visits from the badge in the creator's Analytics tab.
-  const markdown = `[![Buy me AI tokens](${base}/api/badge/${username}${query})](${pageUrl}?ref=badge)`;
+  const markdown = `[![Buy me AI tokens](${base}/api/badge/${username}${query})](${pageUrl}?ref=${badgeRef(name)})`;
   const dark = readme === "dark";
 
   return (
@@ -128,7 +133,23 @@ export function BadgeBuilder({
           <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
         </div>
       </div>
-      <p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
+      <label className="mt-3 flex h-11 items-center gap-2.5 rounded-xl border border-line bg-white px-3.5 text-sm transition focus-within:border-iris focus-within:ring-4 focus-within:ring-iris/15">
+        <Glyph name="folder-git" className="size-4 shrink-0 text-muted" />
+        <span className="shrink-0 text-muted">Repo</span>
+        <input
+          value={name}
+          onChange={(e) => setName(tagName(e.target.value))}
+          placeholder="Name the README it goes in"
+          aria-label="Repo this badge goes in"
+          spellCheck={false}
+          autoComplete="off"
+          className="h-full min-w-0 flex-1 bg-transparent font-semibold text-ink outline-none placeholder:font-normal placeholder:text-zinc-400"
+        />
+      </label>
+      <p className="mt-2.5 text-xs leading-relaxed text-muted">
+        Copy the Markdown into your README. The count updates by itself, and visits from it show up in Analytics
+        {name ? <> as <span className="font-semibold text-ink">README · {badgeRef(name).slice("badge-".length)}</span></> : null}.
+      </p>
     </div>
   );
 }
