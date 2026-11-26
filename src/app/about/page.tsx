@@ -3,6 +3,7 @@ import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
 import { accessCopy } from "@/lib/access-copy";
+import { SOURCE_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "About & transparency",
@@ -100,8 +101,9 @@ export default function AboutPage() {
           <div className="mt-5 space-y-4 leading-relaxed text-muted">
             <p>
               buymeatokens is an early project exploring whether developers need a simple way to receive support
-              for the AI tools they build with. It is not open source yet. Feedback from creators helps shape
-              what comes next.
+              for the AI tools they build with. The full source code is open on{" "}
+              <a href={SOURCE_URL} className="underline underline-offset-4">GitHub</a> under the AGPL-3.0, and
+              feedback from creators helps shape what comes next.
             </p>
             <p>
               Renan has a registered business in Türkiye used primarily for freelance work, but that business is

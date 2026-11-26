@@ -18,6 +18,8 @@ Payments go straight to the creator's own Stripe, PayPal or USDC wallet. The pla
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-1c1c1e)](LICENSE)
 [![Good first issues](https://img.shields.io/github/issues/Renanuya/buymeatokens-oss/good%20first%20issue?label=good%20first%20issues&color=5b6cf2)](https://github.com/Renanuya/buymeatokens-oss/labels/good%20first%20issue)
 
+[![Buy me AI tokens](https://buymeatokens.com/api/badge/renanuya?style=pill)](https://buymeatokens.com/renanuya)
+
 </div>
 
 ---

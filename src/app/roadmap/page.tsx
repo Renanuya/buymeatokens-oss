@@ -1,18 +1,33 @@
 import type { Metadata } from "next";
 import { SiteFooter } from "@/components/site-footer";
 import { SiteHeader } from "@/components/site-header";
+import { ArrowUpRight } from "@/components/icons";
+import { IDEAS_URL, SOURCE_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Roadmap",
-  description: "What's next for buymeatokens: open source, creator tools, funding goals, project discovery, a developer API, webhooks and community integrations.",
+  description: "What's next for buymeatokens, now open source: creator tools, funding goals, project discovery, a developer API, webhooks and community integrations.",
   alternates: { canonical: "/roadmap" },
 };
 
-const milestones = [
+type Milestone = {
+  title: string;
+  description: string;
+  category: string;
+  /** Shipped milestones stay on the page, marked done, with a link to where they live. */
+  done?: boolean;
+  link?: { href: string; label: string };
+  capabilities?: { title: string; description: string }[];
+  periods?: string[];
+};
+
+const milestones: Milestone[] = [
   {
     title: "Make the entire project open source.",
-    description: "Publish the full platform source code and open the project to community contributions. This is our first priority.",
+    description: "The full platform is open source under the AGPL-3.0. Read the code, run your own copy, pick up a good first issue or send a pull request.",
     category: "Open source",
+    done: true,
+    link: { href: SOURCE_URL, label: "See the code on GitHub" },
   },
   {
     title: "Research and establish the legal framework.",
@@ -95,10 +110,14 @@ const milestones = [
   },
   {
     title: "Let the community shape the roadmap.",
-    description: "Let creators and supporters suggest features and vote on the ideas they want most, helping guide future priorities.",
+    description: "Suggest features and vote on the ideas you want most. Popular, clear ideas become items on this page.",
     category: "Community feedback",
+    link: { href: IDEAS_URL, label: "Share an idea" },
   },
 ];
+
+// The highlighted "first priority" is the first milestone that isn't done yet.
+const firstOpen = milestones.findIndex((milestone) => !milestone.done);
 
 export default function RoadmapPage() {
   return (
@@ -109,28 +128,41 @@ export default function RoadmapPage() {
           <p className="eyebrow">Roadmap</p>
           <h1 className="display mt-6 text-[clamp(3rem,8vw,7rem)]">What comes<br />next.</h1>
           <p className="mt-7 max-w-xl text-lg leading-relaxed text-muted">
-            The next steps for buymeatokens, in priority order. Everything below is planned; we&apos;ll update this
-            page as the work progresses.
+            The next steps for buymeatokens, in priority order. We update this page as the work progresses, and
+            the detailed plan lives in the open on{" "}
+            <a href={SOURCE_URL} className="underline underline-offset-4">GitHub</a>.
           </p>
         </div>
 
         <ol aria-label="Planned milestones in priority order" className="mt-14 space-y-4 md:mt-20">
-          {milestones.map((milestone, index) => (
+          {milestones.map((milestone, index) => {
+            const first = index === firstOpen;
+            return (
             <li
               key={milestone.category}
               className={`grid grid-cols-1 gap-5 rounded-[18px] border p-6 sm:p-8 md:grid-cols-[64px_minmax(0,1fr)_auto] md:gap-8 md:p-10 ${
-                index === 0 ? "border-iris/15 bg-lilac" : "border-line bg-white"
+                first ? "border-iris/15 bg-lilac" : "border-line bg-white"
               }`}
             >
               <span aria-hidden className="font-display text-4xl font-semibold tracking-[-0.05em] text-iris/60">
                 {String(index + 1).padStart(2, "0")}
               </span>
               <div className="min-w-0">
-                <p className={`eyebrow ${index === 0 ? "text-ink/60" : ""}`}>{milestone.category}</p>
+                <p className={`eyebrow ${first ? "text-ink/60" : ""}`}>{milestone.category}</p>
                 <h2 className="mt-3 font-display text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">
                   {milestone.title}
                 </h2>
                 <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink/70">{milestone.description}</p>
+                {milestone.link && (
+                  <a
+                    href={milestone.link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="link-arrow mt-5 inline-flex text-sm font-semibold"
+                  >
+                    {milestone.link.label} <ArrowUpRight className="size-3" />
+                  </a>
+                )}
                 {milestone.capabilities && (
                   <ul aria-label="Planned API and integration capabilities" className="mt-6 max-w-2xl space-y-4 border-t border-line pt-5">
                     {milestone.capabilities.map((capability) => (
@@ -155,12 +187,13 @@ export default function RoadmapPage() {
                 )}
               </div>
               <span className={`self-start justify-self-start rounded-full px-3 py-1 text-xs font-semibold ${
-                index === 0 ? "bg-ink text-white" : "bg-paper text-muted"
+                milestone.done ? "bg-iris text-white" : first ? "bg-ink text-white" : "bg-paper text-muted"
               }`}>
-                {index === 0 ? "First priority" : "Planned"}
+                {milestone.done ? "Done" : first ? "First priority" : "Planned"}
               </span>
             </li>
-          ))}
+            );
+          })}
         </ol>
       </main>
       <SiteFooter />

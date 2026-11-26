@@ -1,3 +1,11 @@
+/**
+ * The public source code (AGPL-3.0). The site links to it in the footer: the license asks anyone who runs a
+ * modified copy as a network service to offer its source to the people using it.
+ */
+export const SOURCE_REPO = "Renanuya/buymeatokens-oss";
+export const SOURCE_URL = `https://github.com/${SOURCE_REPO}`;
+export const IDEAS_URL = `${SOURCE_URL}/discussions/categories/ideas`;
+
 export function appUrl(): string {
   return (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
 }

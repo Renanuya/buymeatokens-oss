@@ -109,7 +109,10 @@ Then in **Settings → General → Features**, make sure Issues, Discussions and
 
 ## 6. Announce
 
-- [ ] Point the "Open source" item on buymeatokens.com/roadmap to the repository, and add a GitHub link to the
-      site footer.
-- [ ] Add `.github/FUNDING.yml` that points to the project's own buymeatokens page.
+The site already says it's open source: the footer links to the code, `/roadmap` marks the item done and points
+to Discussions → Ideas, the home page FAQ and `/about` link to GitHub, and `.github/FUNDING.yml` adds the Sponsor
+button. These go live with the first deploy from this repository.
+
+- [ ] Publish the launch post: in `content/blog/buymeatokens-is-open-source.md`, set `date:` to the launch day and
+      remove `draft: true`, then deploy and run `npx tsx scripts/indexnow.ts --apply /blog/buymeatokens-is-open-source`.
 - [ ] Post the launch where your users are, and link the good first issues.
