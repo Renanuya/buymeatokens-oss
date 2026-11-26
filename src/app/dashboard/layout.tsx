@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import Link from "next/link";
 import { ConsentGate } from "@/components/consent-gate";
+import { SignedInHint } from "@/components/signed-in";
 import { ArrowUpRight } from "@/components/icons";
 import { LegalFooter } from "@/components/legal-footer";
 import { Logo } from "@/components/logo";
@@ -38,6 +39,7 @@ export default async function DashboardLayout({ children }: { children: ReactNod
       </header>
       <main className="wrap flex-1 py-8 md:py-10">{children}</main>
       <LegalFooter />
+      <SignedInHint signedIn />
     </ConsentGate>
   );
 }

@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { logout } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
 import { Glyph, type GlyphName } from "@/components/glyph";
+import { forgetSignedIn } from "@/components/signed-in";
 
 function Item({ href, icon, children, onPick }: { href: string; icon: GlyphName; children: ReactNode; onPick: () => void }) {
   return (
@@ -81,7 +82,7 @@ export function AccountMenu({ name, username, avatarUrl }: { name: string; usern
           </Item>
         </div>
         <div className="mx-1.5 h-px bg-line" />
-        <form action={logout} className="pt-1">
+        <form action={logout} onSubmit={forgetSignedIn} className="pt-1">
           <button
             type="submit"
             className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-paper"

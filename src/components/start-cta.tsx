@@ -2,6 +2,10 @@ import Link from "next/link";
 import { accessCopy } from "@/lib/access-copy";
 import { Avatar } from "./avatar";
 import { ArrowUpRight, GitHubIcon } from "./icons";
+import { SignedInSwitch } from "./signed-in-switch";
+
+const BUTTON =
+  "btn-dark w-full justify-between gap-3 px-5 py-5 text-[15px] shadow-[0_24px_60px_-30px_rgba(28,28,30,0.8)] max-[360px]:justify-center sm:w-auto sm:gap-8 sm:pl-7 sm:pr-6";
 
 export type CreatorChip = { username: string; displayName: string; avatarUrl: string | null };
 
@@ -14,18 +18,32 @@ export function StartCta({ livePageHref, creators = [] }: { livePageHref: string
   const copy = accessCopy();
   return (
     <div>
-      <a
-        href="/api/auth/github"
-        className="btn-dark w-full justify-between gap-3 px-5 py-5 text-[15px] shadow-[0_24px_60px_-30px_rgba(28,28,30,0.8)] max-[360px]:justify-center sm:w-auto sm:gap-8 sm:pl-7 sm:pr-6"
-      >
-        <span className="inline-flex items-center gap-3">
-          <GitHubIcon className="size-5 shrink-0" />
-          <span className="sm:hidden">Continue with GitHub</span>
-          <span className="hidden sm:inline">Create your page with GitHub</span>
-        </span>
-        <ArrowUpRight className="size-3.5 shrink-0 max-[360px]:hidden" />
-      </a>
-      <p className="mt-3 max-w-md pl-2 text-sm leading-relaxed text-ink/60">{copy.offer}</p>
+      <SignedInSwitch
+        signedOut={
+          <>
+            <a href="/api/auth/github" className={BUTTON}>
+              <span className="inline-flex items-center gap-3">
+                <GitHubIcon className="size-5 shrink-0" />
+                <span className="sm:hidden">Continue with GitHub</span>
+                <span className="hidden sm:inline">Create your page with GitHub</span>
+              </span>
+              <ArrowUpRight className="size-3.5 shrink-0 max-[360px]:hidden" />
+            </a>
+            <p className="mt-3 max-w-md pl-2 text-sm leading-relaxed text-ink/60">{copy.offer}</p>
+          </>
+        }
+        signedIn={
+          <>
+            <a href="/dashboard" className={BUTTON}>
+              <span>Go to your dashboard</span>
+              <ArrowUpRight className="size-3.5 shrink-0 max-[360px]:hidden" />
+            </a>
+            <p className="mt-3 max-w-md pl-2 text-sm leading-relaxed text-ink/60">
+              Your page, your support and your README badge are all there.
+            </p>
+          </>
+        }
+      />
       <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-3 pl-2">
         <Link href={livePageHref} className="link-arrow">
           See a live page <ArrowUpRight className="size-3" />

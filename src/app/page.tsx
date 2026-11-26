@@ -14,6 +14,7 @@ import { listRecentCreators } from "@/lib/applications";
 import { accessCopy } from "@/lib/access-copy";
 import { categoryOf, getPost, type Post } from "@/lib/blog";
 import { faqJsonLd, jsonLdScript, organizationJsonLd, softwareJsonLd, websiteJsonLd } from "@/lib/seo";
+import { SignedInSwitch } from "@/components/signed-in-switch";
 
 const homeFaqs = (copy: ReturnType<typeof accessCopy>) => [
   {
@@ -100,17 +101,30 @@ export default async function Home() {
             <div id="early-access" className="scroll-mt-6 rounded-[18px] bg-lilac p-6 max-[360px]:p-5 sm:p-8 md:p-12 lg:p-14">
               <p className="eyebrow flex items-center gap-2 text-ink/60">
                 <span className="size-1.5 rounded-full bg-iris" />
-                {copy.label}
+                <SignedInSwitch signedOut={copy.label} signedIn="You're signed in" />
               </p>
               {/* The form starts on the headline's line, not the eyebrow's. */}
               <div className="mt-5 grid grid-cols-1 gap-8 lg:grid-cols-[minmax(260px,1fr)_minmax(0,540px)] lg:items-start lg:gap-14">
-                <div>
-                  <p className="display text-[clamp(1.75rem,3vw,2.5rem)]">Your page, in a minute.</p>
-                  <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70 md:text-lg">
-                    Sign in with GitHub, pick a name, add PayPal, USDC or Stripe. People buy you AI tokens and the
-                    money goes straight to you.
-                  </p>
-                </div>
+                <SignedInSwitch
+                  signedOut={
+                    <div>
+                      <p className="display text-[clamp(1.75rem,3vw,2.5rem)]">Your page, in a minute.</p>
+                      <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70 md:text-lg">
+                        Sign in with GitHub, pick a name, add PayPal, USDC or Stripe. People buy you AI tokens and the
+                        money goes straight to you.
+                      </p>
+                    </div>
+                  }
+                  signedIn={
+                    <div>
+                      <p className="display text-[clamp(1.75rem,3vw,2.5rem)]">Welcome back.</p>
+                      <p className="mt-4 max-w-md text-base leading-relaxed text-ink/70 md:text-lg">
+                        Edit your page, share it, put the badge in your README and see every token your users buy
+                        you.
+                      </p>
+                    </div>
+                  }
+                />
                 <StartCta livePageHref="/renanuya" creators={creators} />
               </div>
             </div>

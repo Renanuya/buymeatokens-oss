@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { logout } from "@/app/actions/auth";
 import { AppHeader } from "@/components/app-header";
 import { ConsentGate } from "@/components/consent-gate";
+import { SignedInHint } from "@/components/signed-in";
 import { LegalFooter } from "@/components/legal-footer";
 import { needsConsent } from "@/lib/consent";
 import { requireUser } from "@/lib/session";
@@ -29,6 +30,7 @@ export default async function OnboardingLayout({ children }: { children: ReactNo
         <SetupCard>{children}</SetupCard>
       </main>
       <LegalFooter />
+      <SignedInHint signedIn />
     </ConsentGate>
   );
 }

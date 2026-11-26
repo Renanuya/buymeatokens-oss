@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
 import { deleteAccount } from "@/lib/account-deletion";
 import { SESSION_COOKIE, requireCreator } from "@/lib/session";
+import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { deletionConfirmationName, matchesConfirmation } from "./confirm";
 
 /**
@@ -20,7 +21,9 @@ export async function deleteAccountAction(_prev: ActionState, formData: FormData
   }
 
   await deleteAccount(user.id, "self_service");
-  (await cookies()).delete(SESSION_COOKIE);
+  const jar = await cookies();
+  jar.delete(SESSION_COOKIE);
+  jar.delete(SIGNED_IN_HINT);
   revalidatePath(`/${user.username}`);
   revalidatePath("/");
   revalidatePath("/sitemap.xml");

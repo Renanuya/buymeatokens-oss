@@ -2,6 +2,8 @@ import Link from "next/link";
 import { ArrowUpRight } from "./icons";
 import { Logo } from "./logo";
 import { MobileMenu } from "./mobile-menu";
+import { SignedInHint } from "./signed-in";
+import { SignedInSwitch } from "./signed-in-switch";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
@@ -11,6 +13,10 @@ const LINKS = [
   { href: "/blog", label: "Blog" },
 ];
 
+const CTA =
+  "btn-dark hidden gap-2.5 whitespace-nowrap py-2 pl-4 pr-3 text-[12px] min-[400px]:inline-flex md:gap-4 md:py-2.5 md:pl-5 md:pr-4 md:text-[13px]";
+
+/** The marketing header. Signed-in visitors get "Edit page" and "Dashboard" instead of "Log in" and "Create your page". */
 export function SiteHeader() {
   return (
     <header className="border-b border-line print:hidden">
@@ -25,17 +31,32 @@ export function SiteHeader() {
             ))}
           </nav>
           <div className="flex items-center gap-3 md:gap-6">
-            <Link href="/login" className="hidden text-[13px] font-medium transition hover:opacity-60 md:block">
-              Log in
-            </Link>
-            <Link
-              href="/apply"
-              className="btn-dark hidden gap-2.5 whitespace-nowrap py-2 pl-4 pr-3 text-[12px] min-[400px]:inline-flex md:gap-4 md:py-2.5 md:pl-5 md:pr-4 md:text-[13px]"
-            >
-              <span className="sm:hidden">Start</span>
-              <span className="hidden sm:inline">Create your page</span> <ArrowUpRight className="size-3" />
-            </Link>
-            <MobileMenu links={[...LINKS, { href: "/apply", label: "Create your page" }, { href: "/login", label: "Log in" }]} />
+            <SignedInSwitch
+              signedOut={
+                <>
+                  <Link href="/login" className="hidden text-[13px] font-medium transition hover:opacity-60 md:block">
+                    Log in
+                  </Link>
+                  <Link href="/apply" className={CTA}>
+                    <span className="sm:hidden">Start</span>
+                    <span className="hidden sm:inline">Create your page</span> <ArrowUpRight className="size-3" />
+                  </Link>
+                  <MobileMenu links={[...LINKS, { href: "/apply", label: "Create your page" }, { href: "/login", label: "Log in" }]} />
+                </>
+              }
+              signedIn={
+                <>
+                  <Link href="/dashboard/settings" className="hidden text-[13px] font-medium transition hover:opacity-60 md:block">
+                    Edit page
+                  </Link>
+                  <Link href="/dashboard" className={CTA}>
+                    Dashboard <ArrowUpRight className="size-3" />
+                  </Link>
+                  <MobileMenu links={[...LINKS, { href: "/dashboard", label: "Dashboard" }, { href: "/dashboard/settings", label: "Edit page" }]} />
+                </>
+              }
+            />
+            <SignedInHint />
           </div>
         </div>
       </div>

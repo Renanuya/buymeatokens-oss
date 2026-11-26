@@ -4,10 +4,14 @@ import { notFound } from "next/navigation";
 import { BlogMarkdown } from "@/components/blog-markdown";
 import { ArrowUpRight } from "@/components/icons";
 import { SiteFooter } from "@/components/site-footer";
+import { SignedInSwitch } from "@/components/signed-in-switch";
 import { SiteHeader } from "@/components/site-header";
 import { categoryOf, formatPostDate, getAllPosts, getPost, relatedPosts } from "@/lib/blog";
 import { appUrl } from "@/lib/config";
 import { faqJsonLd, jsonLdScript } from "@/lib/seo";
+
+const WHITE_BUTTON =
+  "inline-flex items-center gap-3 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-ink transition hover:bg-paper";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -143,9 +147,18 @@ export default async function BlogPostPage({ params }: Props) {
                   own Stripe, PayPal or wallet, and we take 0%.
                 </p>
                 <div className="mt-7 flex flex-wrap gap-3">
-                  <Link href="/apply" className="inline-flex items-center gap-3 rounded-full bg-white px-6 py-3.5 text-sm font-semibold text-ink transition hover:bg-paper">
-                    Create your page <ArrowUpRight className="size-3" />
-                  </Link>
+                  <SignedInSwitch
+                    signedOut={
+                      <Link href="/apply" className={WHITE_BUTTON}>
+                        Create your page <ArrowUpRight className="size-3" />
+                      </Link>
+                    }
+                    signedIn={
+                      <Link href="/dashboard" className={WHITE_BUTTON}>
+                        Go to your dashboard <ArrowUpRight className="size-3" />
+                      </Link>
+                    }
+                  />
                   <Link href="/#how" className="inline-flex items-center gap-2 rounded-full border border-white/20 px-5 py-3 text-sm font-semibold text-white transition hover:border-white/50">
                     How it works
                   </Link>

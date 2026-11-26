@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { SoundEffects } from "@/components/sound-effects";
+import { SIGNED_IN_SCRIPT } from "@/lib/signed-in-hint";
 import "./globals.css";
 
 // Inter for running text and UI, Inter Tight only for big display headlines.
@@ -46,6 +47,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         {/* Lets animations hide content before it reveals, only when JavaScript is running. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        {/* Shows "Dashboard" instead of "Create your page" to signed-in visitors on static pages; see signed-in-hint.ts. */}
+        <script dangerouslySetInnerHTML={{ __html: SIGNED_IN_SCRIPT }} />
       </head>
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
         {children}
