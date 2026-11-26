@@ -46,7 +46,7 @@ const homeFaqs = (copy: ReturnType<typeof accessCopy>) => [
   },
   {
     q: "Who is behind buymeatokens? Is it open source?",
-    a: "Renan is building buymeatokens independently to validate demand and learn what developers need. The project is not open source yet. Formal terms, invoicing and the project's legal framework are still being prepared; the About & transparency page documents the current service and free access commitment.",
+    a: "Renan is building buymeatokens independently to learn what developers need. Yes, it's open source: the full code is on GitHub under the AGPL-3.0, and anyone can read it, run it, suggest ideas and contribute. The About & transparency page documents the current service and the free access commitment.",
   },
   {
     q: "Can I put it in my README?",

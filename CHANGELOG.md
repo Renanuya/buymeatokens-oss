@@ -14,6 +14,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 - Issue and pull request templates, CODEOWNERS for sensitive areas, Dependabot updates.
 - A local Postgres for development (`compose.yaml`).
 
+- The site links to its source: a footer link, the home page FAQ and `/about`. `/roadmap` marks open source as
+  done and links to Discussions → Ideas. A launch post (a draft until launch day) and a Sponsor button.
+
 ### Security
 
 - Outside a deployment, the app refuses to apply its schema to a non-local database unless `ALLOW_REMOTE_SCHEMA=1`

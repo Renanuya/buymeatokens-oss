@@ -123,7 +123,7 @@ describe("/terms and /privacy", () => {
     expect(filled).toBe("Contact: legal@example.com. Logs: [LOG_RETENTION_DAYS] days. [UNKNOWN]");
   });
 
-  it("render the Taxes FAQ with the brief's five questions and a link to the dashboard", () => {
+  it("render the Taxes FAQ with its five questions and a link to the dashboard", () => {
     const html = renderToStaticMarkup(<TaxesFaqPage />);
     for (const q of [
       "Who pays tax on support?",
@@ -138,12 +138,13 @@ describe("/terms and /privacy", () => {
       "Yes. Download your payment history as a CSV from your dashboard and keep it for your own accounting.",
     );
     expect(html).toContain('href="/dashboard/account"');
-    expect(html).not.toMatch(/https?:\/\/(?!buymeatokens)/); // no third-party tax guides
+    const article = html.slice(html.indexOf("<article"), html.indexOf("</article>"));
+    expect(article).not.toMatch(/https?:\/\/(?!buymeatokens)/); // no third-party tax guides (the site footer may link out)
   });
 });
 
 describe("notices", () => {
-  it("keep the brief's exact wording", () => {
+  it("keep the exact wording", () => {
     const copy = legalCopy();
     expect(copy.footerNotice).toBe(BRIEF.footer);
     expect(copy.creatorPaymentNotice).toBe(BRIEF.creator);
