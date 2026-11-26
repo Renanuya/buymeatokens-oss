@@ -37,7 +37,8 @@ import {
   recordVisit,
   visitorsSince,
 } from "../src/lib/page-visits";
-import { classifyVisit, decodeSource, encodeSource, sourceLabel } from "../src/lib/visit-source";
+import { badgeNameFor, badgeRef, classifyVisit, decodeSource, encodeSource, sourceLabel } from "../src/lib/visit-source";
+import { BadgeBuilder } from "../src/components/badge-builder";
 import { shareLinks } from "../src/components/share-buttons";
 import { POST } from "../src/app/api/creators/[username]/visit/route";
 import AnalyticsPage from "../src/app/dashboard/analytics/page";
@@ -144,6 +145,38 @@ describe("where a visit came from", () => {
     expect(decodeURIComponent(links[0].href)).toContain("https://buymeatokens.com/maker?ref=x");
     expect(decodeURIComponent(links[1].href)).toContain("https://buymeatokens.com/maker?ref=linkedin");
     expect(decodeURIComponent(links[2].href)).toContain("https://buymeatokens.com/maker?ref=threads");
+  });
+});
+
+describe("README badges per repo", () => {
+  it("counts ?ref=badge-<repo> as the badge, one row per repo", () => {
+    expect(classifyVisit({ ref: "badge-tiny-llm" })).toEqual({ source: "badge", detail: "tiny-llm" });
+    expect(classifyVisit({ ref: "badge" })).toEqual({ source: "badge", detail: "" });
+    expect(sourceLabel({ source: "badge", detail: "tiny-llm" })).toBe("README · tiny-llm");
+    expect(decodeSource(encodeSource({ source: "badge", detail: "tiny-llm" }))).toEqual({ source: "badge", detail: "tiny-llm" });
+  });
+
+  it("names the badge after the creator's repo, and keeps the tag valid", () => {
+    expect(badgeNameFor("https://github.com/Acme/Tiny.LLM.git")).toBe("tiny-llm");
+    expect(badgeNameFor("https://gitlab.com/acme/tool")).toBe("tool");
+    expect(badgeNameFor("https://acme.dev/tool")).toBe("");
+    expect(badgeNameFor("https://github.com/acme")).toBe("");
+    expect(badgeNameFor(null)).toBe("");
+    expect(badgeRef("")).toBe("badge");
+    expect(badgeRef("My Repo!")).toBe("badge-my-repo");
+    expect(badgeRef("x".repeat(80))).toBe(`badge-${"x".repeat(32)}`);
+    // Whatever the creator types, the link's tag still classifies as their badge.
+    for (const typed of ["My Repo!", "über-tool", "--a--", "x".repeat(80)]) {
+      expect(classifyVisit({ ref: badgeRef(typed) }).source).toBe("badge");
+    }
+  });
+
+  it("shows the repo name in the badge builder", () => {
+    const html = renderToStaticMarkup(
+      <BadgeBuilder username="maker" pageUrl="https://buymeatokens.com/maker" base="https://buymeatokens.com" defaultName="tiny-llm" />,
+    );
+    expect(html).toContain('value="tiny-llm"');
+    expect(html).toContain("README · tiny-llm");
   });
 });
 

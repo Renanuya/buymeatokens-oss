@@ -23,7 +23,10 @@ export type SourceKey = (typeof SOURCE_KEYS)[number];
 export type VisitSource = { source: SourceKey; detail: string };
 
 /** A `?ref=` tag: what our badge and share links add, and what creators can add to their own links. */
-const TAG_RE = /^[a-z0-9][a-z0-9_-]{0,31}$/;
+const TAG_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
+/** README badges name the repo they sit in: `?ref=badge-<repo>` counts as the badge, per repo. */
+const BADGE_PREFIX = "badge-";
+const NAME_MAX = 32;
 
 // Tags we put on our own links, plus a few obvious spellings people use for the same places.
 const TAG_SOURCES: Record<string, SourceKey> = {
@@ -93,6 +96,9 @@ export function referrerHost(raw: unknown): string | null {
 export function classifyVisit(input: { ref?: unknown; referrer?: unknown; ownHosts?: string[] }): VisitSource {
   const tag = normalizeTag(input.ref);
   if (tag) {
+    if (tag.startsWith(BADGE_PREFIX) && tag.length > BADGE_PREFIX.length) {
+      return { source: "badge", detail: tag.slice(BADGE_PREFIX.length) };
+    }
     const known = TAG_SOURCES[tag];
     return known ? { source: known, detail: "" } : { source: "tag", detail: tag };
   }
@@ -102,6 +108,35 @@ export function classifyVisit(input: { ref?: unknown; referrer?: unknown; ownHos
   if (host === "buymeatokens.com" || own.includes(host)) return { source: "buymeatokens", detail: "" };
   for (const [source, match] of HOST_SOURCES) if (match(host)) return { source, detail: "" };
   return { source: "site", detail: host };
+}
+
+/** A name for a link tag: lowercase letters, numbers, dashes and underscores, at most 32 characters. */
+export function tagName(raw: string): string {
+  return raw
+    .toLowerCase()
+    .replace(/[^a-z0-9_-]+/g, "-")
+    .replace(/-{2,}/g, "-")
+    .replace(/^[-_]+/, "")
+    .slice(0, NAME_MAX);
+}
+
+/** The repo's name from the creator's project link (github.com/owner/repo), to name their README badge by. */
+export function badgeNameFor(projectUrl: string | null | undefined): string {
+  if (!projectUrl) return "";
+  try {
+    const url = new URL(projectUrl);
+    const [, repo] = url.pathname.split("/").filter(Boolean);
+    if (!/(^|\.)(github|gitlab)\.com$/.test(url.hostname.toLowerCase()) || !repo) return "";
+    return tagName(repo.replace(/\.git$/i, "")).replace(/[-_]+$/, "");
+  } catch {
+    return "";
+  }
+}
+
+/** The `?ref=` tag for a README badge, named after its repo when there is a name. */
+export function badgeRef(name: string): string {
+  const clean = tagName(name).replace(/[-_]+$/, "");
+  return clean ? `${BADGE_PREFIX}${clean}` : "badge";
 }
 
 /** One string for storing on a payment: "badge", "site:dev.to", "tag:newsletter". */
@@ -137,5 +172,6 @@ const LABELS: Record<SourceKey, string> = {
 export function sourceLabel({ source, detail }: VisitSource): string {
   if (source === "site" && detail) return detail;
   if (source === "tag" && detail) return `?ref=${detail}`;
+  if (source === "badge" && detail) return `README · ${detail}`;
   return LABELS[source];
 }

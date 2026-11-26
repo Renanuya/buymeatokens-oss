@@ -18,6 +18,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
     the creator's own visits don't count.
   - README badge and share-button links now carry `?ref=badge`, `?ref=x` and so on. The page removes the tag
     from the address bar after reading it.
+  - The badge builder names each badge after the repo it goes in (`?ref=badge-<repo>`, prefilled from the
+    project link), so Analytics shows each README as its own source, such as "README · tiny-llm".
   - The Overview's page card shows the last 30 days' visitors.
   - The Privacy Policy describes the counting, and the roadmap marks creator analytics as shipped.
 
