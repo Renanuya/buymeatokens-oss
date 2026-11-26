@@ -72,9 +72,10 @@ can be as messy as you like.
 ### UI changes
 
 - Attach **before and after screenshots**, on desktop and mobile.
-- Follow the existing design language. Dashboard and setup screens use the same plain pattern throughout:
-  a headline on the left and a white card on the right. Please don't add decorative previews, mockups or extra
-  visual blocks; they have been tried and rejected.
+- Follow the existing design language: calm, compact screens in the site's palette (paper, ink, lilac, iris). Each
+  setup step is one centered white card with an icon tile, a short title and one muted line, then the fields.
+  Controls in a row share one height. Please don't add step lists, big side headlines, decorative previews or
+  mockups; they have been tried and rejected.
 - All product copy is in English. Keep it short and plain.
 
 ## Areas that need extra care
@@ -89,6 +90,7 @@ These areas move money, grant access or guard data. Changes there get a slower, 
 | Billing and access rules | `src/lib/billing.ts`, `access.ts`, `src/app/api/paddle/` |
 | Auth, sessions, encryption | `src/lib/session.ts`, `crypto.ts`, `github.ts`, `src/app/api/auth/` |
 | Emails and cron endpoints | `src/lib/email*.ts`, `creator-emails.ts`, `welcome-email.ts`, `src/app/api/cron/` |
+| Personal data and legal texts | `src/lib/account-deletion.ts`, `payment-export.ts`, `consent.ts`, `redact.ts`, `ai-draft.ts`, `src/lib/legal/`, `content/legal/` |
 
 For a PR in these areas, explain the failure cases you thought about (retries, duplicate events, a provider
 being down, two requests at once) and add tests for them.

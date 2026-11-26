@@ -7,6 +7,7 @@
 - [Payments](payments.md): Stripe, PayPal, USDC (with its known limitations) and Paddle subscriptions
 - [Database](database.md): how the schema is applied and the rules for changing it
 - [Emails](emails.md): the creator email flow, delivery guarantees and configuration
+- [Legal pages and creators' data](legal.md): Terms and Privacy, consent, the payment CSV and account deletion
 - [Architecture decisions](adr/): why things are the way they are
 
 ## For maintainers

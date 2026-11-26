@@ -22,6 +22,16 @@
 /src/lib/github.ts              @Renanuya
 /src/app/api/auth/              @Renanuya
 
+# Personal data, consent, legal texts and what we send to third parties
+/src/lib/account-deletion.ts    @Renanuya
+/src/lib/payment-export.ts      @Renanuya
+/src/lib/consent.ts             @Renanuya
+/src/lib/redact.ts              @Renanuya
+/src/lib/ai-draft.ts            @Renanuya
+/src/lib/legal/                 @Renanuya
+/content/legal/                 @Renanuya
+/src/app/api/creators/          @Renanuya
+
 # Cron endpoints and operator scripts
 /src/app/api/cron/              @Renanuya
 /scripts/                       @Renanuya

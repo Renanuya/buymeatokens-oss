@@ -5,13 +5,13 @@ has the long version.
 
 ## Safety
 
-- **Never connect to a production database.** `src/lib/db.ts` applies the schema on the first connection, so
-  running `next dev`, `next build` or any script against a real `POSTGRES_URL` migrates that database. Use the
-  local Postgres from `compose.yaml`, or no database at all (see "Checks" below).
+- **Never connect to a production database.** `src/lib/db.ts` applies the schema on the first connection. Outside a
+  deployment it refuses to change a non-local host unless `ALLOW_REMOTE_SCHEMA=1` is set; never set that to get
+  past the error. Use the local Postgres from `compose.yaml`, or no database at all (see "Checks" below).
 - Never read, print, copy or commit `.env.local` or any other file with real credentials. Use test or sandbox
   keys only: Stripe test mode, Paddle sandbox, `EMAIL_LIVE_ENABLED=false`.
-- Don't run operator scripts in `scripts/` that send emails, change cron jobs or submit URLs, unless the person
-  you're working for explicitly asks you to.
+- Don't run operator scripts in `scripts/` with `--apply`, and never with `PROD_POSTGRES_URL`, unless the person
+  you're working for explicitly asks you to. Without `--apply` they are dry runs.
 
 ## Checks
 
@@ -31,8 +31,10 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build   # an unreachable UR
 - **Money and access code** (Stripe, PayPal, USDC, reconciliation, billing, access rules) needs tests for retries,
   duplicate events and concurrent requests.
 - **Reuse before you add.** Look in `src/lib` and `src/components` first. Don't add dependencies.
-- **UI:** dashboard and setup screens follow one plain pattern, with a headline on the left and a white card on
-  the right. Don't add decorative previews or mockups. All copy is in English.
+- **UI:** app screens (setup, dashboard) are calm and compact, in the site's palette (paper, ink, lilac, iris).
+  Setup steps live in one centered white card: an icon tile, a short title and one muted line, then the fields.
+  Controls in a row share one height. Don't add step lists, big side headlines, decorative previews, fake mockups or
+  rotated cards; they have been tried and rejected. All copy is in English.
 - **Keep diffs small** and focused on the task. Don't reformat files you aren't otherwise changing.
 - Timestamps are Unix milliseconds stored as `BIGINT`.
 

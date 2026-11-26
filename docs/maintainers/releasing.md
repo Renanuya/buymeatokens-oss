@@ -14,6 +14,8 @@ group the changes in between.
    ```
 
 3. Smoke-test production: home page, a creator page, the dashboard, and `/api/badge/<username>`.
+   If the deploy added or changed public pages (a blog post, say), tell search engines:
+   `npx tsx scripts/indexnow.ts --apply /blog/<slug>` (or `--apply` alone for the whole sitemap).
 4. If anything is wrong, use **Vercel → Deployments → Instant Rollback** to go back to the previous deployment.
    Rollbacks don't undo schema changes, which is why schema changes must be backward compatible.
 
@@ -23,6 +25,19 @@ group the changes in between.
 - The schema is applied by the first instance that connects after the deploy ([database.md](../database.md)).
   Watch the logs for the first minutes.
 - Never "test" a schema change by running a local dev server against production.
+
+## Operator scripts
+
+The scripts in `scripts/` are dry runs unless you pass `--apply`, and each one starts with a comment that says what
+it touches. Your `.env.local` points at a local database, so pass production explicitly, for one command only:
+
+```bash
+PROD_POSTGRES_URL='postgres://…' npx tsx scripts/delete-account.ts <login>           # prints the host, then a dry run
+PROD_POSTGRES_URL='postgres://…' npx tsx scripts/delete-account.ts <login> --apply
+```
+
+They never change the schema of a remote database. If one fails with "Refusing to apply the schema", deploy the
+schema change first.
 
 ## Cutting a version
 

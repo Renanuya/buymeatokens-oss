@@ -16,8 +16,16 @@ The whole schema is one SQL string, `SCHEMA` in `src/lib/db.ts`.
 
 This is simple, and it has two consequences everyone has to know about:
 
-- **Any process that connects with a changed `SCHEMA` migrates that database.** That includes `next dev`,
-  `next build` and scripts. This is why you must never point a local checkout at production.
+- **Any process that connects with a changed `SCHEMA` can migrate that database.** To keep that from happening by
+  accident, `mayApplySchema` in `db.ts` only lets these apply it:
+  - deployments on Vercel (`VERCEL=1`) and the runtime of a production server (`next start`);
+  - everything else (`next dev`, `next build`, scripts) only on a **local** host: `localhost`, `127.x`, `::1`,
+    `host.docker.internal` or a bare service name such as `db`.
+
+  Anywhere else the first query fails with "Refusing to apply the schema to …". If you really use a remote
+  development database (your own free Supabase project, say), set `ALLOW_REMOTE_SCHEMA=1`. Never set it to get past
+  the error with a production URL. Reading a database whose schema is already current needs no opt-in, so operator
+  scripts work against production once the schema change is deployed.
 - **The full schema runs again on every change**, so every statement must be safe to repeat.
 
 All tables have row-level security turned on with no policies. That keeps Supabase's public Data API (the anon

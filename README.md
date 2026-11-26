@@ -32,13 +32,15 @@ Payments go straight to the creator's own Stripe, PayPal or USDC wallet. The pla
 
 | | |
 |---|---|
-| **Creator pages** | GitHub login, guided setup, project link, socials, "where the tokens go" and a funding goal. |
+| **Creator pages** | GitHub login and an eight-step guided setup: name, payment method, price, project link with live GitHub stats, description, "where the tokens go", a funding goal and socials. Creators can reply to and like supporters' messages. |
+| **Write with AI** | Optional: drafts the project description from the repository's README (Gemini or Groq free tiers, capped per creator and per day). |
 | **Stripe** | Checkout runs on the creator's own *restricted* key (Checkout Sessions: write only), stored encrypted with AES-256-GCM. No webhooks needed; pending sessions are reconciled. |
 | **PayPal** | Classic "Buy Now" links straight to the creator, confirmed through verified IPN messages. |
 | **USDC on Base** | Wallet-to-wallet payments verified from on-chain `Transfer` logs. *Experimental:* see [known limitations](docs/payments.md#usdc-on-base-experimental). |
-| **README badges** | `/api/badge/<username>` renders an SVG button with the tokens raised, with no web fonts. |
+| **README badges** | `/api/badge/<username>` renders an SVG with the tokens raised, in three styles and four themes, drawn from glyph outlines so it needs no web fonts. |
 | **Creator emails** | One welcome and at most one setup reminder, sent by a minute worker with atomic delivery claims. |
 | **Fair pricing** | Early creators keep lifetime free access. Later, $1/month or $9/year after the first $5 raised (Paddle, off by default). |
+| **Creators' data** | Terms and privacy consent with versioning, a payment history CSV, one-click account deletion, and logs that redact anything shaped like a key. |
 
 ## Quick start
 
