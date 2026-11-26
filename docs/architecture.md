@@ -45,7 +45,7 @@ src/
     page.tsx                 home page
     [username]/              public creator page, checkout action, thank-you page
     onboarding/              guided setup, one step per route
-    dashboard/               creator dashboard: overview, settings, payments, account
+    dashboard/               creator dashboard: overview, analytics, settings, payments, account
     admin/                   registrations and email previews (ADMIN_GITHUB_LOGINS only)
     apply/, r/[code]/        gated signups and referral links
     blog/, about/, roadmap/  marketing pages; posts live in content/blog/*.md
@@ -55,7 +55,7 @@ src/
     api/
       auth/                  GitHub OAuth and the development login
       badge/[username]/      README badge (SVG)
-      creators/[username]/   the signed-in creator's payment history (CSV)
+      creators/[username]/   the signed-in creator's payment history (CSV); page visit counting (visit/)
       paypal/ipn/            PayPal payment notifications (validated with PayPal)
       cron/reconcile/        daily check of pending Stripe sessions
       cron/emails/           minute worker for creator emails
@@ -87,6 +87,7 @@ Key modules in `src/lib`:
 | `legal/`, `consent.ts` | Legal values and copy, Terms acceptance and its version ([legal.md](legal.md)) |
 | `account-deletion.ts`, `payment-export.ts` | Self-service account deletion and the payment history CSV |
 | `ai-draft.ts` | Prompts, provider chain and daily caps for "Write with AI" |
+| `page-visits.ts`, `visit-source.ts`, `visit-client.ts` | Page analytics without cookies: counting visits and support starts with a daily salted mark, where visits come from, and the Analytics tab's numbers |
 
 ## Access and pricing rules
 

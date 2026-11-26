@@ -221,6 +221,40 @@ CREATE INDEX IF NOT EXISTS ai_drafts_user_created ON ai_drafts(user_id, created_
 CREATE INDEX IF NOT EXISTS ai_drafts_created ON ai_drafts(created_at);
 ALTER TABLE ai_drafts ENABLE ROW LEVEL SECURITY;
 
+-- Page analytics (dashboard Analytics tab), counted without cookies and without keeping IP addresses.
+-- page_visits holds daily totals per source only. visitor_marks lets a visitor count once a day: each mark is a
+-- one-way hash of that day's random salt, the page, the IP address and the browser. Marks and salts are deleted
+-- once their UTC day is over, so nothing links visits across days or back to a person.
+-- day is the UTC midnight of the visit, in Unix ms. source/detail: see src/lib/visit-source.ts.
+CREATE TABLE IF NOT EXISTS page_visits (
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day BIGINT NOT NULL,
+  source TEXT NOT NULL,
+  detail TEXT NOT NULL DEFAULT '',
+  views INTEGER NOT NULL DEFAULT 0,
+  visitors INTEGER NOT NULL DEFAULT 0,
+  starts INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (creator_id, day, source, detail)
+);
+ALTER TABLE page_visits ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS visitor_marks (
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  day BIGINT NOT NULL,
+  mark TEXT NOT NULL,
+  views INTEGER NOT NULL DEFAULT 0,
+  starts INTEGER NOT NULL DEFAULT 0,
+  PRIMARY KEY (creator_id, day, mark)
+);
+CREATE INDEX IF NOT EXISTS visitor_marks_day ON visitor_marks(day);
+ALTER TABLE visitor_marks ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS visit_salts (
+  day BIGINT PRIMARY KEY,
+  salt TEXT NOT NULL
+);
+ALTER TABLE visit_salts ENABLE ROW LEVEL SECURITY;
+-- Where the supporter's visit came from, for support by source. NULL for payments made before this existed.
+ALTER TABLE donations ADD COLUMN IF NOT EXISTS visit_source TEXT;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 `;

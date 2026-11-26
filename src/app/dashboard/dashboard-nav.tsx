@@ -6,6 +6,7 @@ import { useEffect, useRef } from "react";
 
 const ITEMS = [
   { href: "/dashboard", label: "Overview" },
+  { href: "/dashboard/analytics", label: "Analytics" },
   { href: "/dashboard/settings", label: "Page" },
   { href: "/dashboard/stripe", label: "Payments" },
   { href: "/dashboard/account", label: "Account" },
