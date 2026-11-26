@@ -10,6 +10,7 @@ import { loadCreatorPage } from "@/lib/creator-page-data";
 import { first } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { getUserByUsername } from "@/lib/users";
+import { VisitBeacon } from "./visit-beacon";
 
 type Props = {
   params: Promise<{ username: string }>;
@@ -74,6 +75,7 @@ export default async function CreatorPage({ params, searchParams }: Props) {
 
         {/* The creator sees like and reply buttons on supporters' messages. */}
         <CreatorPageBody page={page} owner={viewer?.id === creator.id} />
+        <VisitBeacon username={creator.username} skip={viewer?.id === creator.id} />
       </main>
 
       <LegalFooter

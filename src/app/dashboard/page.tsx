@@ -17,6 +17,8 @@ import { planState } from "@/lib/billing";
 import { appUrl } from "@/lib/config";
 import { isContributor } from "@/lib/contributors";
 import { earningsHistory, getStats, listRecentPaid, unitsSince } from "@/lib/donations";
+import { visitorsSince } from "@/lib/page-visits";
+import { badgeNameFor } from "@/lib/visit-source";
 import { formatTokens, formatUsd, shortName } from "@/lib/format";
 import { storedStripeKeyLast4 } from "@/lib/payment-secrets";
 import { syncCreator } from "@/lib/reconcile";
@@ -34,13 +36,14 @@ export default async function DashboardPage() {
 
   const mode = user.stripeMode ?? "live";
   const hasGoal = user.goalUnits !== null && user.goalStartedAt !== null;
-  const [stats, recent, goalReached, history, referrals, contributor] = await Promise.all([
+  const [stats, recent, goalReached, history, referrals, contributor, visitors] = await Promise.all([
     getStats(user.id, mode),
     listRecentPaid(user.id, null, 5),
     hasGoal ? unitsSince(user.id, mode, user.goalStartedAt!) : Promise.resolve(0),
     earningsHistory(user.id, mode),
     referralStats(user.id),
     isContributor(user.login),
+    visitorsSince(user.id, Date.now() - 29 * 86_400_000).catch(() => null),
   ]);
   const setupDone = user.setupDoneAt !== null;
   const stepsDone = setupProgress(user);
@@ -174,7 +177,13 @@ export default async function DashboardPage() {
           </Reveal>
           <Reveal delay={150}>
             <div className="card h-full p-6 sm:p-7">
-              <CardHead title="Your page" />
+              <CardHead title="Your page">
+                {visitors !== null && (
+                  <Link href="/dashboard/analytics" className="text-[13px] font-semibold text-muted transition hover:text-ink">
+                    {visitors.toLocaleString("en-US")} {visitors === 1 ? "visitor" : "visitors"} · 30 days
+                  </Link>
+                )}
+              </CardHead>
               <div className="mt-4">
                 <LinkField href={pageUrl}>
                   <span className="text-muted">{host}/</span>
@@ -263,7 +272,13 @@ export default async function DashboardPage() {
           <Reveal delay={270}>
             <div className="card flex h-full flex-col p-6 sm:p-7">
               <CardHead title="README badge" id="readme-badge" />
-              <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="mt-4 flex flex-1 flex-col" />
+              <BadgeBuilder
+                username={username}
+                pageUrl={pageUrl}
+                base={base}
+                defaultName={badgeNameFor(user.projectUrl)}
+                className="mt-4 flex flex-1 flex-col"
+              />
             </div>
           </Reveal>
 

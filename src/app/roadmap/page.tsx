@@ -84,9 +84,11 @@ const milestones: Milestone[] = [
   },
   {
     title: "Understand visits and support conversions.",
-    description: "Show creators how many people visit their page, which visits come from README badges or shared links, and how many turn into confirmed support.",
+    description: "Creators see how many people visit their page, where they come from (the README badge, shared links, search, other sites or their own tagged links) and how many turn into confirmed support. It's counted without cookies or stored IP addresses.",
     category: "Creator analytics",
     icon: "chart",
+    done: true,
+    links: [{ href: "/dashboard/analytics", label: "Open your analytics" }],
   },
   {
     title: "Help people discover projects.",

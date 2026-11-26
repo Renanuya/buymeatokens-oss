@@ -6,6 +6,23 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ## [Unreleased]
 
+### Added
+
+- **Analytics** tab in the dashboard (`/dashboard/analytics`). It shows the creator's page visitors over 7 days,
+  30 days or 12 months, and a conversion funnel: visitors, then people who pressed a support button, then
+  confirmed support. It also lists where visitors come from: the README badge, GitHub, X, LinkedIn, Threads,
+  search engines, AI assistants, other sites by domain, and the creator's own `?ref=` tagged links. Support is
+  credited to the source of the visit that led to it.
+  - It's counted without cookies and without storing IP addresses. A visit becomes a one-way mark from a random
+    daily salt, and marks and salts are deleted when the UTC day ends. Only daily totals are kept, and bots and
+    the creator's own visits don't count.
+  - README badge and share-button links now carry `?ref=badge`, `?ref=x` and so on. The page removes the tag
+    from the address bar after reading it.
+  - The badge builder names each badge after the repo it goes in (`?ref=badge-<repo>`, prefilled from the
+    project link), so Analytics shows each README as its own source, such as "README · tiny-llm".
+  - The Overview's page card shows the last 30 days' visitors.
+  - The Privacy Policy describes the counting, and the roadmap marks creator analytics as shipped.
+
 ### Changed
 
 - `/roadmap` has a shorter layout. Shipped milestones no longer take a full card each: they sit in a compact
