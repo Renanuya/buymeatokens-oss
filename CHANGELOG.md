@@ -26,6 +26,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- The dashboard Overview shows the creator's Early supporter and Contributor badges under their name instead of
+  at the far right of the header.
 - The compact README badge (`?style=flat`) always shows a count. Before the first support it reads `0M tokens`
   instead of `support`, so creators see the format their badge will keep.
 

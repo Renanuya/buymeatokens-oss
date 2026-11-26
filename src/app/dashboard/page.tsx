@@ -71,15 +71,16 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-4">
-      <Reveal className="mb-8 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-4 sm:gap-5">
-          <Avatar name={user.displayName} url={user.avatarUrl} className="size-14 rounded-2xl! text-lg sm:size-16 sm:text-xl" />
-          <div className="min-w-0">
-            <p className="eyebrow">Overview</p>
-            <h1 className="display mt-2 text-[clamp(2.25rem,4vw,3.25rem)] [overflow-wrap:anywhere]">Hey {firstName}.</h1>
+      {/* The creator's badges sit under their name, as on their page. */}
+      <Reveal className="mb-8 flex items-center gap-4 sm:gap-5">
+        <Avatar name={user.displayName} url={user.avatarUrl} className="size-14 rounded-2xl! text-lg sm:size-16 sm:text-xl" />
+        <div className="min-w-0">
+          <p className="eyebrow">Overview</p>
+          <h1 className="display mt-2 text-[clamp(2.25rem,4vw,3.25rem)] [overflow-wrap:anywhere]">Hey {firstName}.</h1>
+          <div className="mt-3 empty:hidden">
+            <CreatorBadges lifetimeFreeAt={user.lifetimeFreeGrantedAt} contributor={contributor} />
           </div>
         </div>
-        <CreatorBadges lifetimeFreeAt={user.lifetimeFreeGrantedAt} contributor={contributor} />
       </Reveal>
 
       {!setupDone && (
