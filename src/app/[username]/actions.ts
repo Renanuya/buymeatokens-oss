@@ -2,12 +2,10 @@
 
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { getBillingState } from "@/lib/billing";
 import { appUrl } from "@/lib/config";
 import { decrypt } from "@/lib/crypto";
 import { attachSession, createPendingDonation, markStatus, recordUsdcDonation } from "@/lib/donations";
 import { formatTokens, formatUsd } from "@/lib/format";
-import { checkThreshold } from "@/lib/reconcile";
 import { logError } from "@/lib/redact";
 import { paypalCheckoutUrl } from "@/lib/paypal";
 import { createDonationCheckout } from "@/lib/stripe";
@@ -31,8 +29,6 @@ export async function startPaypal(formData: FormData) {
   const creator = await getUserByUsername(username);
   if (!creator?.username) redirect("/");
   if (!creator.paypalEmail) redirect(`/${creator.username}?error=setup`);
-  const { state } = await getBillingState(creator);
-  if (state.kind === "locked") redirect(`/${creator.username}?error=paused`);
 
   const amountCents = creator.unitPriceCents * units;
   const donationId = await createPendingDonation({
@@ -75,9 +71,6 @@ export async function confirmUsdcPayment(input: {
   if (!creator?.username || !creator.usdcAddress) {
     return { ok: false, message: "This creator isn't accepting USDC right now." };
   }
-  const { state } = await getBillingState(creator);
-  if (state.kind === "locked") return { ok: false, message: "Support for this creator is paused right now." };
-
   // Right after sending, the transaction can take a few seconds to show up.
   let check: Awaited<ReturnType<typeof checkUsdcTransfer>> | null = null;
   for (let attempt = 0; attempt < 8; attempt++) {
@@ -115,7 +108,6 @@ export async function confirmUsdcPayment(input: {
   });
   if (!recorded) return { ok: true, message: "This payment is already counted. Thank you!" };
 
-  await checkThreshold(creator.id);
   revalidatePath(`/${creator.username}`);
   return {
     ok: true,
@@ -133,9 +125,6 @@ export async function startCheckout(formData: FormData) {
   if (!creator?.username) redirect("/");
   if (!creator.stripeKeyEnc || !creator.stripeMode) redirect(`/${creator.username}?error=setup`);
   const stripeKeyEnc = creator.stripeKeyEnc;
-
-  const { state } = await getBillingState(creator);
-  if (state.kind === "locked") redirect(`/${creator.username}?error=paused`);
 
   const donationId = await createPendingDonation({
     creatorId: creator.id,

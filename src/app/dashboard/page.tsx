@@ -13,7 +13,7 @@ import { Reveal } from "@/components/reveal";
 import { ShareButtons } from "@/components/share-buttons";
 import { signupsGated } from "@/lib/access";
 import { referralStats } from "@/lib/applications";
-import { getBillingState } from "@/lib/billing";
+import { planState } from "@/lib/billing";
 import { appUrl } from "@/lib/config";
 import { isContributor } from "@/lib/contributors";
 import { earningsHistory, getStats, listRecentPaid, unitsSince } from "@/lib/donations";
@@ -34,10 +34,9 @@ export default async function DashboardPage() {
 
   const mode = user.stripeMode ?? "live";
   const hasGoal = user.goalUnits !== null && user.goalStartedAt !== null;
-  const [stats, recent, billing, goalReached, history, referrals, contributor] = await Promise.all([
+  const [stats, recent, goalReached, history, referrals, contributor] = await Promise.all([
     getStats(user.id, mode),
     listRecentPaid(user.id, null, 5),
-    getBillingState(user),
     hasGoal ? unitsSince(user.id, mode, user.goalStartedAt!) : Promise.resolve(0),
     earningsHistory(user.id, mode),
     referralStats(user.id),
@@ -127,7 +126,7 @@ export default async function DashboardPage() {
       )}
 
       <Reveal>
-        <BillingBanner state={billing.state} paidCents={billing.paidCents} />
+        <BillingBanner state={planState(user)} />
       </Reveal>
 
       {/* Two rows. In each, the card on the left and the stack on the right end on the same line: the stack's

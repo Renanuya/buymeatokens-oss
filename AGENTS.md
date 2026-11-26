@@ -9,7 +9,7 @@ has the long version.
   deployment it refuses to change a non-local host unless `ALLOW_REMOTE_SCHEMA=1` is set; never set that to get
   past the error. Use the local Postgres from `compose.yaml`, or no database at all (see "Checks" below).
 - Never read, print, copy or commit `.env.local` or any other file with real credentials. Use test or sandbox
-  keys only: Stripe test mode, Paddle sandbox, `EMAIL_LIVE_ENABLED=false`.
+  keys only: Stripe test mode, `EMAIL_LIVE_ENABLED=false`.
 - Don't run operator scripts in `scripts/` with `--apply`, and never with `PROD_POSTGRES_URL`, unless the person
   you're working for explicitly asks you to. Without `--apply` they are dry runs.
 
@@ -28,7 +28,7 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build   # an unreachable UR
 - **Schema changes** in `src/lib/db.ts` must be additive and idempotent: `CREATE ... IF NOT EXISTS`,
   `ADD COLUMN IF NOT EXISTS`. Never drop or rename anything in the same change that stops using it. One-time data
   backfills need a new `schema_migrations` ledger id. Never edit an existing id. See [docs/database.md](docs/database.md).
-- **Money and access code** (Stripe, PayPal, USDC, reconciliation, billing, access rules) needs tests for retries,
+- **Money and access code** (Stripe, PayPal, USDC, reconciliation, access rules) needs tests for retries,
   duplicate events and concurrent requests.
 - **Reuse before you add.** Look in `src/lib` and `src/components` first. Don't add dependencies.
 - **UI:** app screens (setup, dashboard) are calm and compact, in the site's palette (paper, ink, lilac, iris).

@@ -8,7 +8,7 @@ ten minutes.
 - **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up.
 - **Docker**, for the local Postgres in [`compose.yaml`](../compose.yaml). Any Postgres 15+ that you own works too,
   such as a free Supabase project used only for development.
-- Optional: a Stripe account in **test mode**, a GitHub OAuth app and a Paddle **sandbox** account, depending on
+- Optional: a Stripe account in **test mode** and a GitHub OAuth app, depending on
   what you work on.
 
 ## 1. Install and start the database
@@ -45,7 +45,6 @@ Everything else is optional:
 | Working on... | You also need |
 |---|---|
 | GitHub login | an OAuth app ([github.com/settings/developers](https://github.com/settings/developers)) with callback `http://localhost:3000/api/auth/github/callback`, then `GITHUB_CLIENT_ID` and `GITHUB_CLIENT_SECRET` |
-| Subscriptions | Paddle sandbox values and `BILLING_ENABLED=true` (see [payments.md](payments.md#subscriptions-paddle)) |
 | USDC | optional `BASE_RPC_URL` if the public RPC rate-limits you |
 | Emails | a test inbox in `EMAIL_TEST_TO`; live sending stays off (see [emails.md](emails.md)) |
 | The admin page | your GitHub login in `ADMIN_GITHUB_LOGINS` (GitHub sign-in only; the development login is never an admin) |
@@ -76,9 +75,7 @@ Open http://localhost:3000. The first request creates the tables.
    date and any CVC.
 5. Back in the dashboard you should see the support, the README badge and your lifetime free access.
 
-To test **billing**, use a separate database, set `EARLY_ACCESS_OPEN=false` and create a new page. Then set
-`BILLING_ENABLED=true` with Paddle sandbox values. `BILLING_COUNT_TEST_MODE=true` counts test payments toward the
-$5 limit, and the billing screen can fake an active subscription.
+To see a page without lifetime free access, set `EARLY_ACCESS_OPEN=false` before you create it.
 
 ## Checks
 

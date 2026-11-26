@@ -76,9 +76,6 @@ export function AccountMenu({ name, username, avatarUrl }: { name: string; usern
           <Item href="/dashboard/settings" icon="sliders" onPick={close}>
             Edit page
           </Item>
-          <Item href="/dashboard/billing" icon="card" onPick={close}>
-            Billing
-          </Item>
           <Item href="/dashboard/account" icon="user" onPick={close}>
             Account &amp; data
           </Item>

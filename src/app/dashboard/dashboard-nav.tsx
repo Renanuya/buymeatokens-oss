@@ -8,7 +8,6 @@ const ITEMS = [
   { href: "/dashboard", label: "Overview" },
   { href: "/dashboard/settings", label: "Page" },
   { href: "/dashboard/stripe", label: "Payments" },
-  { href: "/dashboard/billing", label: "Billing" },
   { href: "/dashboard/account", label: "Account" },
 ];
 

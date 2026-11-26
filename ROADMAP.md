@@ -38,7 +38,6 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 |---|---|---|
 | [#16] | Legal groundwork: terms, privacy, receipts and the lifetime free commitment | Partly built: Terms, Privacy, consent, CSV export, account deletion |
 | [#17] | A sturdier USDC flow: payment records, sender verification, finality | Fixes the [known limitations](docs/payments.md#known-limitations) |
-| [#18] | Link to the Paddle customer portal (cancel, change card) | |
 | [#19] | Notify creators about new support by email and optionally Discord | |
 | [#20] | Show the home page preloader only on the first visit | Better page speed and SEO |
 | [#21] | Funding goals for AI costs | Partly built: optional goal and goal bar |
@@ -68,7 +67,7 @@ under the AGPL-3.0, after a cleanup and a security review, with CI, a secret sca
 
 Already live before the code was opened: creator pages with GitHub login and guided setup; Stripe, PayPal and
 USDC (experimental) payments that go straight to creators; README badges; lifetime free access for early creators;
-Paddle subscriptions (off for now); the creator welcome and reminder emails; and the blog.
+the creator welcome and reminder emails; and the blog.
 See the [changelog](CHANGELOG.md) for what's new.
 
 [board]: https://github.com/users/Renanuya/projects/7
@@ -94,7 +93,6 @@ See the [changelog](CHANGELOG.md) for what's new.
 [#15]: https://github.com/Renanuya/buymeatokens-oss/issues/15
 [#16]: https://github.com/Renanuya/buymeatokens-oss/issues/16
 [#17]: https://github.com/Renanuya/buymeatokens-oss/issues/17
-[#18]: https://github.com/Renanuya/buymeatokens-oss/issues/18
 [#19]: https://github.com/Renanuya/buymeatokens-oss/issues/19
 [#20]: https://github.com/Renanuya/buymeatokens-oss/issues/20
 [#21]: https://github.com/Renanuya/buymeatokens-oss/issues/21

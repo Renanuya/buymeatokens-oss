@@ -33,7 +33,7 @@ Closes #
 
 - [ ] Database schema (`src/lib/db.ts`)
 - [ ] Payments or reconciliation (Stripe, PayPal, USDC)
-- [ ] Billing or access rules (Paddle, lifetime free access, the $5 threshold)
+- [ ] Access rules (lifetime free access, early access, signup gate, admins)
 - [ ] Auth, sessions or encryption
 - [ ] Emails, cron endpoints or operator scripts
 - [ ] A new dependency

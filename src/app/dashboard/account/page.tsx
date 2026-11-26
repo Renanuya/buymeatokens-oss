@@ -27,7 +27,6 @@ export default async function AccountPage() {
   const user = await requireCreator();
   const accepted = hasCurrentConsent(user);
   const email = contactEmail();
-  const subscription = user.subStatus && ["active", "trialing", "past_due", "paused"].includes(user.subStatus);
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -77,12 +76,6 @@ export default async function AccountPage() {
             </a>
             .
           </li>
-          {subscription && (
-            <li className="font-semibold text-ink">
-              Deleting your account doesn&apos;t cancel your Paddle subscription. Cancel it with the link in your Paddle
-              receipt email first.
-            </li>
-          )}
         </ul>
         <p>
           You can also ask us to delete your account by email:{" "}

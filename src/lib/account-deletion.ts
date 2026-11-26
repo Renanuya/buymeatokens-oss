@@ -22,7 +22,7 @@ export async function deletionPreview(userId: string) {
   const rs = await query(
     `SELECT u.id, u.login, u.username, u.email,
        (u.stripe_key_enc IS NOT NULL) AS has_stripe_key, (u.paypal_email IS NOT NULL) AS has_paypal,
-       (u.usdc_address IS NOT NULL) AS has_wallet, u.sub_status,
+       (u.usdc_address IS NOT NULL) AS has_wallet,
        (SELECT COUNT(*)::int FROM donations d WHERE d.creator_id = u.id) AS support_rows,
        (SELECT COUNT(*)::int FROM applications a
           WHERE a.user_id = u.id OR (u.login IS NOT NULL AND a.github_login = lower(u.login))
@@ -41,7 +41,6 @@ export async function deletionPreview(userId: string) {
     hasStripeKey: Boolean(r.has_stripe_key),
     hasPaypal: Boolean(r.has_paypal),
     hasWallet: Boolean(r.has_wallet),
-    subscriptionStatus: str(r.sub_status),
     supportRows: num(r.support_rows) ?? 0,
     applications: num(r.applications) ?? 0,
     waitlist: num(r.waitlist) ?? 0,

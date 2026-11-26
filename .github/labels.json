@@ -6,7 +6,7 @@
   { "name": "type: security", "color": "b60205", "description": "Hardening or a fix for a security weakness (report vulnerabilities privately)" },
 
   { "name": "area: payments", "color": "c5def5", "description": "Stripe, PayPal, USDC and reconciliation" },
-  { "name": "area: billing", "color": "c5def5", "description": "Paddle subscriptions, lifetime free access, the $5 threshold" },
+  { "name": "area: billing", "color": "c5def5", "description": "Lifetime free access, early access and future pricing" },
   { "name": "area: auth", "color": "c5def5", "description": "GitHub OAuth, sessions, encryption" },
   { "name": "area: database", "color": "c5def5", "description": "Schema, migrations, queries" },
   { "name": "area: emails", "color": "c5def5", "description": "Creator emails and the minute worker" },
