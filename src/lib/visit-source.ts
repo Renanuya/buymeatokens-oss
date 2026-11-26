@@ -7,6 +7,8 @@ export const SOURCE_KEYS = [
   "x",
   "linkedin",
   "threads",
+  "discord",
+  "youtube",
   "reddit",
   "hackernews",
   "search",
@@ -24,7 +26,7 @@ export type VisitSource = { source: SourceKey; detail: string };
 
 /** A `?ref=` tag: what our badge and share links add, and what creators can add to their own links. */
 const TAG_RE = /^[a-z0-9][a-z0-9_-]{0,47}$/;
-/** README badges name the repo they sit in: `?ref=badge-<repo>` counts as the badge, per repo. */
+/** `?ref=badge-<name>` counts as the README badge too, shown with its name (links from an earlier badge builder). */
 const BADGE_PREFIX = "badge-";
 const NAME_MAX = 32;
 
@@ -37,6 +39,8 @@ const TAG_SOURCES: Record<string, SourceKey> = {
   twitter: "x",
   linkedin: "linkedin",
   threads: "threads",
+  discord: "discord",
+  youtube: "youtube",
   reddit: "reddit",
   hn: "hackernews",
   hackernews: "hackernews",
@@ -48,6 +52,8 @@ const HOST_SOURCES: [SourceKey, (host: string) => boolean][] = [
   ["x", (h) => on(h, "x.com") || on(h, "twitter.com") || h === "t.co"],
   ["linkedin", (h) => on(h, "linkedin.com") || h === "lnkd.in"],
   ["threads", (h) => on(h, "threads.net") || on(h, "threads.com")],
+  ["discord", (h) => on(h, "discord.com") || on(h, "discordapp.com") || h === "discord.gg"],
+  ["youtube", (h) => on(h, "youtube.com") || h === "youtu.be"],
   ["reddit", (h) => on(h, "reddit.com") || h === "redd.it"],
   ["hackernews", (h) => h === "news.ycombinator.com"],
   [
@@ -120,25 +126,6 @@ export function tagName(raw: string): string {
     .slice(0, NAME_MAX);
 }
 
-/** The repo's name from the creator's project link (github.com/owner/repo), to name their README badge by. */
-export function badgeNameFor(projectUrl: string | null | undefined): string {
-  if (!projectUrl) return "";
-  try {
-    const url = new URL(projectUrl);
-    const [, repo] = url.pathname.split("/").filter(Boolean);
-    if (!/(^|\.)(github|gitlab)\.com$/.test(url.hostname.toLowerCase()) || !repo) return "";
-    return tagName(repo.replace(/\.git$/i, "")).replace(/[-_]+$/, "");
-  } catch {
-    return "";
-  }
-}
-
-/** The `?ref=` tag for a README badge, named after its repo when there is a name. */
-export function badgeRef(name: string): string {
-  const clean = tagName(name).replace(/[-_]+$/, "");
-  return clean ? `${BADGE_PREFIX}${clean}` : "badge";
-}
-
 /** One string for storing on a payment: "badge", "site:dev.to", "tag:newsletter". */
 export function encodeSource({ source, detail }: VisitSource): string {
   return detail ? `${source}:${detail}` : source;
@@ -158,6 +145,8 @@ const LABELS: Record<SourceKey, string> = {
   x: "X",
   linkedin: "LinkedIn",
   threads: "Threads",
+  discord: "Discord",
+  youtube: "YouTube",
   reddit: "Reddit",
   hackernews: "Hacker News",
   search: "Search engines",
@@ -171,7 +160,7 @@ const LABELS: Record<SourceKey, string> = {
 
 export function sourceLabel({ source, detail }: VisitSource): string {
   if (source === "site" && detail) return detail;
-  if (source === "tag" && detail) return `?ref=${detail}`;
+  if (source === "tag" && detail) return detail;
   if (source === "badge" && detail) return `README · ${detail}`;
   return LABELS[source];
 }

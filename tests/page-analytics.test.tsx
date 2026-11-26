@@ -37,8 +37,8 @@ import {
   recordVisit,
   visitorsSince,
 } from "../src/lib/page-visits";
-import { badgeNameFor, badgeRef, classifyVisit, decodeSource, encodeSource, sourceLabel } from "../src/lib/visit-source";
-import { BadgeBuilder } from "../src/components/badge-builder";
+import { classifyVisit, decodeSource, encodeSource, sourceLabel, tagName } from "../src/lib/visit-source";
+import { ShareLinks } from "../src/app/dashboard/analytics/share-links";
 import { shareLinks } from "../src/components/share-buttons";
 import { POST } from "../src/app/api/creators/[username]/visit/route";
 import AnalyticsPage from "../src/app/dashboard/analytics/page";
@@ -135,7 +135,7 @@ describe("where a visit came from", () => {
     }
     expect(decodeSource(null)).toEqual({ source: "unknown", detail: "" });
     expect(decodeSource("nonsense:x")).toEqual({ source: "unknown", detail: "" });
-    expect(sourceLabel({ source: "tag", detail: "discord" })).toBe("?ref=discord");
+    expect(sourceLabel({ source: "tag", detail: "podcast" })).toBe("podcast");
     expect(sourceLabel({ source: "site", detail: "dev.to" })).toBe("dev.to");
     expect(sourceLabel({ source: "badge", detail: "" })).toBe("README badge");
   });
@@ -148,35 +148,32 @@ describe("where a visit came from", () => {
   });
 });
 
-describe("README badges per repo", () => {
-  it("counts ?ref=badge-<repo> as the badge, one row per repo", () => {
-    expect(classifyVisit({ ref: "badge-tiny-llm" })).toEqual({ source: "badge", detail: "tiny-llm" });
-    expect(classifyVisit({ ref: "badge" })).toEqual({ source: "badge", detail: "" });
-    expect(sourceLabel({ source: "badge", detail: "tiny-llm" })).toBe("README · tiny-llm");
-    expect(decodeSource(encodeSource({ source: "badge", detail: "tiny-llm" }))).toEqual({ source: "badge", detail: "tiny-llm" });
+describe("share links", () => {
+  it("knows Discord and YouTube by tag and by referrer", () => {
+    expect(classifyVisit({ ref: "discord" })).toEqual({ source: "discord", detail: "" });
+    expect(classifyVisit({ referrer: "https://discord.com/channels/1/2" })).toEqual({ source: "discord", detail: "" });
+    expect(classifyVisit({ ref: "youtube" })).toEqual({ source: "youtube", detail: "" });
+    expect(classifyVisit({ referrer: "https://www.youtube.com/watch?v=x" })).toEqual({ source: "youtube", detail: "" });
+    expect(sourceLabel({ source: "discord", detail: "" })).toBe("Discord");
   });
 
-  it("names the badge after the creator's repo, and keeps the tag valid", () => {
-    expect(badgeNameFor("https://github.com/Acme/Tiny.LLM.git")).toBe("tiny-llm");
-    expect(badgeNameFor("https://gitlab.com/acme/tool")).toBe("tool");
-    expect(badgeNameFor("https://acme.dev/tool")).toBe("");
-    expect(badgeNameFor("https://github.com/acme")).toBe("");
-    expect(badgeNameFor(null)).toBe("");
-    expect(badgeRef("")).toBe("badge");
-    expect(badgeRef("My Repo!")).toBe("badge-my-repo");
-    expect(badgeRef("x".repeat(80))).toBe(`badge-${"x".repeat(32)}`);
-    // Whatever the creator types, the link's tag still classifies as their badge.
-    for (const typed of ["My Repo!", "über-tool", "--a--", "x".repeat(80)]) {
-      expect(classifyVisit({ ref: badgeRef(typed) }).source).toBe("badge");
+  it("still counts badge links named after a repo as the README badge", () => {
+    expect(classifyVisit({ ref: "badge-tiny-llm" })).toEqual({ source: "badge", detail: "tiny-llm" });
+    expect(sourceLabel({ source: "badge", detail: "tiny-llm" })).toBe("README · tiny-llm");
+  });
+
+  it("turns whatever the creator types into a tag that classifies as their own", () => {
+    expect(tagName("My Podcast!")).toBe("my-podcast-");
+    expect(tagName("x".repeat(80))).toBe("x".repeat(32));
+    for (const typed of ["My Podcast", "über talk", "x".repeat(80)]) {
+      expect(classifyVisit({ ref: tagName(typed).replace(/[-_]+$/, "") }).source).toBe("tag");
     }
   });
 
-  it("shows the repo name in the badge builder", () => {
-    const html = renderToStaticMarkup(
-      <BadgeBuilder username="maker" pageUrl="https://buymeatokens.com/maker" base="https://buymeatokens.com" defaultName="tiny-llm" />,
-    );
-    expect(html).toContain('value="tiny-llm"');
-    expect(html).toContain("README · tiny-llm");
+  it("offers a ready link for Discord, YouTube and a newsletter", () => {
+    const html = renderToStaticMarkup(<ShareLinks pageUrl="https://buymeatokens.com/maker" display="buymeatokens.com/maker" />);
+    for (const tag of ["discord", "youtube", "newsletter"]) expect(html).toContain(`buymeatokens.com/maker?ref=${tag}`);
+    expect(html).toContain("Somewhere else? Name it");
   });
 });
 
