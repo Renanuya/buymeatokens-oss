@@ -52,6 +52,7 @@ Everything else is optional:
 | Repo stats, the Contributor badge | optional `GITHUB_TOKEN` (no permissions needed) to avoid GitHub's anonymous rate limit |
 
 > [!WARNING]
+> ``````
 > `POSTGRES_URL` must point at a database **you can throw away**. The app creates and alters tables on its
 > first connection. Never use a URL you got from a deployment, a teammate or `vercel env pull`. As a safety net,
 > a dev server, a local build or a script refuses to change the schema of a non-local host; a remote development
@@ -65,6 +66,21 @@ npm run dev
 
 Open http://localhost:3000. The first request creates the tables.
 
+## Seed demo data
+
+Run `npm run db:seed` to fill a fresh local database with demo data: three demo creators (`demo-ada`, `demo-grace` and `demo-alan`, each with a completed page) and two paid demo donations for each of them.
+
+The script is idempotent: every demo row has a stable id, so running it again inserts nothing new.
+
+Local databases only: the script reads `POSTGRES_URL` and refuses to run, before opening a connection, when it points at a non-local host. There is no override.
+
+To reset the demo data, throw the local database away and seed again:
+
+```bash
+docker compose down -v
+docker compose up -d db
+npm run db:seed
+```
 ## 4. Try the whole flow
 
 1. **Log in → "Continue without GitHub".**
