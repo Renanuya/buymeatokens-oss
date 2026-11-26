@@ -8,6 +8,7 @@ describe("toCents", () => {
     ["15.5", 1550],
     ["15.50", 1550],
     ["0.99", 99],
+    ["19.99", 1999],
   ] as [string, number][])("turns %s into %i cents", (value, cents) => {
     expect(toCents(value)).toBe(cents);
   });
@@ -25,12 +26,13 @@ describe("paypalCheckoutUrl", () => {
   function checkoutUrl(itemName = "Buy me AI tokens", amountCents = 1500) {
     return new URL(
       paypalCheckoutUrl({
-        business: "maker@example.com",
+        email: "maker@example.com",
         amountCents,
         itemName,
         donationId: "don-1",
         notifyUrl: "https://example.com/api/paypal/ipn",
-        baseUrl: "https://example.com",
+        returnUrl: "https://example.com/maker?paid=paypal",
+        cancelUrl: "https://example.com/maker",
       }),
     );
   }
@@ -60,8 +62,8 @@ describe("paypalCheckoutUrl", () => {
   it("sets the return and cancel urls", () => {
     const url = checkoutUrl();
 
-    expect(url.searchParams.get("return")).toBe("https://example.com/thanks?donation=don-1");
-    expect(url.searchParams.get("cancel_return")).toBe("https://example.com/cancel?donation=don-1");
+    expect(url.searchParams.get("return")).toBe("https://example.com/maker?paid=paypal");
+    expect(url.searchParams.get("cancel_return")).toBe("https://example.com/maker");
   });
 
   it("cuts item_name to 127 characters", () => {
