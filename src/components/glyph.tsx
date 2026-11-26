@@ -241,6 +241,79 @@ const LINE = {
       <rect width="7" height="5" x="3" y="16" rx="1" pathLength={1} />
     </>
   ),
+  // Roadmap.
+  scale: (
+    <>
+      <path d="m16 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" pathLength={1} />
+      <path d="m2 16 3-8 3 8c-.87.65-1.92 1-3 1s-2.13-.35-3-1Z" pathLength={1} />
+      <path d="M7 21h10M12 3v18M3 7h2c2 0 5-1 7-2 2 1 5 2 7 2h2" pathLength={1} />
+    </>
+  ),
+  "badge-check": (
+    <>
+      <path d="M3.85 8.62a4 4 0 0 1 4.78-4.77 4 4 0 0 1 6.74 0 4 4 0 0 1 4.78 4.78 4 4 0 0 1 0 6.74 4 4 0 0 1-4.77 4.78 4 4 0 0 1-6.75 0 4 4 0 0 1-4.78-4.77 4 4 0 0 1 0-6.76Z" pathLength={1} />
+      <path d="m9 12 2 2 4-4" pathLength={1} />
+    </>
+  ),
+  trophy: (
+    <>
+      <path d="M10 14.66v1.626a2 2 0 0 1-.976 1.696A5 5 0 0 0 7 21.978" pathLength={1} />
+      <path d="M14 14.66v1.626a2 2 0 0 0 .976 1.696A5 5 0 0 1 17 21.978" pathLength={1} />
+      <path d="M18 9h1.5a1 1 0 0 0 0-5H18M4 22h16" pathLength={1} />
+      <path d="M6 9a6 6 0 0 0 12 0V3a1 1 0 0 0-1-1H7a1 1 0 0 0-1 1z" pathLength={1} />
+      <path d="M6 9H4.5a1 1 0 0 1 0-5H6" pathLength={1} />
+    </>
+  ),
+  chart: (
+    <>
+      <path d="M3 3v16a2 2 0 0 0 2 2h16" pathLength={1} />
+      <path d="M18 17V9M13 17V5M8 17v-3" pathLength={1} />
+    </>
+  ),
+  search: (
+    <>
+      <path d="m21 21-4.34-4.34" pathLength={1} />
+      <circle cx="11" cy="11" r="8" pathLength={1} />
+    </>
+  ),
+  layers: (
+    <>
+      <path d="M12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83z" pathLength={1} />
+      <path d="M2 12a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 12" pathLength={1} />
+      <path d="M2 17a1 1 0 0 0 .58.91l8.6 3.91a2 2 0 0 0 1.65 0l8.58-3.9A1 1 0 0 0 22 17" pathLength={1} />
+    </>
+  ),
+  repeat: (
+    <>
+      <path d="m17 2 4 4-4 4M3 11v-1a4 4 0 0 1 4-4h14" pathLength={1} />
+      <path d="m7 22-4-4 4-4M21 13v1a4 4 0 0 1-4 4H3" pathLength={1} />
+    </>
+  ),
+  bell: (
+    <>
+      <path d="M10.268 21a2 2 0 0 0 3.464 0" pathLength={1} />
+      <path d="M3.262 15.326A1 1 0 0 0 4 17h16a1 1 0 0 0 .74-1.673C19.41 13.956 18 12.499 18 8A6 6 0 0 0 6 8c0 4.499-1.411 5.956-2.738 7.326" pathLength={1} />
+    </>
+  ),
+  webhook: (
+    <>
+      <path d="M18 16.98h-5.99c-1.1 0-1.95.94-2.48 1.9A4 4 0 0 1 2 17c.01-.7.2-1.4.57-2" pathLength={1} />
+      <path d="m6 17 3.13-5.78c.53-.97.1-2.18-.5-3.1a4 4 0 1 1 6.89-4.06" pathLength={1} />
+      <path d="m12 6 3.13 5.73C15.66 12.7 16.9 13 18 13a4 4 0 0 1 0 8" pathLength={1} />
+    </>
+  ),
+  database: (
+    <>
+      <ellipse cx="12" cy="5" rx="9" ry="3" pathLength={1} />
+      <path d="M3 5v14a9 3 0 0 0 18 0V5M3 12a9 3 0 0 0 18 0" pathLength={1} />
+    </>
+  ),
+  lightbulb: (
+    <>
+      <path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5" pathLength={1} />
+      <path d="M9 18h6M10 22h4" pathLength={1} />
+    </>
+  ),
 } satisfies Record<string, ReactNode>;
 
 export type GlyphName = keyof typeof LINE;
