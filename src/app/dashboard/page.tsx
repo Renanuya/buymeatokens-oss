@@ -18,7 +18,6 @@ import { appUrl } from "@/lib/config";
 import { isContributor } from "@/lib/contributors";
 import { earningsHistory, getStats, listRecentPaid, unitsSince } from "@/lib/donations";
 import { visitorsSince } from "@/lib/page-visits";
-import { badgeNameFor } from "@/lib/visit-source";
 import { formatTokens, formatUsd, shortName } from "@/lib/format";
 import { storedStripeKeyLast4 } from "@/lib/payment-secrets";
 import { syncCreator } from "@/lib/reconcile";
@@ -272,13 +271,7 @@ export default async function DashboardPage() {
           <Reveal delay={270}>
             <div className="card flex h-full flex-col p-6 sm:p-7">
               <CardHead title="README badge" id="readme-badge" />
-              <BadgeBuilder
-                username={username}
-                pageUrl={pageUrl}
-                base={base}
-                defaultName={badgeNameFor(user.projectUrl)}
-                className="mt-4 flex flex-1 flex-col"
-              />
+              <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="mt-4 flex flex-1 flex-col" />
             </div>
           </Reveal>
 

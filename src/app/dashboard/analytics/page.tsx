@@ -12,7 +12,7 @@ import { first, formatDate, formatUsd } from "@/lib/format";
 import { ANALYTICS_RANGES, pageAnalytics, type AnalyticsRange, type FunnelTotals, type SourceStats } from "@/lib/page-visits";
 import { requireCreator } from "@/lib/session";
 import { sourceLabel, type SourceKey } from "@/lib/visit-source";
-import { TagLink } from "./tag-link";
+import { ShareLinks } from "./share-links";
 import { VisitsCard } from "./visits-card";
 
 export const metadata: Metadata = { title: "Analytics" };
@@ -81,11 +81,12 @@ export default async function AnalyticsPage({ searchParams }: Props) {
         <div className="flex flex-col gap-4 lg:col-span-5 [&>:last-child]:flex-1">
           <Reveal delay={150}>
             <div className="card p-6 sm:p-7">
-              <CardHead title="Track your own links" />
+              <CardHead title="Share links" />
               <p className="mt-2 text-sm leading-relaxed text-muted">
-                Add a tag to a link you post, and visits from it show up here as their own source.
+                Posting your page somewhere? Use the link for that place, and its visits show up here under its name.
+                Your README badge and share buttons already do this.
               </p>
-              <TagLink host={host} pageUrl={pageUrl} username={user.username} />
+              <ShareLinks pageUrl={pageUrl} display={`${host}/${user.username}`} />
             </div>
           </Reveal>
           <Reveal delay={210}>
@@ -194,7 +195,7 @@ function SourceIcon({ source }: { source: SourceKey }) {
   const icon =
     source === "github" ? (
       <GitHubIcon className={brand} />
-    ) : source === "x" || source === "linkedin" ? (
+    ) : source === "x" || source === "linkedin" || source === "discord" || source === "youtube" ? (
       <SocialIcon network={source} className={brand} />
     ) : source === "threads" ? (
       <ThreadsIcon className={brand} />
