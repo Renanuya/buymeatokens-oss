@@ -98,7 +98,7 @@ describe("POST /api/paypal/ipn", () => {
     await creator();
     await paypalDonation();
     fetchMock.mockReset();
-    fetchMock.mockResolvedValue(new Response("VERIFIED", { status: 200 }));
+    fetchMock.mockImplementation(async () => new Response("VERIFIED", { status: 200 }));
     vi.stubGlobal("fetch", fetchMock);
     mocks.revalidatePath.mockClear();
   });
@@ -112,7 +112,7 @@ describe("POST /api/paypal/ipn", () => {
   });
 
   it("ignores an unverified message", async () => {
-    fetchMock.mockResolvedValue(new Response("INVALID", { status: 200 }));
+    fetchMock.mockImplementation(async () => new Response("INVALID", { status: 200 }));
 
     const res = await postIpn(ipnBody());
 
@@ -143,7 +143,14 @@ describe("POST /api/paypal/ipn", () => {
     expect(await donationRow()).toMatchObject({ status: "pending", tx_hash: null });
   });
 
-  it("counts a completed payment once", async () => {
+  it("ignores a Pending payment", async () => {
+  const res = await postIpn(ipnBody({ payment_status: "Pending" }));
+
+  expect(res.status).toBe(200);
+  expect(await donationRow()).toMatchObject({ status: "pending", tx_hash: null });
+});
+
+it("counts a completed payment once", async () => {
     const res = await postIpn(ipnBody());
 
     expect(res.status).toBe(200);
@@ -174,7 +181,7 @@ describe("POST /api/paypal/ipn", () => {
     expect((await postIpn(ipnBody())).status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "paid" });
 
-    const res = await postIpn(ipnBody({ payment_status: "Refunded", parent_txn_id: TXN_ID }));
+    const res = await postIpn(ipnBody({ payment_status: "Refunded", txn_id: "REFUND-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }));
 
     expect(res.status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "failed", tx_hash: TXN_ID });
@@ -183,7 +190,7 @@ describe("POST /api/paypal/ipn", () => {
   it("stops counting a paid donation on a Reversed message", async () => {
     expect((await postIpn(ipnBody())).status).toBe(200);
 
-    const res = await postIpn(ipnBody({ payment_status: "Reversed", parent_txn_id: TXN_ID }));
+    const res = await postIpn(ipnBody({ payment_status: "Reversed", txn_id: "REVERSED-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }));
 
     expect(res.status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "failed" });
