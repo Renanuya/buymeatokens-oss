@@ -17,11 +17,13 @@ import { fillPlaceholders, getLegalDocument, unfilledPlaceholders } from "../src
 const ROOT = join(__dirname, "..");
 const PLACEHOLDERS = [
   "LEGAL_LAST_UPDATED",
+  "PRIVACY_LAST_UPDATED",
   "CONTACT_EMAIL",
   "GOVERNING_LAW_TEXT",
   "LOG_RETENTION_DAYS",
   "ACCOUNT_DELETE_DAYS",
   "HOSTING_PROVIDERS_TEXT",
+  "AI_PROVIDERS_TEXT",
 ];
 
 // The notices must stay word for word as the legal brief wrote them.
@@ -100,9 +102,14 @@ describe("/terms and /privacy", () => {
     expect(unfilledPlaceholders(doc.markdown)).toEqual([]);
     expect(doc.markdown).toContain("then remove it within 30 days");
     expect(doc.markdown).toContain("Technical logs are kept for 90 days.");
+    expect(doc.markdown).toContain("Last updated: November 26, 2026.");
     expect(doc.markdown).toContain(
-      "under their own terms: Vercel (hosting), Supabase (database) and Mailjet (email delivery). We do not use analytics tools.",
+      "Hosting, database and email providers process data for us under their own terms: Vercel (hosting), Supabase (database) and Mailjet (email delivery).",
     );
+    expect(doc.markdown).toContain("are sent to Groq to draft their project description. No account data is sent with it.");
+    expect(doc.markdown).toContain("send you account emails: a welcome and at most one setup reminder");
+    expect(doc.markdown).toContain("- We do not use analytics tools.");
+    expect(doc.markdown).not.toContain("analytics providers");
     const html = renderToStaticMarkup(<LegalMarkdown>{doc.markdown}</LegalMarkdown>);
     expect(html).toContain("<h1");
     expect(html).toContain("<table>");
@@ -110,7 +117,7 @@ describe("/terms and /privacy", () => {
     expect(html).not.toMatch(/\[[A-Z_]+\]/);
     const unset = Object.fromEntries(PLACEHOLDERS.map((name) => [name, null])) as unknown as LegalConfig;
     expect(unfilledPlaceholders(getLegalDocument("privacy", "en", unset).markdown).sort()).toEqual(
-      ["ACCOUNT_DELETE_DAYS", "CONTACT_EMAIL", "HOSTING_PROVIDERS_TEXT", "LEGAL_LAST_UPDATED", "LOG_RETENTION_DAYS"].sort(),
+      ["ACCOUNT_DELETE_DAYS", "AI_PROVIDERS_TEXT", "CONTACT_EMAIL", "HOSTING_PROVIDERS_TEXT", "LOG_RETENTION_DAYS", "PRIVACY_LAST_UPDATED"].sort(),
     );
   });
 

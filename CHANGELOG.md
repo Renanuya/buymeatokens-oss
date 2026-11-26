@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- Privacy Policy, updated November 26, 2026:
+  - It names Groq as the provider behind "Write with AI".
+  - It says the creator's email also receives the welcome and the setup reminder.
+  - It drops the "analytics providers" wording; we don't use analytics.
+  - The Terms keep their own date.
+
 - `/roadmap` marks the legal framework as done and links to the Terms, and `/about` points to the Terms and the
   Privacy Policy instead of saying they're still being prepared.
 
