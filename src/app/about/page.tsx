@@ -26,7 +26,7 @@ export default function AboutPage() {
       <SiteHeader />
       <main className="wrap py-16 md:py-24">
         <div className="max-w-3xl">
-          <p className="eyebrow">About &amp; transparency · Updated November 24, 2026</p>
+          <p className="eyebrow">About &amp; transparency · Updated November 26, 2026</p>
           <h1 className="display mt-7 text-[clamp(2.75rem,7vw,5.5rem)]">Know what<br />you&apos;re joining.</h1>
           <p className="mt-7 max-w-2xl text-lg leading-relaxed text-muted">
             A small, independently built way to support developers. Here is how it works today, what is planned,
@@ -51,7 +51,7 @@ export default function AboutPage() {
             {payments.map((payment) => (
               <article key={payment.name} className="card p-6 sm:p-8">
                 <h3 className="text-xl font-semibold">{payment.name}</h3>
-                <p className="mt-2 text-sm font-semibold text-iris">Direct to {payment.destination.toLowerCase()}</p>
+                <p className="mt-2 text-sm font-semibold text-iris">Direct to {payment.destination.charAt(0).toLowerCase() + payment.destination.slice(1)}</p>
                 <p className="mt-5 text-sm leading-relaxed text-muted">{payment.detail}</p>
               </article>
             ))}

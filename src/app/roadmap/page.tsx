@@ -16,7 +16,7 @@ type Milestone = {
   category: string;
   /** Shipped milestones stay on the page, marked done, with a link to where they live. */
   done?: boolean;
-  link?: { href: string; label: string };
+  links?: { href: string; label: string }[];
   capabilities?: { title: string; description: string }[];
   periods?: string[];
 };
@@ -27,14 +27,19 @@ const milestones: Milestone[] = [
     description: "The full platform is open source under the AGPL-3.0. Read the code, run your own copy, pick up a good first issue or send a pull request.",
     category: "Open source",
     done: true,
-    link: { href: SOURCE_URL, label: "See the code on GitHub" },
+    links: [{ href: SOURCE_URL, label: "See the code on GitHub" }],
   },
   {
     title: "Research and establish the legal framework.",
-    description: "The Terms of Service and Privacy Policy are published, with a tax FAQ for creators, consent when you create a page, a download of your payment history and one-click account deletion.",
+    description: "The Terms of Service and Privacy Policy are published, along with a tax FAQ for creators and the lifetime free access commitment. Creators accept the Terms when they create a page, can download their payment history and can delete their account in one click.",
     category: "Legal foundation",
     done: true,
-    link: { href: "/terms", label: "Read the Terms" },
+    links: [
+      { href: "/terms", label: "Terms of Service" },
+      { href: "/privacy", label: "Privacy Policy" },
+      { href: "/faq/taxes", label: "Taxes FAQ" },
+      { href: "/about#lifetime-free", label: "Lifetime free commitment" },
+    ],
   },
   {
     title: "Explore a pooled payment system.",
@@ -114,7 +119,7 @@ const milestones: Milestone[] = [
     title: "Let the community shape the roadmap.",
     description: "Suggest features and vote on the ideas you want most. Popular, clear ideas become items on this page.",
     category: "Community feedback",
-    link: { href: IDEAS_URL, label: "Share an idea" },
+    links: [{ href: IDEAS_URL, label: "Share an idea" }],
   },
 ];
 
@@ -155,14 +160,19 @@ export default function RoadmapPage() {
                   {milestone.title}
                 </h2>
                 <p className="mt-4 max-w-2xl text-[15px] leading-relaxed text-ink/70">{milestone.description}</p>
-                {milestone.link && (
-                  <a
-                    href={milestone.link.href}
-                    {...(milestone.link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
-                    className="link-arrow mt-5 inline-flex text-sm font-semibold"
-                  >
-                    {milestone.link.label} <ArrowUpRight className="size-3" />
-                  </a>
+                {milestone.links && (
+                  <div className="mt-5 flex flex-wrap gap-x-6 gap-y-3">
+                    {milestone.links.map((link) => (
+                      <a
+                        key={link.href}
+                        href={link.href}
+                        {...(link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
+                        className="link-arrow inline-flex text-sm font-semibold"
+                      >
+                        {link.label} <ArrowUpRight className="size-3" />
+                      </a>
+                    ))}
+                  </div>
                 )}
                 {milestone.capabilities && (
                   <ul aria-label="Planned API and integration capabilities" className="mt-6 max-w-2xl space-y-4 border-t border-line pt-5">
