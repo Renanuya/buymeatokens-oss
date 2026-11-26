@@ -14,6 +14,7 @@ buymeatokens.com is operated by Ali Renan Uyanık, an individual based in Turkey
 | Creators | Page content you enter: project description, links, payment method details you choose to publish (for example a PayPal link or wallet address) | To display your page and let supporters pay you |
 | Creators | Payment provider connection data you give us, such as a restricted API key | To show and check your payment options |
 | Everyone | Technical data: IP address, browser, device, pages visited, error logs | To run, secure and fix the site |
+| Visitors to creator pages | A count of the visit, the domain of the site you came from or the link's `?ref=` tag, and whether you pressed a support button. No cookies are used and no IP address is stored: your IP address and browser only make a one-way code that changes every day and is deleted within 48 hours, so a visit counts once a day | To show the creator totals: how many people visited their page, where they came from and how many supported them |
 | Supporters | Whatever you choose to type on a creator's page, if the page has a message field | To pass your note to the creator |
 
 We do not see card numbers. Payments are made on the payment provider's own page or in your wallet.
@@ -24,7 +25,7 @@ We do not see card numbers. Payments are made on the payment provider's own page
 - Creators see the payments and messages sent to them through their own payment provider, not through us. How a creator treats supporter data is up to that creator and their local law.
 - Hosting, database and email providers process data for us under their own terms: [HOSTING_PROVIDERS_TEXT].
 - If a creator uses "Write with AI", the public details of the GitHub repository they link (its name, description, topics, main language, website and README) are sent to [AI_PROVIDERS_TEXT] to draft their project description. No account data is sent with it.
-- We do not use analytics tools.
+- We do not use third-party analytics or advertising tools. Creators see only the totals described in section 2, never who visited.
 - We share data with authorities only when the law requires it.
 
 Blockchain transfers are public. A USDC transfer on Base shows the sending and receiving wallet addresses to anyone, and we cannot remove it.

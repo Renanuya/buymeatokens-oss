@@ -1,5 +1,6 @@
 import { INTER_TIGHT_600, INTER_TIGHT_700, type BadgeFont } from "./badge-font";
 import type { BadgeStyle, BadgeTheme } from "./badge-options";
+import { formatTokens } from "./format";
 
 export type { BadgeStyle, BadgeTheme };
 
@@ -113,16 +114,20 @@ function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): stri
   );
 }
 
-/** Shields-height badge for badge rows: [ </> buy me AI tokens | 12M tokens ]. */
+/**
+ * Shields-height badge for badge rows: [ </> buy me AI tokens | 12M tokens ]. It always shows a count, starting at
+ * "0M tokens" before the first support.
+ */
 function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
   const h = 20;
+  const shown = count ?? `${formatTokens(0)} tokens`;
   const label = run(INTER_TIGHT_600, "buy me AI tokens", 11, 0.005);
-  const value = run(INTER_TIGHT_700, count ?? "support", 11, 0.005);
+  const value = run(INTER_TIGHT_700, shown, 11, 0.005);
   const labelX = 4 + 12 + 5;
   const split = labelX + label.width + 7;
   const width = split + value.width + 14;
 
-  const title = esc(`buy me AI tokens: ${count ?? "support"}`);
+  const title = esc(`buy me AI tokens: ${shown}`);
   return wrap(
     width,
     h,
