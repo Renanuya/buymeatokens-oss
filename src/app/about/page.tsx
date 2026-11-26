@@ -110,9 +110,10 @@ export default function AboutPage() {
               not currently associated with buymeatokens. At this stage, the project is operated independently.
             </p>
             <p>
-              Formal terms of service, invoice and receipt processes, and the project&apos;s legal framework are
-              still being prepared. This page records the current service and free access commitment; it is not
-              a legally reviewed terms-of-service agreement.
+              Using buymeatokens is governed by the{" "}
+              <Link href="/terms" className="underline underline-offset-4">Terms of Service</Link> and the{" "}
+              <Link href="/privacy" className="underline underline-offset-4">Privacy Policy</Link>. This page explains
+              the current service and the free access commitment in plain words.
             </p>
           </div>
           <h3 className="mt-8 text-xl font-semibold">If the service closes</h3>

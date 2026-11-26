@@ -31,8 +31,10 @@ const milestones: Milestone[] = [
   },
   {
     title: "Research and establish the legal framework.",
-    description: "Research the project's legal requirements and take the necessary steps, including formal terms, invoice and receipt processes, and documentation of the lifetime free access commitment.",
+    description: "The Terms of Service and Privacy Policy are published, with a tax FAQ for creators, consent when you create a page, a download of your payment history and one-click account deletion.",
     category: "Legal foundation",
+    done: true,
+    link: { href: "/terms", label: "Read the Terms" },
   },
   {
     title: "Explore a pooled payment system.",
@@ -156,8 +158,7 @@ export default function RoadmapPage() {
                 {milestone.link && (
                   <a
                     href={milestone.link.href}
-                    target="_blank"
-                    rel="noopener noreferrer"
+                    {...(milestone.link.href.startsWith("http") ? { target: "_blank", rel: "noopener noreferrer" } : {})}
                     className="link-arrow mt-5 inline-flex text-sm font-semibold"
                   >
                     {milestone.link.label} <ArrowUpRight className="size-3" />

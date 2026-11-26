@@ -93,8 +93,8 @@ Using an AI coding agent? Point it at [AGENTS.md](AGENTS.md).
 ## Roadmap
 
 The priorities, in order, live in [ROADMAP.md](ROADMAP.md) and on the
-[project board](https://github.com/users/Renanuya/projects/7). Up next: open sourcing the platform,
-the legal groundwork, and a sturdier USDC flow.
+[project board](https://github.com/users/Renanuya/projects/7). Up next: contributor foundations (versioned
+migrations, demo data, smoke tests for the money paths) and a sturdier USDC flow.
 
 ## Security
 

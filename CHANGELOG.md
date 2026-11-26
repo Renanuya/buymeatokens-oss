@@ -6,6 +6,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ## [Unreleased]
 
+### Changed
+
+- `/roadmap` marks the legal framework as done and links to the Terms, and `/about` points to the Terms and the
+  Privacy Policy instead of saying they're still being prepared.
+
 ### Removed
 
 - Paddle subscriptions and everything that only existed for them: the webhook, the Billing page, the $5 threshold

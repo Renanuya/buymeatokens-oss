@@ -36,7 +36,6 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 
 | | Item | Notes |
 |---|---|---|
-| [#16] | Legal groundwork: terms, privacy, receipts and the lifetime free commitment | Partly built: Terms, Privacy, consent, CSV export, account deletion |
 | [#17] | A sturdier USDC flow: payment records, sender verification, finality | Fixes the [known limitations](docs/payments.md#known-limitations) |
 | [#19] | Notify creators about new support by email and optionally Discord | |
 | [#20] | Show the home page preloader only on the first visit | Better page speed and SEO |
@@ -64,6 +63,9 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 **v0.1, open source launch** ([milestone][m1], 2026-11-26): the full platform published with a fresh history
 under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
 [changelog](CHANGELOG.md#010---2026-11-26).
+
+**Legal foundation** ([#16], 2026-11-26): Terms of Service and Privacy Policy, a tax FAQ for creators, consent with
+versioning, the payment history CSV and account deletion.
 
 Already live before the code was opened: creator pages with GitHub login and guided setup; Stripe, PayPal and
 USDC (experimental) payments that go straight to creators; README badges; lifetime free access for early creators;
