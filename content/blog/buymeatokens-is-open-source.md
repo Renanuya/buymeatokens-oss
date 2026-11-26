@@ -3,7 +3,6 @@ title: "buymeatokens Is Now Open Source: Here's How to Contribute"
 description: "The full buymeatokens platform is now open source under the AGPL-3.0. Why we opened it, what's in the repository and how to make your first contribution."
 answer: "The whole buymeatokens platform, from creator pages to payments, badges and emails, is now public on GitHub under the AGPL-3.0. You can read the code, run it locally with test payments, vote on ideas in Discussions and pick up a good first issue. Security reports go through private advisories."
 date: 2026-11-26
-draft: true
 category: open-source
 keywords: buymeatokens open source, open source donation platform, contribute to open source, agpl saas, buy me a coffee open source alternative
 ---

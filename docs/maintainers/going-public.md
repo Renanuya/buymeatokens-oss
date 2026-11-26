@@ -26,21 +26,14 @@ git status   # fix any *.rej by hand (files changed on both sides), write the ne
 From the switch on, deploy only from this repository: run `npx vercel link` in a clean checkout of `main`, then
 follow [releasing.md](releasing.md).
 
-## 1. Rename the repositories
+## 1. Keep the repository names
 
-The final public name is `Renanuya/buymeatokens`, which is the old private repository's name today.
+The public repository stays `Renanuya/buymeatokens-oss`, and the private archive stays `Renanuya/buymeatokens`.
 
-```bash
-gh repo rename buymeatokens-private --repo Renanuya/buymeatokens --yes   # the old private repo becomes the archive
-gh repo rename buymeatokens         --repo Renanuya/buymeatokens-oss --yes
-
-# then update the links in this repository and open a PR with the result
-git grep -l 'Renanuya/buymeatokens-oss' | xargs sed -i 's#Renanuya/buymeatokens-oss#Renanuya/buymeatokens#g'
-git remote set-url origin https://github.com/Renanuya/buymeatokens.git
-```
-
-GitHub redirects the old names, but explicit links are better. If the Vercel project is connected to a GitHub
-repository, reconnect it to the new one.
+We decided against swapping the names (2026-11-26). If the public repository took the name `buymeatokens`, every
+clone and tool that still has the private repository as its remote, a coding agent's checkout for example, would
+push to the **public** repository, and a pushed branch would publish the private history. Keeping the names means
+those pushes keep landing in the private archive.
 
 ## 2. Final checks
 
@@ -57,7 +50,8 @@ git log --format='%an <%ae>' | sort -u   # only identities you're happy to publi
       connect it, **Settings → Git → Git Fork Protection** is on.
 - [ ] Vercel: the **Preview** and **Development** environments contain no production values. The Supabase
       integration adds `POSTGRES_*` and `SUPABASE_*` to all three environments by default; limit them to
-      Production in the integration's settings, so `vercel env pull` and preview deploys can't reach production.
+      Production, so `vercel env pull` and preview deploys can't reach production. (Done on 2026-11-26 through the
+      Vercel API. Check again if the Supabase store is ever reconnected, since that adds them back.)
 - [ ] Every secret that ever lived outside Vercel is rotated: anything that was in a local `.env.local` (the
       database password, `SESSION_SECRET`, `ENCRYPTION_KEY` (re-encrypt saved Stripe keys, see below), `CRON_SECRET`,
       `EMAIL_CRON_SECRET`, Mailjet, GitHub OAuth, Groq) or in a chat or screenshot.

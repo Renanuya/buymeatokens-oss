@@ -18,36 +18,19 @@ and popular, clear ideas become issues on this page. If you'd like to build some
 
 ---
 
-## Now: open source launch (v0.1)
+## Now: contributor foundations (v0.2)
 
-The first priority is to publish the full platform and open it to contributions, safely. Milestone: [v0.1][m1].
-
-| | Item |
-|---|---|
-| [#1] | Import the application code with a fresh history |
-| [#2] | Remove personal data from code and tests |
-| [#3] | Keep local development away from the production database |
-| [#4] | Make CI green on the imported code |
-| [#5] | Move the operator docs out of the old README and check every doc against the code |
-| [#6] | Security review of auth, payments and secrets |
-| [#7] | Review internal files before they become public |
-| [#8] | Make hello@buymeatokens.com receive mail |
-| [#9] | Lock down Vercel for outside pull requests |
-| [#10] | Go public |
-| [#11] | Announce open source on the site and use our own badge |
-| [#12] | Prepare the first good first issues |
-
-## Next
-
-### Contributor foundations (v0.2)
-
-Milestone: [v0.2][m2].
+With the code open, the next priority is making it safe and pleasant to work on. Milestone: [v0.2][m2].
 
 | | Item |
 |---|---|
 | [#13] | Versioned SQL migrations instead of the auto-applied schema ([ADR 0003](docs/adr/0003-versioned-migrations.md)) |
 | [#14] | Seed script with demo data for local development |
 | [#15] | End-to-end smoke tests for the money paths |
+
+New here? The [good first issues][gfi] are small, well-described and ready to pick up.
+
+## Next
 
 ### Product
 
@@ -78,6 +61,10 @@ Milestone: [v0.2][m2].
 | [#33] | Decide whether self-hosting is officially supported | A decision |
 
 ## Shipped
+
+**v0.1, open source launch** ([milestone][m1], 2026-11-26): the full platform published with a fresh history
+under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
+[changelog](CHANGELOG.md#010---2026-11-26).
 
 Already live before the code was opened: creator pages with GitHub login and guided setup; Stripe, PayPal and
 USDC (experimental) payments that go straight to creators; README badges; lifetime free access for early creators;
