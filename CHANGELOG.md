@@ -6,6 +6,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-11-26
+
+The open source launch.
+
 ### Added
 
 - The full source code of buymeatokens, published under the AGPL-3.0.

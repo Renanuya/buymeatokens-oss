@@ -101,7 +101,8 @@ async function allText(): Promise<string> {
     const rows = await mocks.db.query(`SELECT * FROM ${table_name}`);
     dumps.push(`${table_name}: ${JSON.stringify(rows.rows)}`);
   }
-  return dumps.join("\n");
+  // Random ids are hex, so one can contain "ada" or "4242" by chance. They don't point back to anyone; leave them out.
+  return dumps.join("\n").replace(/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}/gi, "<uuid>");
 }
 
 beforeAll(async () => {
