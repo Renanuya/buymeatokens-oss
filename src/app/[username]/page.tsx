@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { AppHeader } from "@/components/app-header";
+import { homePathFor } from "@/lib/access";
 import { CreatorPageBody } from "@/components/creator-page";
 import { ArrowUpRight } from "@/components/icons";
 import { LegalFooter } from "@/components/legal-footer";
@@ -52,10 +53,21 @@ export default async function CreatorPage({ params, searchParams }: Props) {
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader>
-        <Link href="/apply" className="link-arrow whitespace-nowrap">
-          <span className="sm:hidden">Get yours</span>
-          <span className="hidden sm:inline">Get your own page</span> <ArrowUpRight className="size-3" />
-        </Link>
+        {viewer?.username ? (
+          <Link href="/dashboard/settings" className="link-arrow whitespace-nowrap">
+            Edit <span className="hidden sm:inline">{viewer.id === creator.id ? "this page" : "your page"}</span>{" "}
+            <ArrowUpRight className="size-3" />
+          </Link>
+        ) : viewer ? (
+          <Link href={homePathFor(viewer)} className="link-arrow whitespace-nowrap">
+            Finish <span className="hidden sm:inline">your page</span> <ArrowUpRight className="size-3" />
+          </Link>
+        ) : (
+          <Link href="/apply" className="link-arrow whitespace-nowrap">
+            <span className="sm:hidden">Get yours</span>
+            <span className="hidden sm:inline">Get your own page</span> <ArrowUpRight className="size-3" />
+          </Link>
+        )}
       </AppHeader>
 
       <main className="wrap flex-1 pb-24">

@@ -5,6 +5,7 @@ import { homePathFor, signupsGated } from "@/lib/access";
 import { AppHeader } from "@/components/app-header";
 import { ArrowUpRight, GitHubIcon } from "@/components/icons";
 import { LegalFooter } from "@/components/legal-footer";
+import { SignedInHint } from "@/components/signed-in";
 import { devLoginEnabled, githubConfigured } from "@/lib/config";
 import { first } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
@@ -34,6 +35,7 @@ export default async function LoginPage({
   return (
     <div className="flex min-h-dvh flex-col">
       <AppHeader />
+      <SignedInHint signedIn={false} />
       <main className="wrap grid flex-1 grid-cols-1 items-center gap-12 py-16 md:grid-cols-2 md:gap-10 lg:grid-cols-[1fr_400px] lg:gap-20">
         <div>
           <p className="eyebrow">Early access</p>

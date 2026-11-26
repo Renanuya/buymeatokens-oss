@@ -139,7 +139,7 @@ describe("delete my account", () => {
     const confirm = new FormData();
     confirm.set("confirm", "makerperson");
     await expect(deleteAccountAction({}, confirm)).rejects.toMatchObject({ url: "/login?deleted=1" });
-    expect(mocks.deletedCookies).toEqual(["bmt_session"]);
+    expect(mocks.deletedCookies).toEqual(["bmt_session", "bmt_signed_in"]);
     expect(mocks.revalidatePath).toHaveBeenCalledWith("/maker");
 
     // The public page is gone: /maker renders notFound().

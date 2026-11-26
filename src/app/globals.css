@@ -170,6 +170,13 @@ body {
 .profile-markdown hr { margin: 1em 0; border-color: var(--color-line); }
 
 /* Scroll-in reveals (src/components/reveal.tsx). Hidden states apply only when JavaScript runs. */
+/* Signed-in variants of calls to action (src/components/signed-in-switch.tsx). The wrappers take no box of their
+   own, so their children sit in the parent's flex row as if the wrapper weren't there. */
+.auth-out { display: contents; }
+.auth-in { display: none; }
+html[data-auth="in"] .auth-out { display: none; }
+html[data-auth="in"] .auth-in { display: contents; }
+
 .js [data-reveal] {
   opacity: 0;
   transform: translateY(28px);
