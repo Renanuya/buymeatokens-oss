@@ -144,13 +144,13 @@ describe("POST /api/paypal/ipn", () => {
   });
 
   it("ignores a Pending payment", async () => {
-  const res = await postIpn(ipnBody({ payment_status: "Pending" }));
+    const res = await postIpn(ipnBody({ payment_status: "Pending" }));
 
-  expect(res.status).toBe(200);
-  expect(await donationRow()).toMatchObject({ status: "pending", tx_hash: null });
-});
+    expect(res.status).toBe(200);
+    expect(await donationRow()).toMatchObject({ status: "pending", tx_hash: null });
+  });
 
-it("counts a completed payment once", async () => {
+  it("counts a completed payment once", async () => {
     const res = await postIpn(ipnBody());
 
     expect(res.status).toBe(200);
@@ -181,7 +181,9 @@ it("counts a completed payment once", async () => {
     expect((await postIpn(ipnBody())).status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "paid" });
 
-    const res = await postIpn(ipnBody({ payment_status: "Refunded", txn_id: "REFUND-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }));
+    const res = await postIpn(
+      ipnBody({ payment_status: "Refunded", txn_id: "REFUND-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }),
+    );
 
     expect(res.status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "failed", tx_hash: TXN_ID });
@@ -190,7 +192,9 @@ it("counts a completed payment once", async () => {
   it("stops counting a paid donation on a Reversed message", async () => {
     expect((await postIpn(ipnBody())).status).toBe(200);
 
-    const res = await postIpn(ipnBody({ payment_status: "Reversed", txn_id: "REVERSED-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }));
+    const res = await postIpn(
+      ipnBody({ payment_status: "Reversed", txn_id: "REVERSED-1", parent_txn_id: TXN_ID, mc_gross: "-15.00" }),
+    );
 
     expect(res.status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "failed" });
