@@ -106,7 +106,10 @@ describe("/terms and /privacy", () => {
     expect(doc.markdown).toContain(
       "Hosting, database and email providers process data for us under their own terms: Vercel (hosting), Supabase (database) and Mailjet (email delivery).",
     );
-    expect(doc.markdown).toContain("are sent to Groq to draft their project description. No account data is sent with it.");
+    expect(doc.markdown).toContain(
+      "are sent to Groq to draft their project description. Without a GitHub repository, the project name, link and " +
+        "token use they saved for their public page are sent instead. No account data is sent with it.",
+    );
     expect(doc.markdown).toContain("send you account emails: a welcome, at most one setup reminder, and an email when someone supports you");
     expect(doc.markdown).toContain("- We do not use third-party analytics or advertising tools.");
     expect(doc.markdown).toContain("No cookies are used and no IP address is stored");
@@ -188,7 +191,8 @@ describe("footer", () => {
 
   it("is on every page: each page or one of its layouts renders a footer", () => {
     const app = join(ROOT, "src", "app");
-    const pages = files(app, (p) => /[/\\]page\.tsx$/.test(p) || /[/\\]not-found\.tsx$/.test(p));
+    // The stream alerts widget is a transparent OBS browser source: no site chrome on purpose.
+    const pages = files(app, (p) => (/[/\\]page\.tsx$/.test(p) || /[/\\]not-found\.tsx$/.test(p)) && !/[/\\]alerts[/\\]/.test(p));
     const hasFooter = (source: string) => /<(SiteFooter|LegalFooter|LegalPage)\b/.test(source);
     const missing = pages.filter((page) => {
       if (hasFooter(readFileSync(page, "utf8"))) return false;

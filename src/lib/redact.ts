@@ -6,6 +6,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /\bwhsec_[A-Za-z0-9]+/g, // webhook signing secrets
   /\bgh[pousr]_[A-Za-z0-9]{20,}/g, // GitHub tokens
   /bmtwh_[A-Za-z0-9_-]+/g, // our own webhook signing secrets (no \b: one may follow a word character)
+  /bmta_[A-Za-z0-9_-]{20,}/g, // stream alert URLs; no \b, the token may follow "%2F" in an encoded URL
   /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/g, // Authorization headers
 ];
 
