@@ -132,3 +132,11 @@ describe("building the roadmap", () => {
     expect(buildRoadmap([])).toEqual({ current: null, upcoming: [], shipped: [] });
   });
 });
+
+describe("summary safety", () => {
+  it("leaves no markup behind, even from nested or broken comments", () => {
+    const summary = firstParagraph("Hello <!<!-- x -->-- y --> world <img src=x onerror=alert(1)> <3");
+    expect(summary).not.toMatch(/[<>]/);
+    expect(summary).toContain("Hello");
+  });
+});

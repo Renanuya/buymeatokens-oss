@@ -92,13 +92,17 @@ export function parseTasks(body: string): Omit<RoadmapTask, "icon">[] {
   return tasks;
 }
 
-/** The first real paragraph of the body: no headings, lists, quotes or the hidden block. */
+/**
+ * The first real paragraph of the body as plain text: no headings, lists, quotes, comments or the hidden block.
+ * It's rendered as text (React escapes it), and any angle bracket left after removing comments goes too, so nested
+ * or broken comments can't turn back into markup.
+ */
 export function firstParagraph(body: string): string {
-  const text = body.replace(META_RE, "").replace(/<!--[\s\S]*?-->/g, "");
+  const text = body.replace(META_RE, "").replace(/<!--[\s\S]*?-->/g, " ");
   for (const block of text.split(/\r?\n\s*\r?\n/)) {
     const trimmed = block.trim();
     if (!trimmed || /^(#|[-*+]\s|\d+\.\s|>|\||```)/.test(trimmed)) continue;
-    return plainText(trimmed).replace(/\s+/g, " ").trim();
+    return plainText(trimmed).replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
   }
   return "";
 }
