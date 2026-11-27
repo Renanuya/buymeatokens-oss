@@ -8,6 +8,9 @@ const STYLES: { key: BadgeStyle; label: string }[] = [
   { key: "button", label: "Button" },
   { key: "pill", label: "Pill" },
   { key: "flat", label: "Compact" },
+  { key: "outline", label: "Outline" },
+  { key: "goal", label: "Goal" },
+  { key: "supporters", label: "Supporters" },
 ];
 
 const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
@@ -19,7 +22,7 @@ const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
 
 /**
  * Pick a README badge: shape and colours, previewed on a light or a dark README (GitHub's dark background), then
- * copy its Markdown. The badge always shows the live token count.
+ * copy its Markdown. Button, outline and supporters show the live count; goal shows progress toward the funding goal.
  */
 export function BadgeBuilder({
   username,
