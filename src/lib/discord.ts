@@ -54,7 +54,9 @@ export function storedDiscordHint(encrypted: string | null): string | null {
 // ---- text that is safe to post ----
 
 /** Control, zero-width, bidi-override and tag characters. */
-const INVISIBLE_RE = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\ufeff\ufff9-\ufffb\u{e0000}-\u{e007f}]/gu;
+const INVISIBLE_RE = /[\u0000-\u001f\u007f-\u009f\u00ad\u061c\u115f\u1160\u180e\u200b-\u200f\u2028-\u202e\u2060-\u206f\u2800\u3164\ufeff\uffa0\ufff9-\ufffb\u{e0000}-\u{e007f}]/gu;
+/** More than three marks on one letter is a smear drawn over the channel, not a language. */
+const MARK_FLOOD_RE = /(\p{M}{3})\p{M}+/gu;
 /** Anything Discord would turn into a link: an address with a scheme, www, or a name with a top-level domain. */
 const LINKISH_RE = /https?:\/\/\S+|\b(?:[a-z0-9-]+\.)+[a-z]{2,}\b(?:\/\S*)?/gi;
 const ESCAPE_RE = /[\\*_~`|[\]()#>-]/;
@@ -68,13 +70,15 @@ const defang = (text: string) =>
  * characters before and `escapedMax` after escaping (by code point).
  */
 export function discordText(text: string, max: number, escapedMax: number): string {
-  const line = defang(text.replace(INVISIBLE_RE, " ").replace(/\s+/g, " ").trim());
+  const line = defang(text.replace(INVISIBLE_RE, " ").replace(MARK_FLOOD_RE, "$1").replace(/\s+/g, " ").trim());
   const chars = Array.from(line);
+  // "1. text" at the start would turn into a numbered list, so the dot after a leading number is escaped too.
+  const listDot = /^\d+\./.test(line) ? line.indexOf(".") : -1;
   let out = "";
   let used = 0;
-  for (const ch of chars.slice(0, max)) {
+  for (const [i, ch] of chars.slice(0, max).entries()) {
     // < and > make mentions, channels, emoji and links; @ makes @everyone. Look-alikes keep them readable.
-    const piece = ch === "<" ? "‹" : ch === ">" ? "›" : ch === "@" ? "＠" : ESCAPE_RE.test(ch) ? `\\${ch}` : ch;
+    const piece = ch === "<" ? "‹" : ch === ">" ? "›" : ch === "@" ? "＠" : ESCAPE_RE.test(ch) || i === listDot ? `\\${ch}` : ch;
     if (used + piece.length > escapedMax) return `${out}…`;
     out += piece;
     used += piece.length;

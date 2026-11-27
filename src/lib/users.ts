@@ -268,11 +268,17 @@ export async function setSupportEmails(id: string, on: boolean) {
   await run("UPDATE users SET support_emails = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
 }
 
-/** Connects (or replaces) the Discord webhook, or disconnects it with null. Clears the "stopped working" notice. */
+/**
+ * Connects (or replaces) the Discord webhook, or disconnects it with null. Clears the "stopped working" notice.
+ * Replacing a connected webhook keeps the connect time, so support still waiting goes to the new channel; a fresh
+ * connect (or one after a disconnect) only announces what comes after it.
+ */
 export async function setDiscordWebhook(id: string, encrypted: string | null, now = Date.now()) {
   await run(
-    "UPDATE users SET discord_webhook_enc = ?, discord_connected_at = ?, discord_failed_at = NULL WHERE id = ?",
-    [encrypted, encrypted ? now : null, id],
+    `UPDATE users SET discord_webhook_enc = ?::text,
+       discord_connected_at = CASE WHEN ?::text IS NULL THEN NULL ELSE COALESCE(discord_connected_at, ?::bigint) END,
+       discord_failed_at = NULL WHERE id = ?`,
+    [encrypted, encrypted, now, id],
   );
 }
 

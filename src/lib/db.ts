@@ -296,6 +296,11 @@ CREATE TABLE IF NOT EXISTS discord_notifications (
   sent_at BIGINT
 );
 CREATE INDEX IF NOT EXISTS discord_notifications_creator ON discord_notifications(creator_id, attempted_at);
+-- The minute worker only looks at creators who connected a webhook.
+CREATE INDEX IF NOT EXISTS users_discord_hooked ON users(id) INCLUDE (discord_connected_at) WHERE discord_webhook_enc IS NOT NULL;
+-- Checking a pasted webhook is a request to Discord from the operator's address: a few per creator per 10 minutes.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks_since BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE discord_notifications ENABLE ROW LEVEL SECURITY;
 
 -- Operator alerts (src/lib/ops.ts): server errors and payment problems, grouped by what went wrong. The minute email

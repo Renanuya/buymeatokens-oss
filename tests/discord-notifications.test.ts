@@ -130,6 +130,14 @@ describe("message text", () => {
   const sneaky = String.fromCharCode(0x202e, 0x200b, 0x2066, 0xfeff, 0x0007);
   const sneakyRe = new RegExp(`[${sneaky}]`);
 
+  it("drops blank-looking fillers, flattens towers of accents and keeps a leading number from becoming a list", () => {
+    expect(discordText("ㅤ", 40, 60)).toBe("");
+    expect(discordText("⠀ᅟᅠﾠ", 40, 60)).toBe("");
+    expect(discordText(`Z${"́".repeat(150)}`, 200, 240)).toBe(`Z${"́".repeat(3)}`);
+    expect(discordText("Café ủng hộ", 200, 240)).toBe("Café ủng hộ");
+    expect(discordText("1. not a list", 200, 240)).toBe("1\\. not a list");
+  });
+
   it("neutralises mentions, masked links and invites", () => {
     const text = discordText("@everyone @here <@123> <@&456> <#789> [free](https://evil.com/x) discord.gg/abc https://discord.com/invite/xyz **b** __u__ `c` ||s||", 200, 400);
     for (const bad of ["@everyone", "@here", "<@", "<#", "](", "evil.com", "discord.gg", "discord.com", "https:", "**", "||"]) {
@@ -290,8 +298,12 @@ describe("Discord notifications", () => {
       await setDiscordWebhook("maker", encrypt(replacement), at);
       return status(404);
     });
-    await sendDiscordMessage("maker", at + MIN);
+    expect(await sendDiscordMessage("maker", at + MIN)).toBe("failed");
     expect(decrypt((await getUserById("maker"))!.discordWebhookEnc!)).toBe(replacement);
+    // No false "stopped working" alert, and the payment goes to the new webhook on the next tick.
+    expect((await query("SELECT tag FROM ops_events")).rows).toEqual([]);
+    fetchMock.mockImplementation(async () => status(204));
+    expect(await sendDiscordMessage("maker", at + 2 * MIN)).toBe("sent");
   });
 
   it.each([
@@ -356,10 +368,13 @@ describe("Discord notifications", () => {
     expect(sentBody().content).toContain("**Someone** bought 3M AI tokens");
   });
 
-  it("labels test-mode payments, as the email does", async () => {
-    await paid({ at: T + MIN, mode: "test" });
-    await processDiscordNotifications(T + 2 * MIN);
-    expect(sentBody().content).toContain("(test)");
+  it("follows the public page: a test payment only posts, labelled, while the creator is in test mode", async () => {
+    await paid({ at: T + MIN, mode: "test", name: "Tester" });
+    expect(await processDiscordNotifications(T + 2 * MIN)).toMatchObject({ sent: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
+    await query("UPDATE users SET stripe_mode = 'test' WHERE id = 'maker'");
+    await processDiscordNotifications(T + 3 * MIN);
+    expect(sentBody().content).toContain("**Tester** bought 3M AI tokens (test)");
   });
 
   it("makes hostile names and messages inert and keeps the whole payload short", async () => {
@@ -389,13 +404,21 @@ describe("Discord notifications", () => {
     expect(content).toContain("After");
   });
 
-  it("doesn't post history when the webhook is replaced, only what comes after", async () => {
-    await paid({ at: T + MIN, name: "Old" });
+  it("sends what is waiting to a replaced webhook, but no history after a disconnect", async () => {
+    await paid({ at: T + MIN, name: "Waiting" });
+    // Moved to another channel before the first message went out: what was waiting goes there.
     await setDiscordWebhook("maker", encrypt(URL_OK), T + 5 * MIN);
-    await paid({ at: T + 6 * MIN, name: "New" });
-    await processDiscordNotifications(T + 7 * MIN);
-    expect(sentBody().content).toContain("New");
-    expect(sentBody().content).not.toContain("Old");
+    await processDiscordNotifications(T + 6 * MIN);
+    expect(sentBody().content).toContain("Waiting");
+
+    fetchMock.mockClear();
+    await paid({ at: T + 7 * MIN, name: "Before" });
+    await setDiscordWebhook("maker", null);
+    await setDiscordWebhook("maker", encrypt(URL_OK), T + 8 * MIN);
+    await paid({ at: T + 9 * MIN, name: "After" });
+    await processDiscordNotifications(T + 30 * MIN);
+    expect(sentBody().content).toContain("After");
+    expect(sentBody().content).not.toContain("Before");
   });
 
   it("posts nothing for creators without a webhook, and nothing while live sending is off", async () => {
@@ -471,6 +494,19 @@ describe("connecting", () => {
     expect((await getUserById("maker"))!.discordWebhookEnc).toBeNull();
   });
 
+  it("checks a pasted webhook at most 5 times per 10 minutes, so nobody can make the server hammer Discord", async () => {
+    fetchMock.mockImplementation(async () => status(401));
+    const tries = await Promise.all(Array.from({ length: 8 }, () => connectDiscordWebhook("maker", URL_OK, T)));
+    expect(tries.filter((r) => !r.ok && r.error.includes("doesn't know"))).toHaveLength(5);
+    expect(tries.filter((r) => !r.ok && r.error.includes("tries"))).toHaveLength(3);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    // A URL that isn't a webhook never reaches Discord and doesn't use up a check.
+    await connectDiscordWebhook("maker", "https://example.com/hook", T);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
+    fetchMock.mockImplementation(async () => status(200));
+    expect(await connectDiscordWebhook("maker", URL_OK, T + 10 * MIN)).toEqual({ ok: true });
+  });
+
   it("clears the stopped-working notice when a new one is connected, and disconnecting forgets it", async () => {
     await query("UPDATE users SET discord_failed_at = 5 WHERE id = 'maker'");
     await connectDiscordWebhook("maker", URL_OK, T);
@@ -484,6 +520,10 @@ describe("log redaction", () => {
   it("blanks out webhook URLs", () => {
     expect(redactSecrets(`failed for ${URL_OK} twice`)).toBe("failed for [redacted] twice");
     expect(redactSecrets(`https://discordapp.com/api/webhooks/${ID}/${TOKEN}`)).toBe("[redacted]");
+    // Without a scheme, with an API version, and percent-encoded.
+    expect(redactSecrets(`discord.com/api/webhooks/${ID}/${TOKEN}`)).toBe("[redacted]");
+    expect(redactSecrets(`https://discord.com/api/v10/webhooks/${ID}/${TOKEN}`)).toBe("[redacted]");
+    expect(redactSecrets(`url=https%3A%2F%2Fdiscord.com%2Fapi%2Fwebhooks%2F${ID}%2F${TOKEN}`)).toBe("url=[redacted]");
   });
 });
 

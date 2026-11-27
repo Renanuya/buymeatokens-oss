@@ -39,6 +39,7 @@ async function dueCreators(now: number, limit: number): Promise<string[]> {
      JOIN users u ON u.id = d.creator_id
      LEFT JOIN discord_notifications n ON n.donation_id = d.id
      WHERE u.discord_webhook_enc IS NOT NULL AND d.status = 'paid' AND d.paid_at >= u.discord_connected_at AND d.paid_at >= ?
+       AND d.stripe_mode = COALESCE(u.stripe_mode, 'live')
        AND (n.donation_id IS NULL OR (n.status = 'failed' AND n.attempt_count < ? AND n.retry_at <= ?))
        AND NOT EXISTS (SELECT 1 FROM discord_notifications s WHERE s.creator_id = d.creator_id
          AND s.status IN ('sending', 'sent', 'unknown') AND s.attempted_at > ?)
@@ -57,6 +58,8 @@ export async function sendDiscordMessage(creatorId: string, now = Date.now()): P
        LEFT JOIN discord_notifications n ON n.donation_id = d.id
        WHERE d.creator_id = ? AND u.discord_webhook_enc IS NOT NULL AND d.status = 'paid'
          AND d.paid_at >= u.discord_connected_at AND d.paid_at >= ?
+         -- The public page's rule: only support in the creator's current mode, so a test card can't post to a live channel.
+         AND d.stripe_mode = COALESCE(u.stripe_mode, 'live')
          AND (n.donation_id IS NULL OR (n.status = 'failed' AND n.attempt_count < ? AND n.retry_at <= ?))
          AND NOT EXISTS (SELECT 1 FROM discord_notifications s WHERE s.creator_id = d.creator_id
            AND s.status IN ('sending', 'sent', 'unknown') AND s.attempted_at > ?)
@@ -114,10 +117,15 @@ export async function sendDiscordMessage(creatorId: string, now = Date.now()): P
   }
   if (outcome.status === "gone") {
     // Only if it's still the webhook we used: the creator may have pasted a new one while this request was in flight.
-    await query(
+    const cleared = await query(
       "UPDATE users SET discord_webhook_enc = NULL, discord_connected_at = NULL, discord_failed_at = ? WHERE id = ? AND discord_webhook_enc = ?",
       [now, creatorId, encrypted],
     );
+    if (cleared.rowsAffected === 0) {
+      // Replaced while this request was in flight: the new webhook gets these payments on the next tick.
+      await query(`UPDATE discord_notifications SET status = 'failed', retry_at = ? WHERE donation_id IN (${marks})`, [now, ...ids]);
+      return "failed";
+    }
     await finish("skipped");
     await query("UPDATE discord_notifications SET status = 'skipped' WHERE creator_id = ? AND status = 'failed'", [creatorId]);
     await recordOpsEvent("[discord] webhook stopped working", [creatorId]);
@@ -148,10 +156,34 @@ export async function processDiscordNotifications(now = Date.now(), deadline = D
 export type ConnectResult = { ok: true } | { ok: false; error: string };
 
 /** Saves the creator's webhook after checking its shape and asking Discord that it exists. */
+const CHECKS_PER_WINDOW = 5;
+const CHECK_WINDOW_MS = 10 * 60 * 1000;
+
+/**
+ * Takes one of the creator's webhook checks for this window, or returns false when they're used up. Each check is a
+ * request to Discord from the operator's address, and Discord bans an address that makes too many bad ones. One
+ * conditional statement, so parallel saves can't take more than the limit.
+ */
+async function takeWebhookCheck(userId: string, now: number): Promise<boolean> {
+  const expired = now - CHECK_WINDOW_MS;
+  const rs = await query(
+    `UPDATE users SET
+       discord_checks = CASE WHEN discord_checks_since IS NULL OR discord_checks_since <= ? THEN 1 ELSE discord_checks + 1 END,
+       discord_checks_since = CASE WHEN discord_checks_since IS NULL OR discord_checks_since <= ? THEN ? ELSE discord_checks_since END
+     WHERE id = ? AND (discord_checks_since IS NULL OR discord_checks_since <= ? OR discord_checks < ?)
+     RETURNING id`,
+    [expired, expired, now, userId, expired, CHECKS_PER_WINDOW],
+  );
+  return rs.rows.length > 0;
+}
+
 export async function connectDiscordWebhook(userId: string, input: string, now = Date.now()): Promise<ConnectResult> {
   const webhook = parseDiscordWebhook(input);
   if (!webhook) {
     return { ok: false, error: "That isn't a Discord webhook URL. Copy it from Channel settings, Integrations, Webhooks." };
+  }
+  if (!(await takeWebhookCheck(userId, now))) {
+    return { ok: false, error: "That's a lot of tries in a row. Wait a few minutes, then try again." };
   }
   const check = await verifyDiscordWebhook(webhook.url);
   if (check === "missing") return { ok: false, error: "Discord doesn't know that webhook. Check the URL, or make a new one." };

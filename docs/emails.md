@@ -53,7 +53,8 @@ A creator can also get the same news in their own Discord channel. It is optiona
 
 **Setup.** In Discord: channel settings, Integrations, Webhooks, New Webhook, Copy Webhook URL. Paste it under
 *Dashboard → Account → Discord*. We check its shape and ask Discord (a `GET`, which posts nothing) that it exists, then
-store it encrypted (`users.discord_webhook_enc`). It is never sent back to the browser; the page shows only the last four
+store it encrypted (`users.discord_webhook_enc`). That check is a request to Discord from our address, and Discord bans
+an address that makes too many bad ones, so a creator gets five checks per ten minutes. It is never sent back to the browser; the page shows only the last four
 characters of its token. The URL is a credential: anyone who has it can post to that channel, so it is redacted from logs.
 
 **What is posted.** One plain message per batch, listing up to five supporters and counting the rest:
@@ -65,9 +66,10 @@ characters of its token. The URL is a credential: anyone who has it can post to 
 <https://buymeatokens.com/ada>
 ```
 
-It follows what the public page shows of a supporter: the name (blank means "Someone"), the message and the tokens.
-**No dollar amounts**: the page shows tokens only, and a Discord server is a wider audience than the creator's inbox. Test-mode
-payments are included and marked "(test)", as in the email. Supporters' words are hostile input headed for someone's
+It follows what the public page shows of a supporter: the name (blank means "Someone"), the message and the tokens, in the
+creator's current mode, so a free test-card payment never reaches a live channel. While the page is in test mode, the
+messages are marked "(test)". **No dollar amounts**: the page shows tokens only, and a Discord server is a wider audience
+than the creator's inbox. Supporters' words are hostile input headed for someone's
 community, so the name and message are cut to one short line, stripped of control, zero-width and bidi characters, have
 mentions, links, invites and markdown made inert, and every request carries `allowed_mentions: { "parse": [] }` and
 `flags: 4` (no link previews). The message always stays under Discord's 2000 characters.
@@ -76,14 +78,16 @@ mentions, links, invites and markdown made inert, and every request carries `all
 so one channel can't block or repeat the other):
 
 - One row per payment, claimed atomically before posting. At most one message per creator every ten minutes.
-- Only support paid after the webhook was connected (and within seven days) is announced. Replacing the URL starts again
-  from that moment, so connecting never posts history.
+- Only support paid after the webhook was connected (and within seven days) is announced, so connecting never posts
+  history. Replacing a connected URL (moving to another channel) keeps that time, so what was waiting goes to the new
+  channel; disconnecting and connecting again starts from the new connection.
 - Runs in the same minute worker, only when `EMAIL_LIVE_ENABLED=true`, as its own isolated job: up to five creators per
   tick, none started after 15 seconds, 5 second timeout per request.
 - `204`: sent. `429`: nothing was posted; retried after the longer of Discord's `retry_after` and five minutes, three
   attempts at most.
 - `401`, `403`, `404`: the webhook is gone. It is disconnected, waiting rows are skipped, an ops alert is recorded and
-  Account shows "The webhook stopped working".
+  Account shows "The webhook stopped working". If the creator replaced the URL while that request was in flight, the new
+  one is kept and gets the payments on the next tick.
 - `5xx`, a timeout or a network error: marked `unknown` and **never resent**, like email. A webhook post has no
   idempotency key, so a retry can post twice in someone's community, while a missed message costs little (the dashboard
   still lists the payment). Other `4xx` and any redirect: not posted, not retried.
