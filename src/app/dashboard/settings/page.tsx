@@ -27,6 +27,7 @@ export default async function SettingsPage() {
           projectName: user.projectName ?? "",
           tokenUse: user.tokenUse,
           goalUnits: user.goalUnits,
+          goalPeriod: user.goalPeriod,
           socials: user.socials,
         }}
       />

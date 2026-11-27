@@ -14,6 +14,7 @@ import {
   PRICE_ERROR,
   PROJECT_NAME_MAX_LENGTH,
   normalizeProjectUrl,
+  parseGoalPeriod,
   parseGoalUnits,
   parsePriceUsd,
   projectNameFromUrl,
@@ -61,6 +62,9 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
     const goal = parseGoalUnits(formData.get("goal"));
     if ("error" in goal) return { error: goal.error };
     update.goalUnits = goal.units;
+    const period = parseGoalPeriod(formData.get("goalPeriod"));
+    if ("error" in period) return { error: period.error };
+    update.goalPeriod = period.period;
   }
   if (SOCIAL_NETWORKS.some((n) => formData.has(`social_${n.key}`))) {
     const parsed = socialsFromForm(formData);

@@ -8,6 +8,14 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Monthly funding goals**: a goal is now one-time (as before, the default) or monthly. A monthly goal counts the
+  confirmed support of the current calendar month, across card, PayPal and USDC, in the creator's current mode, and
+  starts over on the 1st with no job or stored counter: progress is summed when the page loads, by confirmation
+  time, so a late-confirmed payment counts in the month it was confirmed and a reversed one drops out. Months are UTC.
+  The setup's goal step and the settings form got a "Resets" choice, and the public bar says "this month". One
+  function, `goalReached` in `src/lib/donations.ts`, feeds the page, the dashboard and the link-preview image. New
+  column `users.goal_period` and index `donations_goal_window`.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

@@ -32,6 +32,16 @@ export function parsePriceUsd(input: unknown): number | null {
 
 export const PRICE_ERROR = `Price per 1M tokens must be a whole number between $${PRICE_MIN_USD} and $${PRICE_MAX_USD}.`;
 
+export const GOAL_PERIODS = ["one-time", "monthly"] as const;
+export type GoalPeriod = (typeof GOAL_PERIODS)[number];
+
+/** A missing field is `undefined` (keep the saved period); anything but the two known values is an error. */
+export function parseGoalPeriod(input: unknown): { period: GoalPeriod | undefined } | { error: string } {
+  if (input === null || input === undefined) return { period: undefined };
+  const period = GOAL_PERIODS.find((p) => p === input);
+  return period ? { period } : { error: "Pick one-time or monthly for the goal." };
+}
+
 /** Empty means "no goal" (null). Otherwise a whole number of millions within the limit. */
 export function parseGoalUnits(input: unknown): { units: number | null } | { error: string } {
   const text = String(input ?? "").trim().replace(/[,_\s]/g, "").replace(/m$/i, "");

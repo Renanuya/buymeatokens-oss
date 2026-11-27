@@ -2,6 +2,7 @@ import { isUniqueViolation, num, query, str, type Arg, type Row } from "./db";
 import { newId } from "./crypto";
 import { earlyAccessOpen } from "./config";
 import { SETUP_STEPS } from "./setup";
+import type { GoalPeriod } from "./profile";
 import { parseSocials, type Socials } from "./socials";
 
 export type StripeMode = "test" | "live";
@@ -29,6 +30,7 @@ export type User = {
   /** In millions of tokens; null when the creator has no goal. */
   goalUnits: number | null;
   goalStartedAt: number | null;
+  goalPeriod: GoalPeriod;
   socials: Socials;
   /** Guided setup steps finished (see src/lib/setup.ts). */
   setupProgress: number;
@@ -68,6 +70,7 @@ function mapUser(r: Row): User {
     tokenUse: str(r.token_use) ?? "",
     goalUnits: num(r.goal_units),
     goalStartedAt: num(r.goal_started_at),
+    goalPeriod: r.goal_period === "monthly" ? "monthly" : "one-time",
     socials: parseSocials(r.socials),
     setupProgress: num(r.setup_progress) ?? 0,
     setupDoneAt: num(r.setup_done_at),
@@ -202,11 +205,11 @@ export async function setTokenUse(id: string, tokenUse: string) {
 
 // Progress toward a goal counts from when it was first set. Changing the number keeps that start;
 // removing the goal clears it, so a new goal starts from zero.
-const GOAL_SET = `goal_units = ?::int,
+const GOAL_SET = `goal_units = ?::int, goal_period = COALESCE(?::text, goal_period),
   goal_started_at = CASE WHEN ?::int IS NULL THEN NULL WHEN goal_units IS NULL THEN ?::bigint ELSE goal_started_at END`;
 
-export async function setGoal(id: string, goalUnits: number | null) {
-  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [goalUnits, goalUnits, Date.now(), id]);
+export async function setGoal(id: string, goalUnits: number | null, period?: GoalPeriod) {
+  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [goalUnits, period ?? null, goalUnits, Date.now(), id]);
 }
 
 export async function setSocials(id: string, socials: Socials) {
@@ -221,6 +224,7 @@ export type ProfileUpdate = {
   projectName?: string | null;
   tokenUse?: string;
   goalUnits?: number | null;
+  goalPeriod?: GoalPeriod;
   socials?: Socials;
 };
 
@@ -238,7 +242,7 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
   }
   if (profile.goalUnits !== undefined) {
     sets.push(GOAL_SET);
-    args.push(profile.goalUnits, profile.goalUnits, Date.now());
+    args.push(profile.goalUnits, profile.goalPeriod ?? null, profile.goalUnits, Date.now());
   }
   if (profile.socials !== undefined) {
     sets.push("socials = ?");

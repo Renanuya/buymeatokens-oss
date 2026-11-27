@@ -1,6 +1,6 @@
 import type { CreatorPageModel } from "@/components/creator-page";
 import { isContributor } from "./contributors";
-import { getStats, listRecentPaid, unitsSince } from "./donations";
+import { getStats, goalReached, listRecentPaid } from "./donations";
 import { repoStats } from "./github";
 import { githubRepo } from "./profile";
 import { hasPaymentMethod, type User } from "./users";
@@ -10,10 +10,10 @@ export async function loadCreatorPage(creator: User): Promise<CreatorPageModel> 
   const mode = creator.stripeMode ?? "live";
   const hasGoal = creator.goalUnits !== null && creator.goalStartedAt !== null;
   const repo = creator.projectUrl ? githubRepo(creator.projectUrl) : null;
-  const [stats, recent, goalReached, repoInfo, contributor] = await Promise.all([
+  const [stats, recent, reached, repoInfo, contributor] = await Promise.all([
     getStats(creator.id, mode),
     listRecentPaid(creator.id, mode, 20),
-    hasGoal ? unitsSince(creator.id, mode, creator.goalStartedAt!) : Promise.resolve(0),
+    goalReached(creator),
     repo ? repoStats(repo) : Promise.resolve(null),
     isContributor(creator.login),
   ]);
@@ -33,7 +33,7 @@ export async function loadCreatorPage(creator: User): Promise<CreatorPageModel> 
     projectName: creator.projectName,
     socials: creator.socials,
     unitPriceCents: creator.unitPriceCents,
-    goal: hasGoal ? { units: creator.goalUnits!, reached: goalReached } : null,
+    goal: hasGoal ? { units: creator.goalUnits!, reached, period: creator.goalPeriod } : null,
     lifetimeFreeAt: creator.lifetimeFreeGrantedAt,
     contributor,
     stats: { units: stats.units, supporters: stats.supporters },

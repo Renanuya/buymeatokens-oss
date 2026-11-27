@@ -1,6 +1,6 @@
 import { num, query, str, type Row } from "./db";
 import { newId } from "./crypto";
-import type { StripeMode } from "./users";
+import type { StripeMode, User } from "./users";
 
 export type DonationStatus = "pending" | "paid" | "expired" | "failed";
 
@@ -197,13 +197,29 @@ export async function getStats(creatorId: string, mode: StripeMode): Promise<Sta
 }
 
 /** Tokens (in millions) paid since `since`, counted like the page's other stats. Drives the goal bar. */
-export async function unitsSince(creatorId: string, mode: StripeMode, since: number): Promise<number> {
+export async function unitsSince(creatorId: string, mode: StripeMode, since: number, until = Infinity): Promise<number> {
   const rs = await query(
     `SELECT COALESCE(SUM(units), 0) AS units FROM donations
-     WHERE creator_id = ? AND status = 'paid' AND stripe_mode = ? AND COALESCE(paid_at, created_at) >= ?`,
-    [creatorId, mode, since],
+     WHERE creator_id = ? AND status = 'paid' AND stripe_mode = ? AND COALESCE(paid_at, created_at) >= ?
+       AND COALESCE(paid_at, created_at) < ?`,
+    [creatorId, mode, since, Math.min(until, Number.MAX_SAFE_INTEGER)],
   );
   return num(rs.rows[0]?.units) ?? 0;
+}
+
+/**
+ * Progress toward the creator's goal, for every place that shows it. A one-time goal counts since it was set; a
+ * monthly goal counts the current calendar month in UTC, so it "resets" by the clock and needs no job or counter.
+ */
+export async function goalReached(
+  c: Pick<User, "id" | "stripeMode" | "goalUnits" | "goalStartedAt" | "goalPeriod">,
+  now = Date.now(),
+): Promise<number> {
+  if (c.goalUnits === null || c.goalStartedAt === null) return 0;
+  const mode = c.stripeMode ?? "live";
+  if (c.goalPeriod !== "monthly") return unitsSince(c.id, mode, c.goalStartedAt);
+  const d = new Date(now);
+  return unitsSince(c.id, mode, Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), 1), Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 1));
 }
 
 const DAY_MS = 86_400_000;

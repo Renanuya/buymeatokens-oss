@@ -174,6 +174,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS project_name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_use TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_units INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_started_at BIGINT;
+-- goal_period is 'one-time' (counts since goal_started_at) or 'monthly' (counts the current UTC month, computed on read).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_period TEXT NOT NULL DEFAULT 'one-time';
+-- Serves the goal's "paid in this window" sum on the public page.
+CREATE INDEX IF NOT EXISTS donations_goal_window ON donations(creator_id, status, stripe_mode, (COALESCE(paid_at, created_at)));
 ALTER TABLE users ADD COLUMN IF NOT EXISTS socials TEXT NOT NULL DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_progress INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_done_at BIGINT;

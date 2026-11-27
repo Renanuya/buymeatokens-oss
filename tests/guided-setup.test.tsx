@@ -48,11 +48,11 @@ import { SCHEMA, query } from "../src/lib/db";
 import { TERMS_VERSION } from "../src/lib/legal/config";
 import { homePathFor } from "../src/lib/access";
 import { GoalProgress, SocialLinks } from "../src/components/creator-profile";
-import { unitsSince } from "../src/lib/donations";
+import { goalReached, unitsSince } from "../src/lib/donations";
 import { normalizeProjectUrl, parseGoalUnits, parsePriceUsd, projectNameFromUrl } from "../src/lib/profile";
 import { canOpenStep, filledSteps, resumePath, setupProgress } from "../src/lib/setup";
 import { normalizeSocial, parseSocials, socialEntries, socialInputValue } from "../src/lib/socials";
-import { getUserById } from "../src/lib/users";
+import { getUserById, setGoal } from "../src/lib/users";
 import {
   advanceStepAction,
   checkUsernameAction,
@@ -378,5 +378,92 @@ describe("existing creators and goals", () => {
     full.set("projectUrl", "");
     await updateProfileAction({}, full);
     expect(await user()).toMatchObject({ projectUrl: null, projectName: null });
+  });
+});
+
+describe("goal periods", () => {
+  const MAY = Date.UTC(2027, 4, 1);
+  const JUNE = Date.UTC(2027, 5, 1);
+  const MID_MAY = MAY + 10 * 86_400_000;
+
+  async function pay(id: string, units: number, at: number, extra: { mode?: string; status?: string; created?: number } = {}) {
+    await query(
+      `INSERT INTO donations (id, creator_id, stripe_mode, units, amount_cents, status, created_at, paid_at)
+       VALUES (?, 'maker', ?, ?, 500, ?, ?, ?)`,
+      [id, extra.mode ?? "live", units, extra.status ?? "paid", extra.created ?? at, at],
+    );
+  }
+  async function maker() {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_done_at = 1, terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+  }
+  const reached = async (now: number) => goalReached(await user(), now);
+
+  it("keeps one-time goals as they were, and applies the schema twice", async () => {
+    await maker();
+    await mocks.db.exec(SCHEMA);
+    await run(() => saveGoalAction({}, form({ goal: "10" })));
+    expect(await user()).toMatchObject({ goalPeriod: "one-time", goalStartedAt: NOW });
+    await pay("old", 4, NOW - 1000);
+    await pay("new", 3, NOW + 1000);
+    expect(await reached(NOW + 400 * 86_400_000)).toBe(3);
+  });
+
+  it("counts only this UTC month, with both edges exact", async () => {
+    await maker();
+    await run(() => saveGoalAction({}, form({ goal: "50", goalPeriod: "monthly" })));
+    await pay("before", 1, MAY - 1);
+    await pay("first", 2, MAY);
+    await pay("last", 4, JUNE - 1);
+    await pay("next", 8, JUNE);
+    expect(await reached(MID_MAY)).toBe(6);
+    expect(await reached(JUNE)).toBe(8);
+    expect(await reached(Date.UTC(2027, 6, 1))).toBe(0);
+  });
+
+  it("counts a late confirmation in the month it was confirmed, and skips pending, failed and other modes", async () => {
+    await maker();
+    await setGoal("maker", 50, "monthly");
+    await pay("late", 5, MAY + 5, { created: MAY - 5000 });
+    await pay("pending", 1, MAY + 6, { status: "pending" });
+    await pay("failed", 2, MAY + 7, { status: "failed" });
+    await pay("test", 4, MAY + 8, { mode: "test" });
+    expect(await reached(MID_MAY)).toBe(5);
+    await query("UPDATE users SET stripe_mode = 'test' WHERE id = 'maker'");
+    expect(await reached(MID_MAY)).toBe(4);
+  });
+
+  it("switching period mid-month counts the whole month, and keeping the field absent keeps the period", async () => {
+    await maker();
+    await run(() => saveGoalAction({}, form({ goal: "50" })));
+    await pay("early", 3, MAY + 1);
+    await query("UPDATE users SET goal_started_at = ? WHERE id = 'maker'", [MAY + 5]); // set after the payment
+    vi.spyOn(Date, "now").mockReturnValue(MID_MAY);
+    expect(await reached(MID_MAY)).toBe(0);
+    await run(() => saveGoalAction({}, form({ goal: "50", goalPeriod: "monthly" })));
+    expect(await reached(MID_MAY)).toBe(3);
+    await run(() => saveGoalAction({}, form({ goal: "60" })));
+    expect(await user()).toMatchObject({ goalUnits: 60, goalPeriod: "monthly" });
+  });
+
+  it("rejects a bad period in both forms and changes nothing", async () => {
+    await maker();
+    for (const bad of ["weekly", "", "MONTHLY"]) {
+      expect(await run(() => saveGoalAction({}, form({ goal: "10", goalPeriod: bad })))).toEqual({ state: { error: expect.stringContaining("one-time or monthly") } });
+      expect(
+        await run(() => updateProfileAction({}, form({ displayName: "Maker", bio: "", price: "5", goal: "10", goalPeriod: bad }))),
+      ).toEqual({ state: { error: expect.stringContaining("one-time or monthly") } });
+    }
+    expect((await user()).goalUnits).toBeNull();
+    await run(() => updateProfileAction({}, form({ displayName: "Maker", bio: "", price: "5", goal: "10", goalPeriod: "monthly" })));
+    expect(await user()).toMatchObject({ goalUnits: 10, goalPeriod: "monthly" });
+  });
+
+  it("says on the bar what the period is", () => {
+    const once = renderToStaticMarkup(<GoalProgress reached={1} goal={50} />);
+    const monthly = renderToStaticMarkup(<GoalProgress reached={1} goal={50} period="monthly" />);
+    expect(once).not.toContain("this month");
+    expect(monthly).toContain("Token goal · this month");
+    expect(monthly).toContain("AI tokens to go this month");
   });
 });

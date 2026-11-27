@@ -9,6 +9,7 @@ import {
   PRICE_ERROR,
   PROJECT_NAME_MAX_LENGTH,
   normalizeProjectUrl,
+  parseGoalPeriod,
   parseGoalUnits,
   parsePriceUsd,
   projectNameFromUrl,
@@ -152,7 +153,9 @@ export async function saveGoalAction(_prev: ActionState, formData: FormData): Pr
   const user = await creatorAt("goal");
   const goal = parseGoalUnits(formData.get("goal"));
   if ("error" in goal) return { error: goal.error };
-  await setGoal(user.id, goal.units);
+  const period = parseGoalPeriod(formData.get("goalPeriod"));
+  if ("error" in period) return { error: period.error };
+  await setGoal(user.id, goal.units, period.period);
   return finishStep(user, "goal");
 }
 
