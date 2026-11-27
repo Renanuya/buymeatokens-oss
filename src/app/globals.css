@@ -78,7 +78,7 @@ body {
     @apply mx-auto w-full max-w-[1440px] px-6 sm:px-10 lg:px-16;
   }
   .display {
-    @apply font-display font-semibold leading-[0.98] tracking-[-0.02em];
+    @apply font-display font-semibold leading-[0.98] tracking-[-0.045em];
   }
   .eyebrow {
     @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
