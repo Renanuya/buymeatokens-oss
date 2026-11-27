@@ -24,7 +24,7 @@ We do not see card numbers. Payments are made on the payment provider's own page
 - Payment providers (PayPal, Stripe, the Base network and your wallet or exchange) receive the payment details you give them. They are independent controllers under their own privacy policies.
 - Creators see the payments and messages sent to them through their own payment provider, not through us. How a creator treats supporter data is up to that creator and their local law.
 - Hosting, database and email providers process data for us under their own terms: [HOSTING_PROVIDERS_TEXT].
-- If a creator uses "Write with AI", the public details of the GitHub repository they link (its name, description, topics, main language, website and README) are sent to [AI_PROVIDERS_TEXT] to draft their project description. No account data is sent with it.
+- If a creator uses "Write with AI", the public details of the GitHub repository they link (its name, description, topics, main language, website and README) are sent to [AI_PROVIDERS_TEXT] to draft their project description. Without a GitHub repository, the project name, link and token use they saved for their public page are sent instead. No account data is sent with it.
 - We do not use third-party analytics or advertising tools. Creators see only the totals described in section 2, never who visited.
 - We share data with authorities only when the law requires it.
 

@@ -8,6 +8,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Write with AI without a GitHub repo.** The guided setup's description step now shows the button whenever AI drafts are on, not only when the project link is a GitHub repo. Without a repo the draft is written from what is already saved (project name, link as text and token use: the details the public page shows), never from a fetched page, and the prompt allows no invented features or claims. It counts against the same per-creator and daily caps.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a
@@ -75,6 +77,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- **The roadmap page is built from GitHub issues** labelled `roadmap` (`src/lib/roadmap.ts`, [docs/roadmap.md](docs/roadmap.md)),
+  refreshed every five minutes. Closing an issue as completed moves it to *Shipped* (as not planned, it drops off); the open issue labelled `roadmap: now` is the
+  *Now* card, and its task list becomes the card's tiles (ticked boxes show as done); a hidden block in each issue sets
+  the title, summary, icon, order and links shown on the page. Nothing on the page is edited by hand any more. Two
+  closed issues stand in for shipped work that had none (#77, #78), and the community card closes the page without
+  counting as a milestone.
 - The roadmap's *Now* card shows what the current priority is working through (for pooled payments: custody,
   payouts, ways to pay and the law) and links to its issue and the Discord. The *Shipped* card shows the latest three,
   each with a short description, then the changelog link; the "Show more" fold is gone.
