@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
 import { deleteAccount } from "@/lib/account-deletion";
 import { SESSION_COOKIE, requireCreator } from "@/lib/session";
-import { connectDiscordWebhook } from "@/lib/discord-notifications";
+import { connectDiscordWebhook, sendDiscordTest } from "@/lib/discord-notifications";
+import { reportError } from "@/lib/ops";
 import { setDiscordWebhook, setLeaderboardOptIn, setSupportEmails } from "@/lib/users";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { deletionConfirmationName, matchesConfirmation } from "./confirm";
@@ -57,6 +58,25 @@ export async function connectDiscordAction(_prev: ActionState, formData: FormDat
   if (!result.ok) return { error: result.error };
   revalidatePath("/dashboard/account");
   return { message: "Connected. New support will show up in your channel." };
+}
+
+const DISCORD_TEST_ANSWERS = {
+  sent: { message: "Test message sent. Check your channel." },
+  not_connected: { error: "Connect a webhook first." },
+  limited: { error: "That's a lot of tries in a row. Wait a few minutes, then try again." },
+  gone: { error: "Discord says this webhook no longer exists. Paste a new one." },
+  rate_limited: { error: "Discord asked us to slow down. Try again in a minute." },
+  unreachable: { error: "Couldn't reach Discord. Try again in a minute." },
+} satisfies Record<string, ActionState>;
+
+/** Posts one marked test message to the connected webhook. Like the rest of this page, allowed without the current Terms. */
+export async function testDiscordAction(): Promise<ActionState> {
+  const user = await requireCreator();
+  const result = await sendDiscordTest(user.id).catch(async (error) => {
+    await reportError("[discord] test message", error).catch(() => undefined);
+    return "unreachable" as const;
+  });
+  return DISCORD_TEST_ANSWERS[result];
 }
 
 export async function disconnectDiscordAction(): Promise<void> {
