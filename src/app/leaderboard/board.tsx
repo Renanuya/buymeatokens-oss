@@ -3,6 +3,7 @@ import { Avatar } from "@/components/avatar";
 import { SignedInSwitch } from "@/components/signed-in-switch";
 import { formatTokens } from "@/lib/format";
 import { topCreators, type Period } from "@/lib/leaderboard";
+import { reportError } from "@/lib/ops";
 
 const TABS: { period: Period; label: string; href: string; window: string }[] = [
   { period: "daily", label: "Daily", href: "/leaderboard/daily", window: "the last 24 hours" },
@@ -13,8 +14,12 @@ const TABS: { period: Period; label: string; href: string; window: string }[] = 
 
 /** One leaderboard view. Pages render it statically and revalidate every few minutes (see their `revalidate`). */
 export async function Board({ period }: { period: Period }) {
-  // Like the home page: with the database unreachable (a build, an outage) the board is simply empty.
-  const entries = await topCreators(period).catch(() => []);
+  // Like the home page: with the database unreachable (a build, an outage) the board is simply empty. Reported, so
+  // a broken query doesn't pass for "nobody is listed".
+  const entries = await topCreators(period).catch(async (error) => {
+    await reportError("[leaderboard]", period, error).catch(() => undefined);
+    return [];
+  });
   const tab = TABS.find((t) => t.period === period)!;
   return (
     <main className="wrap py-16 md:py-24">
@@ -73,7 +78,9 @@ export async function Board({ period }: { period: Period }) {
           </ol>
         )}
         <p className="mt-4 text-[13px] text-muted">
-          Ranked by recorded support, not verified popularity. Windows are rolling, not calendar days. Updated every few minutes.
+          Ranked by recorded card and PayPal support, not verified popularity: payments aren't checked, so a creator could
+          pay themselves. Tokens depend on each creator's own price. Windows are rolling, not calendar days. Updated every
+          few minutes.
         </p>
       </div>
     </main>

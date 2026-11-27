@@ -28,15 +28,23 @@ export type LeaderboardEntry = {
  * Opted-in creators with a listed page (the sitemap's rule), in live mode, ranked by tokens of confirmed live support
  * in the period. Ties go to whoever was supported first in the window, then username. Equal tokens share a rank
  * (1, 2, 2, 4). Short windows are range scans on the partial index donations_paid_at.
+ *
+ * USDC isn't counted: we can't see who sent a transfer, and moving the same dollar between two of your own wallets
+ * costs only gas, so it would let anyone buy the top spot. Card and PayPal payments cost the creator fees to fake.
+ * The eligible creators are picked in their own subquery, so the users columns in INDEXABLE_SQL can never become
+ * ambiguous against a donations column added later.
  */
 export async function topCreators(period: Period, now = Date.now()): Promise<LeaderboardEntry[]> {
   const window = WINDOW_MS[period];
   const rs = await query(
     `SELECT u.username, u.display_name, u.avatar_url, SUM(d.units) AS units, COUNT(*) AS supporters
-     FROM donations d JOIN users u ON u.id = d.creator_id
-     WHERE d.status = 'paid' AND d.stripe_mode = 'live' AND (?::bigint IS NULL OR d.paid_at >= ?::bigint)
-       AND u.leaderboard_opt_in AND u.stripe_mode IS DISTINCT FROM 'test' AND ${INDEXABLE_SQL}
-     GROUP BY u.id
+     FROM donations d
+     JOIN (
+       SELECT id, username, display_name, avatar_url FROM users
+       WHERE leaderboard_opt_in AND stripe_mode IS DISTINCT FROM 'test' AND ${INDEXABLE_SQL}
+     ) u ON u.id = d.creator_id
+     WHERE d.status = 'paid' AND d.stripe_mode = 'live' AND d.method <> 'usdc' AND (?::bigint IS NULL OR d.paid_at >= ?::bigint)
+     GROUP BY u.id, u.username, u.display_name, u.avatar_url
      ORDER BY SUM(d.units) DESC, MIN(d.paid_at) ASC, u.username ASC
      LIMIT ${LEADERBOARD_SIZE}`,
     [window === null ? null : now - window, window === null ? null : now - window],

@@ -65,7 +65,8 @@ export default async function AccountPage() {
             <p className="font-semibold text-ink">Show my project on the leaderboard</p>
             <p className="mt-0.5 break-words text-[13px] leading-snug text-muted">
               Off by default. Your name, avatar, tokens received and supporter count are listed on the{" "}
-              <a href="/leaderboard" className="underline underline-offset-2">public leaderboard</a>. Never dollar amounts.
+              <a href="/leaderboard" className="underline underline-offset-2">public leaderboard</a>, for the last day, week,
+              month and all time. With your public price, those tokens tell roughly what you received in each.
             </p>
           </div>
           <LeaderboardToggle on={user.leaderboardOptIn} />

@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertConsent } from "@/lib/consent";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
@@ -28,6 +29,7 @@ export async function deleteAccountAction(_prev: ActionState, formData: FormData
   revalidatePath(`/${user.username}`);
   revalidatePath("/");
   revalidatePath("/sitemap.xml");
+  revalidatePath("/leaderboard", "layout");
   redirect("/login?deleted=1");
 }
 
@@ -47,6 +49,8 @@ export async function setSupportEmailsAction(on: boolean): Promise<{ ok: boolean
 export async function setLeaderboardAction(on: boolean): Promise<{ ok: boolean }> {
   const user = await requireCreator();
   if (typeof on !== "boolean") return { ok: false };
+  // Joining a public list needs the current Terms; leaving it never does.
+  if (on) assertConsent(user);
   await setLeaderboardOptIn(user.id, on);
   revalidatePath("/dashboard/account");
   revalidatePath("/leaderboard", "layout");

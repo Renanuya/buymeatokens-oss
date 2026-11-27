@@ -27,6 +27,8 @@ function refresh(username: string) {
   revalidatePath("/dashboard", "layout");
   revalidatePath("/onboarding", "layout");
   revalidatePath(`/${username}`);
+  // A name, a payment method or test mode changes who is on the leaderboard and how they show.
+  revalidatePath("/leaderboard", "layout");
 }
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

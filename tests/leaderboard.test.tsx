@@ -16,7 +16,12 @@ vi.mock("../src/lib/db", async (importOriginal) => {
   };
 });
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/" }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  redirect: (to: string) => {
+    throw new Error(`REDIRECT ${to}`);
+  },
+}));
 vi.mock("../src/lib/session", async () => {
   const users = await import("../src/lib/users");
   return {
@@ -32,6 +37,7 @@ import { SCHEMA, query } from "../src/lib/db";
 import { setLeaderboardAction } from "../src/app/dashboard/account/actions";
 import { Board } from "../src/app/leaderboard/board";
 import { LEADERBOARD_SIZE, topCreators } from "../src/lib/leaderboard";
+import { TERMS_VERSION } from "../src/lib/legal/config";
 import { getUserById } from "../src/lib/users";
 
 const NOW = Date.UTC(2026, 10, 28, 12);
@@ -46,11 +52,11 @@ async function creator(id: string, extra: { optIn?: boolean; auth?: string; payo
   );
 }
 
-async function paid(creatorId: string, units: number, at: number, extra: { mode?: string; status?: string } = {}) {
+async function paid(creatorId: string, units: number, at: number, extra: { mode?: string; status?: string; method?: string } = {}) {
   await query(
-    `INSERT INTO donations (id, creator_id, stripe_mode, units, amount_cents, status, created_at, paid_at)
-     VALUES (?, ?, ?, ?, 99999, ?, ?, ?)`,
-    [`d${++seq}`, creatorId, extra.mode ?? "live", units, extra.status ?? "paid", at, at],
+    `INSERT INTO donations (id, creator_id, stripe_mode, method, units, amount_cents, status, created_at, paid_at)
+     VALUES (?, ?, ?, ?, ?, 99999, ?, ?, ?)`,
+    [`d${++seq}`, creatorId, extra.mode ?? "live", extra.method ?? "stripe", units, extra.status ?? "paid", at, at],
   );
 }
 
@@ -89,6 +95,16 @@ describe("leaderboard", () => {
     expect((await topCreators("lifetime", NOW))[0]).toMatchObject({ rank: 1, units: 5, supporters: 1 });
   });
 
+  it("doesn't count USDC, which costs only gas to send to yourself", async () => {
+    await creator("honest");
+    await creator("cycler");
+    await paid("honest", 10, NOW - HOUR, { method: "paypal" });
+    for (let i = 0; i < 101; i++) await paid("cycler", 1, NOW - HOUR, { method: "usdc" });
+    await paid("cycler", 1, NOW - HOUR);
+    expect(await names("daily")).toEqual(["honest", "cycler"]);
+    expect((await topCreators("daily", NOW))[1]).toMatchObject({ units: 1, supporters: 1 });
+  });
+
   it("uses rolling windows with an inclusive start", async () => {
     await creator("a");
     await paid("a", 1, NOW - 24 * HOUR); // exactly 24h ago: in
@@ -119,10 +135,14 @@ describe("leaderboard", () => {
     expect(board[0].units).toBe(LEADERBOARD_SIZE + 5);
   });
 
-  it("lets a creator change only their own switch", async () => {
+  it("lets a creator change only their own switch, and joining needs the current Terms", async () => {
     await creator("a", { optIn: false });
     await creator("b", { optIn: false });
     mocks.userId = "a";
+    // Without the current Terms, joining is refused; leaving is always allowed.
+    await expect(setLeaderboardAction(true)).rejects.toThrow(/REDIRECT/);
+    expect((await getUserById("a"))?.leaderboardOptIn).toBe(false);
+    await query("UPDATE users SET terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'a'", [TERMS_VERSION]);
     expect(await setLeaderboardAction(true)).toEqual({ ok: true });
     expect((await getUserById("a"))?.leaderboardOptIn).toBe(true);
     expect((await getUserById("b"))?.leaderboardOptIn).toBe(false);
