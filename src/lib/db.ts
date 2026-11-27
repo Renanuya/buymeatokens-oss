@@ -178,8 +178,11 @@ ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_use TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS thank_you TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_units INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_started_at BIGINT;
+-- goal_period is 'one-time' (counts since goal_started_at) or 'monthly' (counts the current UTC month, computed on read).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_period TEXT NOT NULL DEFAULT 'one-time';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS socials TEXT NOT NULL DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_progress INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_done_at BIGINT;
@@ -302,6 +305,19 @@ ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 -- Stream alerts (src/lib/stream-alerts.ts): SHA-256 of the secret in the creator's browser source URL. NULL = off.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_token_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS users_alerts_token_hash ON users(alerts_token_hash);
+-- Project directory (src/lib/directory.ts): a creator opts in (listed_at, Unix ms) and picks one category and one
+-- language from fixed lists. The index serves the unfiltered listing, newest first.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS listed_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_category TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_language TEXT;
+CREATE INDEX IF NOT EXISTS users_directory ON users(listed_at DESC, id) WHERE listed_at IS NOT NULL;
+-- Directory search (src/lib/directory.ts, SEARCH_DOC): word-prefix full-text search over listed creators only.
+CREATE INDEX IF NOT EXISTS users_directory_search ON users USING GIN (to_tsvector('simple',
+  coalesce(project_name, '') || ' ' || coalesce(display_name, '') || ' ' || coalesce(username, '') || ' ' || coalesce(bio, '')))
+  WHERE listed_at IS NOT NULL;
+-- Leaderboard (src/lib/leaderboard.ts): a creator appears only after turning this on under Account. The short
+-- windows are range scans on the donations_paid_at index above.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS leaderboard_opt_in BOOLEAN NOT NULL DEFAULT false;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;

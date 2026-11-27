@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { ImageResponse } from "next/og";
 import { appUrl } from "@/lib/config";
 import { cardLines, cardName, cardStats } from "@/lib/creator-card";
-import { getStats, unitsSince } from "@/lib/donations";
+import { getStats, goalReached } from "@/lib/donations";
 import { initials } from "@/lib/format";
 import { getUserByUsername } from "@/lib/users";
 
@@ -57,7 +57,7 @@ export default async function Image({ params }: { params: Promise<{ username: st
   const font = (name: string) => readFile(join(process.cwd(), "assets/fonts", name));
   const [stats, reached, avatar, bold, semibold, boldExt, semiboldExt] = await Promise.all([
     getStats(creator.id, mode),
-    hasGoal ? unitsSince(creator.id, mode, creator.goalStartedAt!) : Promise.resolve(0),
+    goalReached(creator),
     avatarData(creator.avatarUrl),
     font("inter-tight-latin-700-normal.woff"),
     font("inter-tight-latin-600-normal.woff"),

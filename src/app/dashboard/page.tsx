@@ -17,7 +17,7 @@ import { referralStats } from "@/lib/applications";
 import { planState } from "@/lib/billing";
 import { appUrl } from "@/lib/config";
 import { isContributor } from "@/lib/contributors";
-import { earningsHistory, getStats, listRecentPaid, unitsSince } from "@/lib/donations";
+import { earningsHistory, getStats, goalReached as progressOf, listRecentPaid } from "@/lib/donations";
 import { visitorsSince } from "@/lib/page-visits";
 import { formatTokens, formatUsd, shortName } from "@/lib/format";
 import { storedStripeKeyLast4 } from "@/lib/payment-secrets";
@@ -39,7 +39,7 @@ export default async function DashboardPage() {
   const [stats, recent, goalReached, history, referrals, contributor, visitors] = await Promise.all([
     getStats(user.id, mode),
     listRecentPaid(user.id, null, 5),
-    hasGoal ? unitsSince(user.id, mode, user.goalStartedAt!) : Promise.resolve(0),
+    progressOf(user),
     earningsHistory(user.id, mode),
     referralStats(user.id),
     isContributor(user.login),
@@ -159,6 +159,7 @@ export default async function DashboardPage() {
                     </p>
                     <p className="mt-1 text-sm text-muted">
                       {formatUsd(user.goalUnits! * user.unitPriceCents)} at {formatUsd(user.unitPriceCents)} per 1M
+                      {user.goalPeriod === "monthly" && ", this month"}
                     </p>
                     <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-xs font-semibold text-ink/75">
                       <Glyph name="trending" className="size-3.5 text-iris" />
