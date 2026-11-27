@@ -1,5 +1,5 @@
-// AI drafts of a creator's page text, written from their repo's README, or from the project details they gave in the
-// guided setup when there is no GitHub repo. Server only.
+// AI drafts of a creator's page text, written from their repo's README, or from the project details they saved for
+// their page when there is no GitHub repo. Server only.
 //
 // Free tiers first: Gemini (Google AI Studio) and then Groq (two models, each with its own quota), all through their
 // OpenAI-compatible chat endpoints, so one request shape covers them. A provider is used only when its key is set; with no key the feature is off
@@ -122,8 +122,8 @@ Write it from the README and GitHub details you are given:
 ${SHARED_RULES}`,
 };
 
-/** What the creator already gave us about a project without a GitHub repo. All of it is their own text. */
-export type ProjectFacts = { name: string; url: string; description: string; tokenUse: string };
+/** What the creator saved for their page about a project without a GitHub repo: their own text, shown publicly. */
+export type ProjectFacts = { name: string; url: string; tokenUse: string };
 
 /** Creator text as one plain line for the prompt: no angle brackets, so it can't close the tag it sits in. */
 const fact = (text: string, max: number) => text.replace(/[<>]/g, " ").replace(/\s+/g, " ").trim().slice(0, max);
@@ -131,14 +131,13 @@ const fact = (text: string, max: number) => text.replace(/[<>]/g, " ").replace(/
 const factsOf = (facts: ProjectFacts) => ({
   name: fact(facts.name, PROJECT_NAME_MAX_LENGTH),
   url: fact(facts.url, 300),
-  description: fact(facts.description, BIO_MAX_LENGTH),
   tokenUse: fact(facts.tokenUse, TOKEN_USE_MAX_LENGTH),
 });
 
 /** Whether there is anything to write from when there is no repo: a name, a link or some text. */
 export function hasFacts(facts: ProjectFacts): boolean {
   const f = factsOf(facts);
-  return Boolean(f.name || f.url || f.description.length >= 15 || f.tokenUse.length >= 15);
+  return Boolean(f.name || f.url || f.tokenUse.length >= 15);
 }
 
 const FACTS_SYSTEM: Record<DraftField, string> = {
@@ -160,7 +159,6 @@ export function draftMessages(field: DraftField, source: RepoBrief | ProjectFact
     const lines = [
       f.name && `Name: ${f.name}`,
       f.url && `Link: ${f.url}`,
-      f.description && `Description: ${f.description}`,
       f.tokenUse && `How the tokens will be used: ${f.tokenUse}`,
     ].filter(Boolean);
     return [

@@ -10,7 +10,6 @@ import {
   type AiProvider,
   type DraftField,
 } from "@/lib/ai-draft";
-import { getApplicationForUser } from "@/lib/applications";
 import { query } from "@/lib/db";
 import { repoBrief } from "@/lib/github";
 import { githubRepo, normalizeProjectUrl } from "@/lib/profile";
@@ -52,17 +51,12 @@ async function refund(id: number) {
 }
 
 /**
- * Without a GitHub repo: drafts from what the signed-in creator has saved (project name and link, their application,
- * token use). Nothing comes from the client and no link is fetched, so this can't be used as a general text generator.
+ * Without a GitHub repo: drafts from what the signed-in creator has saved for their page (project name, link, token
+ * use), the same details the public page shows. Nothing comes from the client and no link is fetched, so this can't be
+ * used as a general text generator.
  */
 async function draftFromSavedDetails(user: User, field: DraftField, providers: AiProvider[]): Promise<DraftResult> {
-  const application = await getApplicationForUser(user.id).catch(() => null);
-  const facts = {
-    name: user.projectName ?? application?.projectName ?? "",
-    url: user.projectUrl ?? application?.projectUrl ?? "",
-    description: application?.description ?? "",
-    tokenUse: user.tokenUse || application?.tokenUse || "",
-  };
+  const facts = { name: user.projectName ?? "", url: user.projectUrl ?? "", tokenUse: user.tokenUse ?? "" };
   if (!hasFacts(facts)) return { error: "Add your project's name or link in the Project step first, so the AI has something to write from." };
 
   const reserved = await reserveDraft(user.id, field, "");
