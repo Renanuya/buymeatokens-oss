@@ -85,6 +85,12 @@ CREATE TABLE IF NOT EXISTS donations (
 );
 CREATE INDEX IF NOT EXISTS donations_creator_status ON donations(creator_id, status);
 CREATE INDEX IF NOT EXISTS donations_status_created ON donations(status, created_at);
+-- Confirmed support per creator and mode, by the time it was confirmed: public pages sum it and page through it.
+CREATE INDEX IF NOT EXISTS donations_paid_window
+  ON donations (creator_id, stripe_mode, (COALESCE(paid_at, created_at)), id) INCLUDE (units, paid_at, created_at)
+  WHERE status = 'paid';
+-- Postgres keeps no statistics for an expression in a partial index; without these it misjudges a window's size.
+CREATE STATISTICS IF NOT EXISTS donations_paid_at_stats ON (COALESCE(paid_at, created_at)) FROM donations;
 
 -- USDC on Base: creators add a wallet address, supporters pay on-chain.
 -- method is 'stripe' or 'usdc'; tx_hash makes each transfer count once.
@@ -296,9 +302,6 @@ ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 -- Stream alerts (src/lib/stream-alerts.ts): SHA-256 of the secret in the creator's browser source URL. NULL = off.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_token_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS users_alerts_token_hash ON users(alerts_token_hash);
--- The feed is polled every few seconds per open stream: it must not scan and sort a creator's whole history.
-CREATE INDEX IF NOT EXISTS donations_alerts_feed
-  ON donations (creator_id, stripe_mode, (COALESCE(paid_at, created_at)), id) WHERE status = 'paid';
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;

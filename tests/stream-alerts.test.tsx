@@ -232,7 +232,7 @@ describe("stream alerts", () => {
   });
 
   it("has an index for the feed, so a poll doesn't sort a creator's whole history", async () => {
-    const rs = await query("SELECT indexdef FROM pg_indexes WHERE indexname = 'donations_alerts_feed'");
+    const rs = await query("SELECT indexdef FROM pg_indexes WHERE indexname = 'donations_paid_window'");
     expect(String(rs.rows[0]?.indexdef)).toContain("WHERE (status = 'paid'");
   });
 });
