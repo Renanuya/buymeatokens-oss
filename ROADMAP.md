@@ -62,9 +62,8 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
 [changelog](CHANGELOG.md#010---2026-11-26).
 
-**Get found on GitHub** ([#31], 2026-11-27): a README supporter wall that lists a creator's latest supporters by
-name and follows GitHub's light and dark mode, and GitHub's Sponsor button for one repository or all of them, set up
-from the dashboard in one click.
+**README supporter wall** ([#31], 2026-11-27): a card for the README that lists a creator's latest supporters by
+name, shows the tokens received and follows GitHub's light and dark mode. It updates by itself.
 
 **Support emails and site alerts** ([#19], 2026-11-27): creators get an email when someone supports them, bundled
 on busy days and easy to turn off, and the operator is emailed about server errors and payment problems.

@@ -208,8 +208,6 @@ function SourceIcon({ source }: { source: SourceKey }) {
           ({
             badge: "badge-check",
             wall: "users",
-            sponsor: "heart",
-            npm: "layers",
             reddit: "message",
             hackernews: "trending",
             search: "search",

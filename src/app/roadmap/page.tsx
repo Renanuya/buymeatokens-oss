@@ -99,15 +99,12 @@ const milestones: Milestone[] = [
     links: [{ href: "/dashboard/account#emails", label: "Email settings" }],
   },
   {
-    title: "Get found on GitHub.",
-    description: "Creators add a supporter wall to their README that lists their latest supporters by name and follows GitHub's light and dark mode, and turn on GitHub's Sponsor button for one repository or all of them in one click.",
-    category: "GitHub",
+    title: "Show supporters in your README.",
+    description: "Creators add a supporter wall to their README that lists their latest supporters by name, shows the tokens they've received and follows GitHub's light and dark mode. It updates by itself.",
+    category: "Supporter wall",
     icon: "users",
     done: true,
-    links: [
-      { href: "/dashboard#supporter-wall", label: "Add your supporter wall" },
-      { href: "/dashboard#sponsor-button", label: "Turn on the Sponsor button" },
-    ],
+    links: [{ href: "/dashboard#supporter-wall", label: "Add your supporter wall" }],
   },
   {
     title: "Help people discover projects.",

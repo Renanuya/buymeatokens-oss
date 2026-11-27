@@ -2,20 +2,18 @@
 
 import { useEffect, useState } from "react";
 import { BadgeBuilder } from "@/components/badge-builder";
-import { SponsorSetup } from "@/components/sponsor-setup";
 import { WallBuilder } from "@/components/wall-builder";
 
-type Tab = "badge" | "wall" | "sponsor";
+type Tab = "badge" | "wall";
 
 const TABS: { key: Tab; label: string; hash: string }[] = [
   { key: "badge", label: "Badge", hash: "#readme-badge" },
   { key: "wall", label: "Supporter wall", hash: "#supporter-wall" },
-  { key: "sponsor", label: "Sponsor button", hash: "#sponsor-button" },
 ];
 
 /**
- * Everything that brings people from GitHub to the creator's page, as three tabs: the README badge, the README
- * supporter wall and GitHub's Sponsor button. `/dashboard#supporter-wall` and `#sponsor-button` open their tab.
+ * What brings people from a README to the creator's page, as two tabs: the badge and the supporter wall.
+ * `/dashboard#supporter-wall` opens the wall's tab.
  */
 export function ReadmeTools({ username, pageUrl, base }: { username: string; pageUrl: string; base: string }) {
   const [tab, setTab] = useState<Tab>("badge");
@@ -59,7 +57,6 @@ export function ReadmeTools({ username, pageUrl, base }: { username: string; pag
       >
         {tab === "badge" && <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="flex flex-1 flex-col" />}
         {tab === "wall" && <WallBuilder username={username} pageUrl={pageUrl} base={base} />}
-        {tab === "sponsor" && <SponsorSetup username={username} base={base} />}
       </div>
     </div>
   );
