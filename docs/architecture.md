@@ -51,7 +51,7 @@ src/
     blog/, about/, roadmap/  marketing pages; posts live in content/blog/*.md
     terms/, privacy/, faq/   legal pages; the texts live in content/legal/en/*.md
     llms.txt/, sitemap.ts    search engine and AI assistant entry points
-    draft-actions.ts         "Write with AI" for the project description
+    draft-actions.ts         "Write with AI" for the project description (README, or saved project details without a repo)
     api/
       auth/                  GitHub OAuth and the development login
       badge/[username]/      README badge (SVG)

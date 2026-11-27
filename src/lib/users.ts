@@ -2,6 +2,7 @@ import { isUniqueViolation, num, query, str, type Arg, type Row } from "./db";
 import { newId } from "./crypto";
 import { earlyAccessOpen } from "./config";
 import { SETUP_STEPS } from "./setup";
+import { validateProjectName } from "./profile";
 import { parseSocials, type Socials } from "./socials";
 
 export type StripeMode = "test" | "live";
@@ -190,7 +191,13 @@ export async function setPrice(id: string, unitPriceCents: number) {
   await run("UPDATE users SET unit_price_cents = ? WHERE id = ?", [unitPriceCents, id]);
 }
 
+// Last line of defence: the forms check names and give a message; this stops any other caller.
+function assertProjectName(name: string | null | undefined) {
+  if (name && validateProjectName(name)) throw new Error("Project name not allowed");
+}
+
 export async function setProject(id: string, projectUrl: string | null, projectName: string | null) {
+  assertProjectName(projectName);
   await run("UPDATE users SET project_url = ?, project_name = ? WHERE id = ?", [projectUrl, projectName, id]);
 }
 
@@ -236,6 +243,7 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
   const sets = ["display_name = ?", "bio = ?", "unit_price_cents = ?"];
   const args: Arg[] = [profile.displayName, profile.bio, profile.unitPriceCents];
   if (profile.projectUrl !== undefined) {
+    assertProjectName(profile.projectName);
     sets.push("project_url = ?", "project_name = ?");
     args.push(profile.projectUrl, profile.projectName ?? null);
   }

@@ -106,7 +106,7 @@ function CustomTile({
   );
 }
 
-/** Where "Write with AI" reads from. Leave it out to hide the button (AI drafts off, or nothing to read). */
+/** Where "Write with AI" reads from. Leave it out to hide the button (AI drafts off). `projectUrl` can be empty or not GitHub: the server then writes from the saved project details. */
 export type AiDraftSource = { projectUrl: string };
 
 type DraftStatus = "idle" | "reading" | "writing";
@@ -187,7 +187,7 @@ function AiDraftButton({ ai, onStart }: { ai: AiDraft; onStart?: () => void }) {
         onStart?.();
         void ai.run();
       }}
-      title="Drafts this from your repo's README"
+      title="Drafts this from your repo's README, or from your project details"
       className="group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-lilac-soft px-2.5 text-xs font-semibold text-iris transition duration-200 hover:bg-lilac/70 hover:text-ink disabled:cursor-default disabled:hover:bg-lilac-soft disabled:hover:text-iris"
     >
       {ai.status === "reading" ? (
@@ -199,7 +199,7 @@ function AiDraftButton({ ai, onStart }: { ai: AiDraft; onStart?: () => void }) {
           className={`size-3.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${ai.status === "writing" ? "animate-pulse" : ""}`}
         />
       )}
-      <span aria-live="polite">{ai.status === "reading" ? "Reading README…" : ai.status === "writing" ? "Writing…" : "Write with AI"}</span>
+      <span aria-live="polite">{ai.status === "reading" ? "Reading your project…" : ai.status === "writing" ? "Writing…" : "Write with AI"}</span>
     </button>
   );
 }

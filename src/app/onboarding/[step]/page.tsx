@@ -64,9 +64,9 @@ function socialsToStart(user: User): Socials {
   return decided || !user.login ? user.socials : { github: `https://github.com/${user.login}` };
 }
 
-/** "Write with AI" reads the saved project link; it only shows when that is a GitHub repo and AI drafts are on. */
+/** "Write with AI" shows whenever AI drafts are on: from the saved GitHub repo's README, else from the saved project details. */
 function aiSource(user: User) {
-  return aiDraftEnabled() && user.projectUrl && githubRepo(user.projectUrl) ? { projectUrl: user.projectUrl } : undefined;
+  return aiDraftEnabled() ? { projectUrl: user.projectUrl ?? "" } : undefined;
 }
 
 /** What goes in a step's form the first time: saved values, else the application, else GitHub. */

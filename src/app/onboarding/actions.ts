@@ -7,11 +7,10 @@ import { hasAccess } from "@/lib/access";
 import { assertConsent, consentFromForm } from "@/lib/consent";
 import {
   PRICE_ERROR,
-  PROJECT_NAME_MAX_LENGTH,
   normalizeProjectUrl,
   parseGoalUnits,
   parsePriceUsd,
-  projectNameFromUrl,
+  resolveProjectName,
   validateBio,
   parseThankYou,
   validateTokenUse,
@@ -125,8 +124,9 @@ export async function saveProjectAction(_prev: ActionState, formData: FormData):
   const link = normalizeProjectUrl(String(formData.get("projectUrl") ?? ""));
   if ("error" in link) return { error: link.error };
   if (!link.url) return { error: "Add your project link, or skip this step for now." };
-  const name = String(formData.get("projectName") ?? "").trim().slice(0, PROJECT_NAME_MAX_LENGTH);
-  await setProject(user.id, link.url, name || projectNameFromUrl(link.url));
+  const project = resolveProjectName(String(formData.get("projectName") ?? ""), link.url);
+  if ("error" in project) return { error: project.error };
+  await setProject(user.id, link.url, project.name);
   return finishStep(user, "project");
 }
 
