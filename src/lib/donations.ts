@@ -1,5 +1,6 @@
 import { num, query, str, type Row } from "./db";
 import { newId } from "./crypto";
+import { SUPPORT_RETURNING, enqueueWebhooksCte } from "./webhook-events";
 import type { StripeMode } from "./users";
 
 export type DonationStatus = "pending" | "paid" | "expired" | "failed";
@@ -109,18 +110,31 @@ export async function getPaypalDonation(id: string): Promise<{ id: string; creat
 
 /** Marks a PayPal donation paid with the amount PayPal reports. Returns false if already paid or the txn is taken. */
 export async function markPaypalPaid(id: string, txnId: string, amountCents: number, units: number): Promise<boolean> {
+  const now = Date.now();
+  // The webhook event is enqueued by this same statement (src/lib/webhook-events.ts).
   const rs = await query(
-    `UPDATE donations SET status = 'paid', paid_at = ?, tx_hash = ?, amount_cents = ?, units = ?
-     WHERE id = ? AND method = 'paypal' AND status IN ('pending', 'expired')
-       AND NOT EXISTS (SELECT 1 FROM donations WHERE tx_hash = ?)`,
-    [Date.now(), txnId, amountCents, units, id, txnId],
+    `WITH moved AS (
+       UPDATE donations SET status = 'paid', paid_at = ?, tx_hash = ?, amount_cents = ?, units = ?
+       WHERE id = ? AND method = 'paypal' AND status IN ('pending', 'expired')
+         AND NOT EXISTS (SELECT 1 FROM donations WHERE tx_hash = ?)
+       RETURNING ${SUPPORT_RETURNING}
+     ), ${enqueueWebhooksCte("support.confirmed")}
+     SELECT id FROM moved`,
+    [now, txnId, amountCents, units, id, txnId, now],
   );
-  return rs.rowsAffected > 0;
+  return rs.rows.length > 0;
 }
 
 /** A refunded or reversed PayPal payment stops counting. */
 export async function markPaypalReversed(txnId: string) {
-  await query("UPDATE donations SET status = 'failed' WHERE method = 'paypal' AND tx_hash = ? AND status = 'paid'", [txnId]);
+  await query(
+    `WITH moved AS (
+       UPDATE donations SET status = 'failed' WHERE method = 'paypal' AND tx_hash = ? AND status = 'paid'
+       RETURNING ${SUPPORT_RETURNING}
+     ), ${enqueueWebhooksCte("support.reversed")}
+     SELECT id FROM moved`,
+    [txnId, Date.now()],
+  );
 }
 
 /**
@@ -138,12 +152,16 @@ export async function recordUsdcDonation(input: {
 }): Promise<boolean> {
   const now = Date.now();
   const rs = await query(
-    `INSERT INTO donations (id, creator_id, stripe_mode, method, tx_hash, units, amount_cents, currency, supporter_name, message, status, created_at, paid_at, visit_source)
-     VALUES (?, ?, 'live', 'usdc', ?, ?, ?, 'usd', ?, ?, 'paid', ?, ?, ?)
-     ON CONFLICT (tx_hash) DO NOTHING`,
-    [newId(), input.creatorId, input.txHash, input.units, input.amountCents, input.supporterName, input.message, now, now, input.visitSource ?? null],
+    `WITH moved AS (
+       INSERT INTO donations (id, creator_id, stripe_mode, method, tx_hash, units, amount_cents, currency, supporter_name, message, status, created_at, paid_at, visit_source)
+       VALUES (?, ?, 'live', 'usdc', ?, ?, ?, 'usd', ?, ?, 'paid', ?, ?, ?)
+       ON CONFLICT (tx_hash) DO NOTHING
+       RETURNING ${SUPPORT_RETURNING}
+     ), ${enqueueWebhooksCte("support.confirmed")}
+     SELECT id FROM moved`,
+    [newId(), input.creatorId, input.txHash, input.units, input.amountCents, input.supporterName, input.message, now, now, input.visitSource ?? null, now],
   );
-  return rs.rowsAffected > 0;
+  return rs.rows.length > 0;
 }
 
 export async function attachSession(id: string, sessionId: string) {
@@ -152,11 +170,16 @@ export async function attachSession(id: string, sessionId: string) {
 
 /** Returns true only the first time a donation flips to paid. */
 export async function markPaid(id: string): Promise<boolean> {
+  const now = Date.now();
   const rs = await query(
-    "UPDATE donations SET status = 'paid', paid_at = ? WHERE id = ? AND status IN ('pending', 'expired')",
-    [Date.now(), id],
+    `WITH moved AS (
+       UPDATE donations SET status = 'paid', paid_at = ? WHERE id = ? AND status IN ('pending', 'expired')
+       RETURNING ${SUPPORT_RETURNING}
+     ), ${enqueueWebhooksCte("support.confirmed")}
+     SELECT id FROM moved`,
+    [now, id, now],
   );
-  return rs.rowsAffected > 0;
+  return rs.rows.length > 0;
 }
 
 export async function markStatus(id: string, status: "expired" | "failed") {

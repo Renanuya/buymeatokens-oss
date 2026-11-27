@@ -8,7 +8,8 @@ import { accountDeleteDays } from "./legal/config";
 //   - the support recorded on the page (supporter names, messages, replies, amounts, references)
 //   - early-access applications and waitlist entries made with the same GitHub login or email
 //   - badge copy counts, email-flow rows, support email rows and "Write with AI" draft counts (deleted with the user
-//     through ON DELETE CASCADE)
+//     through ON DELETE CASCADE), and webhook endpoints with their stored secrets, queued and past deliveries
+//     (which hold supporter names and messages) and the test-event counter, all through the same cascade
 // Other people's applications that named this creator as referrer keep their row with the link cleared.
 // GitHub OAuth tokens are never stored, so there is nothing to revoke on our side.
 // What stays: one account_deletions row with the request time and nothing that points back to the person.

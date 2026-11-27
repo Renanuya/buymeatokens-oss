@@ -8,6 +8,13 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Signed webhooks**: creators can add up to 3 HTTPS endpoints under Account > Webhooks and get a signed
+  `support.confirmed` event when a payment is confirmed (Stripe, PayPal or USDC) and `support.reversed` when a PayPal
+  payment is reversed. The event is written by the same SQL statement that confirms the payment, so it is never lost
+  or doubled. Deliveries retry with backoff, endpoints that keep failing are disabled, secrets are shown once and can
+  be rotated with a 24 hour overlap, and every URL is checked against private and internal addresses before each send.
+  See [docs/webhooks.md](docs/webhooks.md). The developer API and Discord roles are still to come.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

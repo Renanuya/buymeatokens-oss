@@ -2,6 +2,7 @@ import { safeEqual } from "@/lib/crypto";
 import { pruneVisitorMarks } from "@/lib/page-visits";
 import { syncAll } from "@/lib/reconcile";
 import { pruneOpsEvents, reportError } from "@/lib/ops";
+import { pruneWebhookDeliveries } from "@/lib/webhook-delivery";
 
 export const maxDuration = 60;
 
@@ -10,7 +11,7 @@ export const maxDuration = 60;
  * The existing daily Vercel Cron calls this with "Authorization: Bearer <CRON_SECRET>".
  * Creator onboarding emails use their own minute worker at /api/cron/emails.
  * It also deletes the page analytics' visitor marks from earlier days, in case no visit did that today, and operator
- * alert groups not seen for 30 days.
+ * alert groups not seen for 30 days, and webhook deliveries finished more than 30 days ago.
  */
 export async function GET(req: Request) {
   const secret = process.env.CRON_SECRET;
@@ -20,5 +21,6 @@ export async function GET(req: Request) {
   }
   await pruneVisitorMarks().catch((error) => reportError("[cron] visitor marks", error));
   await pruneOpsEvents().catch((error) => reportError("[cron] prune alerts", error));
+  await pruneWebhookDeliveries().catch((error) => reportError("[cron] prune webhooks", error));
   return Response.json(await syncAll());
 }

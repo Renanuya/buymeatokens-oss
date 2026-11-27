@@ -88,6 +88,7 @@ Key modules in `src/lib`:
 | `setup.ts`, `profile.ts`, `socials.ts`, `validation.ts` | Guided setup, profile fields, reserved usernames |
 | `seo.ts`, `blog.ts` | Structured data, sitemap inputs and blog loading |
 | `legal/`, `consent.ts` | Legal values and copy, Terms acceptance and its version ([legal.md](legal.md)) |
+| `webhooks.ts`, `webhook-events.ts`, `webhook-url.ts`, `webhook-sign.ts`, `webhook-send.ts`, `webhook-delivery.ts` | Signed webhooks to creators' endpoints: enqueued by the confirming statement, SSRF-checked, sent by the minute worker ([webhooks.md](webhooks.md)) |
 | `account-deletion.ts`, `payment-export.ts` | Self-service account deletion and the payment history CSV |
 | `ai-draft.ts` | Prompts, provider chain and daily caps for "Write with AI" |
 | `page-visits.ts`, `visit-source.ts`, `visit-client.ts` | Page analytics without cookies: counting visits and support starts with a daily salted mark, where visits come from, and the Analytics tab's numbers |
