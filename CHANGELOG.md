@@ -171,7 +171,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
     creator page can end up hidden behind them.
   - Handles made only of official-sounding words ("support", "official-team", "destek") or containing
     "buymeatokens" are reserved.
-  - Atatürk and state institutions are never available.
+  - National founders and symbols of every country (Atatürk, Washington, Gandhi, Mandela, Bolívar, Ho Chi Minh…, by
+    full name so first names stay free) and states and public bodies are never available. The latter means
+    government, ministries, police, armies, embassies, parliaments, tax and customs, and the FBI, IRS, NHS, UN,
+    UNICEF, NATO and the like, in several languages and in the usual scam shapes ("irs-refund", "police-department",
+    "us-embassy").
   - Company and product names (OpenAI, Anthropic, PayPal, Stripe, GitHub, Google…) are kept for their owners, with a
     message to email hello@buymeatokens.com if that's you.
   - Variants count: dashes, trailing numbers, look-alike digits and words like "official", "support" or "resmi"
