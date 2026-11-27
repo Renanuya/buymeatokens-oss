@@ -20,7 +20,7 @@ const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
 ];
 
 const CAPTIONS: Record<Kind, string> = {
-  floating: "Paste it before </body>. The button stays in the corner of every page; on phones it shrinks to the mark.",
+  floating: "Paste it before </body>. The button stays at the bottom centre of every page; on phones it shrinks to the mark.",
   inline: "Paste it where the button should appear, like your footer or about page.",
   image: "For sites that don’t run scripts, like Notion or Medium: a plain image link.",
 };
