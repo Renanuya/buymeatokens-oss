@@ -7,16 +7,20 @@ const ACCEPTED = [
   "Arsenal", "bass", "grape", "therapist finder", "MongoDB", "nginx", "kill-port", "git-blame", "Hell's Kitchen Menu",
   "Damn Small Linux", "badass-cli", "snigger", "fagot", "Niggard Budget", "popcorn", "Rapeseed Co", "tiny-llm",
   "web3-kit", "k8s-lens", "Proyecto Árbol", "Café Ünder", "日本語ツール", "Scunthorpe.io", "a b c", "",
+  "Brainfuck Interpreter", "brainfuck-rs", "A* Pathfinding", "*nix tools", "glob **/*.ts", "My **** Project", "C* Compiler",
+  "f***", "**bold** notes", "Moby-Duck", "Cook Book", "Dock Manager", "print-server", "Spice Rack", "Tit for Tat",
+  "Moby Dick Reader", "Philip K. Dick Bibliography", "Dick Tracy Fan Wiki",
 ];
 
 const REJECTED = [
   "fuck", "FUCK", "Fuck Tools", "fuuuuck", "f u c k", "f.u.c.k", "f_u-c*k", "f​u​c​k", "fück",
   "fuсk" /* Cyrillic с */, "ｆｕｃｋ" /* fullwidth */, "motherfucker", "fuck3r",
   "cunt", "c u n t", "cunt!", "cuuunt", "CUNT-api", "p0rn", "porn hub", "pornography", "PORN",
-  "pu55y", "pussy", "d1ck", "d!ck", "sh0wer-dick", "c0ck", "tits", "t1ts", "b00bs", "wh0re", "sluts", "n1gg3r",
+  "pu55y", "pussy", "c0ck", "tits", "t1ts", "b00bs", "wh0re", "sluts", "n1gg3r",
   "nigg@", "nigger", "n i g g e r", "niggerlover", "faggot", "f4gg0t", "fag", "retard", "tranny", "orospu", "siktir",
   "Αρχηγός fuck", "hentai-archive", "blowjob", "handjob", "pedo", "pedophile", "wanker", "putain", "hurensohn",
-  "ASSIST fuck", "my_fuck_project",
+  "ASSIST fuck", "my_fuck_project", "f*ck", "f**k", "F**K Tools", "c*nt", "p*rn", "p**n hub", "n*gger", "c*ck pics",
+  "brainfuck fuck", "what the f*ck",
 ];
 
 describe("validateProjectName", () => {
