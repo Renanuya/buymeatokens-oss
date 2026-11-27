@@ -29,6 +29,7 @@ export async function loadCreatorPage(creator: User): Promise<CreatorPageModel> 
     avatarUrl: creator.avatarUrl,
     bio: creator.bio,
     tokenUse: creator.tokenUse,
+    thankYou: creator.thankYou,
     projectUrl: creator.projectUrl,
     projectName: creator.projectName,
     socials: creator.socials,

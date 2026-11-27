@@ -17,6 +17,7 @@ import {
   parsePriceUsd,
   resolveProjectName,
   validateBio,
+  parseThankYou,
   validateTokenUse,
 } from "@/lib/profile";
 import { SOCIAL_NETWORKS, socialsFromForm } from "@/lib/socials";
@@ -56,6 +57,11 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
     const invalid = validateTokenUse(tokenUse);
     if (invalid) return { error: invalid };
     update.tokenUse = tokenUse.trim();
+  }
+  if (formData.has("thankYou")) {
+    const note = parseThankYou(formData.get("thankYou"));
+    if ("error" in note) return { error: note.error };
+    update.thankYou = note.text;
   }
   if (formData.has("goal")) {
     const goal = parseGoalUnits(formData.get("goal"));

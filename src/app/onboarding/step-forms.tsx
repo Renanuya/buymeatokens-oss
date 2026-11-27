@@ -18,6 +18,7 @@ import {
   PriceField,
   ProjectFields,
   SocialFields,
+  ThankYouField,
   TokenUseField,
 } from "@/components/profile-fields";
 import type { RepoSuggestion } from "@/lib/github";
@@ -468,11 +469,12 @@ export function DescriptionStep({
 
 // ---------- 6. Token use ----------
 
-export function TokensStep({ defaultValue, nav }: { defaultValue: string; nav: StepNav }) {
+export function TokensStep({ defaultValue, thankYou, nav }: { defaultValue: string; thankYou: string; nav: StepNav }) {
   const [state, action] = useStepAction(saveTokenUseAction);
   return (
     <form action={action} className="stagger mt-8 space-y-6">
       <TokenUseField defaultValue={defaultValue} />
+      <ThankYouField defaultValue={thankYou} />
       <FormMessage state={state} />
       <StepFooter step="tokens" nav={nav} submitLabel="Continue" skipLabel="Skip" />
     </form>

@@ -12,6 +12,7 @@ import {
   parsePriceUsd,
   resolveProjectName,
   validateBio,
+  parseThankYou,
   validateTokenUse,
 } from "@/lib/profile";
 import { canOpenStep, isSetupSlug, nextPath, resumePath, stepIndex, stepPath, type SetupSlug } from "@/lib/setup";
@@ -27,6 +28,7 @@ import {
   setPrice,
   setProject,
   setSocials,
+  setThankYou,
   setTokenUse,
   type Creator,
 } from "@/lib/users";
@@ -143,8 +145,12 @@ export async function saveTokenUseAction(_prev: ActionState, formData: FormData)
   const input = String(formData.get("tokenUse") ?? "");
   const invalid = validateTokenUse(input);
   if (invalid) return { error: invalid };
-  if (!input.trim()) return { error: "Add a line about what the tokens pay for, or skip this step for now." };
+  const note = parseThankYou(formData.get("thankYou"));
+  if ("error" in note) return { error: note.error };
+  if (!input.trim() && !note.text) return { error: "Add a line about what the tokens pay for, or skip this step for now." };
   await setTokenUse(user.id, input.trim());
+  // Only when the form carries the field: a stale or crafted submission without it must not wipe the note.
+  if (formData.has("thankYou")) await setThankYou(user.id, note.text);
   return finishStep(user, "tokens");
 }
 

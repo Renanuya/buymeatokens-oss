@@ -8,6 +8,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Thank-you note**: creators can pin a short note (up to 280 characters, plain text) to their page. It shows above the
+  supporter list, only when set, and is editable in the settings form (with the live preview) and in the guided
+  setup's token-use step. Control, zero-width and bidi characters are removed and whitespace is collapsed. One
+  additive column, `users.thank_you`; setup progress is unchanged.
 - **Write with AI without a GitHub repo.** The guided setup's description step now shows the button whenever AI drafts are on, not only when the project link is a GitHub repo. Without a repo the draft is written from what is already saved (project name, link as text and token use: the details the public page shows), never from a fetched page, and the prompt allows no invented features or claims. It counts against the same per-creator and daily caps.
 
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and

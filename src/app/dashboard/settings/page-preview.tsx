@@ -7,7 +7,7 @@ import { CreatorPageBody, type CreatorPageModel } from "@/components/creator-pag
 import { Glyph } from "@/components/glyph";
 import { ArrowUpRight } from "@/components/icons";
 import { LogoMark } from "@/components/logo";
-import { githubRepo, normalizeProjectUrl, parseGoalUnits, parsePriceUsd, projectNameFromUrl } from "@/lib/profile";
+import { githubRepo, normalizeProjectUrl, parseGoalUnits, parsePriceUsd, parseThankYou, projectNameFromUrl } from "@/lib/profile";
 import { socialsFromForm } from "@/lib/socials";
 import { previewRepoStatsAction } from "./preview-actions";
 
@@ -20,6 +20,7 @@ export function draftPage(saved: CreatorPageModel, form: FormData): CreatorPageM
   const projectName = projectUrl ? String(form.get("projectName") ?? "").trim() || projectNameFromUrl(projectUrl) : null;
   const goal = parseGoalUnits(form.get("goal"));
   const goalUnits = "units" in goal ? goal.units : (saved.goal?.units ?? null);
+  const thanks = parseThankYou(form.get("thankYou") ?? saved.thankYou);
   const socials = socialsFromForm(form);
   const sameRepo = Boolean(projectUrl && saved.projectUrl && githubRepo(projectUrl) === githubRepo(saved.projectUrl));
   return {
@@ -28,6 +29,7 @@ export function draftPage(saved: CreatorPageModel, form: FormData): CreatorPageM
     unitPriceCents: price ? price * 100 : saved.unitPriceCents,
     bio: String(form.get("bio") ?? saved.bio),
     tokenUse: String(form.get("tokenUse") ?? saved.tokenUse),
+    thankYou: "text" in thanks ? thanks.text : saved.thankYou,
     projectUrl,
     projectName,
     repo: sameRepo ? saved.repo : null,

@@ -27,6 +27,7 @@ export type User = {
   projectUrl: string | null;
   projectName: string | null;
   tokenUse: string;
+  thankYou: string;
   /** In millions of tokens; null when the creator has no goal. */
   goalUnits: number | null;
   goalStartedAt: number | null;
@@ -67,6 +68,7 @@ function mapUser(r: Row): User {
     projectUrl: str(r.project_url),
     projectName: str(r.project_name),
     tokenUse: str(r.token_use) ?? "",
+    thankYou: str(r.thank_you) ?? "",
     goalUnits: num(r.goal_units),
     goalStartedAt: num(r.goal_started_at),
     socials: parseSocials(r.socials),
@@ -207,6 +209,10 @@ export async function setTokenUse(id: string, tokenUse: string) {
   await run("UPDATE users SET token_use = ? WHERE id = ?", [tokenUse, id]);
 }
 
+export async function setThankYou(id: string, thankYou: string) {
+  await run("UPDATE users SET thank_you = ? WHERE id = ?", [thankYou, id]);
+}
+
 // Progress toward a goal counts from when it was first set. Changing the number keeps that start;
 // removing the goal clears it, so a new goal starts from zero.
 const GOAL_SET = `goal_units = ?::int,
@@ -227,6 +233,7 @@ export type ProfileUpdate = {
   projectUrl?: string | null;
   projectName?: string | null;
   tokenUse?: string;
+  thankYou?: string;
   goalUnits?: number | null;
   socials?: Socials;
 };
@@ -243,6 +250,10 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
   if (profile.tokenUse !== undefined) {
     sets.push("token_use = ?");
     args.push(profile.tokenUse);
+  }
+  if (profile.thankYou !== undefined) {
+    sets.push("thank_you = ?");
+    args.push(profile.thankYou);
   }
   if (profile.goalUnits !== undefined) {
     sets.push(GOAL_SET);
