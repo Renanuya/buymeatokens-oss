@@ -115,6 +115,33 @@ ${badge}
 </td></tr></table>`, 20, 30);
 }
 
+/** A panel of rows split by hairlines, for lists such as new support or site alerts. Rows are trusted HTML. */
+export function listPanel(rows: string[]) {
+  const body = rows.map((row, i) => `<tr><td class="b-line" style="padding:14px 0;${i ? "border-top:1px solid #e6e5df;" : ""}">${row}</td></tr>`).join("");
+  return block(`<table ${TABLE} width="100%" class="bg-panel" bgcolor="${PAPER}" style="background-color:${PAPER};border-radius:14px">
+<tr><td style="padding:4px 20px"><table ${TABLE} width="100%">${body}</table></td></tr></table>`, 20, 30);
+}
+
+/** One supporter in a listPanel: initial, name, how they paid, their message and the amount. Escapes everything. */
+export function supportRow(s: { name: string; meta: string; message: string; amount: string }) {
+  const initial = Array.from(s.name.trim() || "?")[0].toUpperCase();
+  return `<table ${TABLE} width="100%"><tr>
+<td width="32" valign="top" style="width:32px"><table ${TABLE}><tr><td class="dot-now" width="32" height="32" align="center" valign="middle" bgcolor="${LILAC}" style="width:32px;height:32px;border-radius:999px;background-color:${LILAC};font-family:${DISPLAY};font-size:14px;line-height:32px;font-weight:700;color:${INK};mso-line-height-rule:exactly">${esc(initial)}</td></tr></table></td>
+<td style="padding-left:12px;font-family:${SANS}">
+<p class="t-ink" style="margin:0;font-size:15px;line-height:22px;font-weight:600;color:${INK}">${esc(s.name)}</p>
+<p class="t-muted" style="margin:0;font-size:13px;line-height:19px;color:${MUTED}">${esc(s.meta)}</p>
+${s.message ? `<p class="t-body" style="margin:8px 0 0;font-size:14px;line-height:21px;color:${BODY}">&ldquo;${esc(s.message)}&rdquo;</p>` : ""}
+</td>
+<td width="64" align="right" valign="top" class="t-ink" style="width:64px;padding-left:10px;font-family:${DISPLAY};font-size:16px;line-height:22px;font-weight:700;color:${INK};white-space:nowrap">${esc(s.amount)}</td>
+</tr></table>`;
+}
+
+/** A small mono detail line for operator emails. */
+export function monoLine(title: string, detail: string) {
+  return `<p class="t-ink" style="margin:0;font-family:${SANS};font-size:14px;line-height:20px;font-weight:600;color:${INK}">${esc(title)}</p>
+${detail ? `<p class="t-muted" style="margin:4px 0 0;font-family:${MONO};font-size:12px;line-height:18px;color:${MUTED};word-break:break-word">${esc(detail)}</p>` : ""}`;
+}
+
 export type EmailLayout = {
   title: string;
   /** Inbox preview text shown after the subject. */
@@ -128,6 +155,8 @@ export type EmailLayout = {
   button: { label: string; url: string };
   /** Why the recipient got this email. */
   footer: string;
+  /** The "just reply" line and the founder's sign-off. On by default; off for notifications. */
+  signature?: boolean;
 };
 
 /** Keeps the last two words together so a heading never ends on a lone word. */
@@ -166,13 +195,13 @@ ${e.visual ?? block("", 0, 26)}
 <table ${TABLE} class="cta-table"><tr><td class="cta-td" align="center" bgcolor="${INK}" style="border-radius:999px;background-color:${INK};mso-padding-alt:15px 28px">
 <a class="cta-a" href="${esc(e.button.url)}" target="_blank" style="display:inline-block;padding:15px 28px;border:1px solid ${INK};border-radius:999px;font-family:${SANS};font-size:15px;line-height:20px;font-weight:600;color:${WHITE};text-decoration:none;mso-padding-alt:0;mso-border-alt:none">${esc(e.button.label)}&nbsp;&nbsp;&rarr;</a>
 </td></tr></table>
-<p class="t-muted" style="margin:30px 0 20px;font-family:${SANS};font-size:14px;line-height:22px;color:${MUTED}">Stuck on anything? Just reply to this email.</p>
+${e.signature === false ? "" : `<p class="t-muted" style="margin:30px 0 20px;font-family:${SANS};font-size:14px;line-height:22px;color:${MUTED}">Stuck on anything? Just reply to this email.</p>
 <table ${TABLE}><tr>
 <td width="38" height="38" align="center" valign="middle" bgcolor="${LILAC}" style="width:38px;height:38px;border-radius:999px;background-color:${LILAC};font-family:${DISPLAY};font-size:15px;line-height:38px;font-weight:700;color:${INK};mso-line-height-rule:exactly">R</td>
 <td style="padding-left:12px;font-family:${SANS}">
 <p class="t-ink" style="margin:0;font-size:14px;line-height:20px;font-weight:600;color:${INK}">Renan</p>
 <p class="t-muted" style="margin:0;font-size:13px;line-height:19px;color:${MUTED}">Founder, buymeatokens</p>
-</td></tr></table>
+</td></tr></table>`}
 </td></tr>
 <tr><td class="t-muted" style="padding:22px 4px 0;font-family:${SANS};font-size:12px;line-height:19px;color:#737378">
 ${esc(e.footer)}<br>buymeatokens &middot; Coffee is nice. AI tokens ship&nbsp;code.

@@ -7,7 +7,7 @@ import { LegalFooter } from "@/components/legal-footer";
 import { getDonationBySessionId } from "@/lib/donations";
 import { first, formatTokens, formatUsd } from "@/lib/format";
 import { syncDonation } from "@/lib/reconcile";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 import { getUserByUsername } from "@/lib/users";
 
 export const metadata: Metadata = { title: "Thank you", robots: { index: false, follow: true } };
@@ -31,7 +31,7 @@ export default async function ThanksPage({
     try {
       status = await syncDonation(donation, creator);
     } catch (error) {
-      logError("[thanks]", error);
+      await reportError("[thanks]", error);
     }
   }
 

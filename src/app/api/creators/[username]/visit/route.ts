@@ -1,6 +1,6 @@
 import { appUrl } from "@/lib/config";
 import { clientIp, isLikelyBot, recordVisit, type VisitKind } from "@/lib/page-visits";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 import { getCurrentUser } from "@/lib/session";
 import { getUserByUsername } from "@/lib/users";
 import { normalizeUsername } from "@/lib/validation";
@@ -43,7 +43,7 @@ export async function POST(req: Request, { params }: { params: Promise<{ usernam
       userAgent,
     });
   } catch (error) {
-    logError("[visit]", error);
+    await reportError("[visit]", error);
   }
   return done();
 }

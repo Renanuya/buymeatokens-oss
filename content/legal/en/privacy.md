@@ -10,12 +10,12 @@ buymeatokens.com is operated by Ali Renan Uyanık, an individual based in Turkey
 
 | Who | Data | Why |
 | --- | --- | --- |
-| Creators | GitHub username, profile name, avatar and email from GitHub login | To sign you in, show your page and send you account emails: a welcome and at most one setup reminder |
+| Creators | GitHub username, profile name, avatar and email from GitHub login | To sign you in, show your page and send you account emails: a welcome, at most one setup reminder, and an email when someone supports you (you can turn that one off under Account) |
 | Creators | Page content you enter: project description, links, payment method details you choose to publish (for example a PayPal link or wallet address) | To display your page and let supporters pay you |
 | Creators | Payment provider connection data you give us, such as a restricted API key | To show and check your payment options |
 | Everyone | Technical data: IP address, browser, device, pages visited, error logs | To run, secure and fix the site |
 | Visitors to creator pages | A count of the visit, the domain of the site you came from or the link's `?ref=` tag, and whether you pressed a support button. No cookies are used and no IP address is stored: your IP address and browser only make a one-way code that changes every day and is deleted within 48 hours, so a visit counts once a day | To show the creator totals: how many people visited their page, where they came from and how many supported them |
-| Supporters | Whatever you choose to type on a creator's page, if the page has a message field | To pass your note to the creator |
+| Supporters | Whatever you choose to type on a creator's page, if the page has a message field | To pass your note to the creator, on their page and in the email that tells them about your support |
 
 We do not see card numbers. Payments are made on the payment provider's own page or in your wallet.
 

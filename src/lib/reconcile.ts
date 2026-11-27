@@ -1,5 +1,5 @@
 import { decrypt } from "./crypto";
-import { logError } from "./redact";
+import { reportError } from "./ops";
 import { expireStale, listPending, markPaid, markStatus, type Donation } from "./donations";
 import { retrieveCheckoutSession } from "./stripe";
 import { getUserById, type User } from "./users";
@@ -33,7 +33,7 @@ export async function syncCreator(creator: User, limit = 20) {
     try {
       await syncDonation(donation, creator);
     } catch (error) {
-      logError("[reconcile]", donation.id, error);
+      await reportError("[reconcile]", donation.id, error);
     }
   }
 }
@@ -50,7 +50,7 @@ export async function syncAll(limit = 200) {
     try {
       if ((await syncDonation(donation, creator)) === "paid") paid++;
     } catch (error) {
-      logError("[reconcile]", donation.id, error);
+      await reportError("[reconcile]", donation.id, error);
     }
   }
   return { checked: pending.length, paid };

@@ -37,7 +37,7 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 | | Item | Notes |
 |---|---|---|
 | [#17] | A sturdier USDC flow: payment records, sender verification, finality | Fixes the [known limitations](docs/payments.md#known-limitations) |
-| [#19] | Notify creators about new support by email and optionally Discord | |
+| [#19] | Notify creators about new support by email and optionally Discord | Email is live; Discord is next |
 | [#20] | Show the home page preloader only on the first visit | Better page speed and SEO |
 | [#21] | Funding goals for AI costs | Partly built: optional goal and goal bar |
 | [#22] | More ways to customize creator pages | Partly built: project, socials, "where the tokens go" |
@@ -47,7 +47,6 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 
 | | Item | Blocked by / needs |
 |---|---|---|
-| [#24] | Creator analytics: visits, sources and conversions | Privacy-friendly design |
 | [#25] | Leaderboard of the most-supported projects (daily, weekly, monthly, lifetime) | Design, anti-gaming rules |
 | [#26] | Searchable project directory with categories, tags and languages | Design |
 | [#27] | Multiple projects per account | Data model design |
@@ -63,6 +62,12 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 **v0.1, open source launch** ([milestone][m1], 2026-11-26): the full platform published with a fresh history
 under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
 [changelog](CHANGELOG.md#010---2026-11-26).
+
+**Support emails and site alerts** ([#19], 2026-11-27): creators get an email when someone supports them, bundled
+on busy days and easy to turn off, and the operator is emailed about server errors and payment problems.
+
+**Creator analytics** ([#24], 2026-11-26): page visitors, where they came from and how many supported, counted
+without cookies or stored IP addresses.
 
 **Legal foundation** ([#16], 2026-11-26): Terms of Service and Privacy Policy, a tax FAQ for creators, consent with
 versioning, the payment history CSV and account deletion.

@@ -5,7 +5,7 @@ import type { ActionState } from "@/components/form-message";
 import { appUrl } from "@/lib/config";
 import { assertConsent } from "@/lib/consent";
 import { encrypt } from "@/lib/crypto";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 import { requireCreator } from "@/lib/session";
 import { StripeApiError, keyMode, verifyRestrictedKey } from "@/lib/stripe";
 import { BASE, isEvmAddress } from "@/lib/usdc";
@@ -107,7 +107,7 @@ export async function saveStripeKeyAction(_prev: ActionState, formData: FormData
       }
       return { error: `Stripe rejected the key: ${error.message}` };
     }
-    logError("[stripe key]", error);
+    await reportError("[stripe key]", error);
     return { error: "We couldn't reach Stripe. Please try again." };
   }
 

@@ -6,7 +6,7 @@ import { safeEqual } from "@/lib/crypto";
 import { sessionCookie } from "@/lib/session";
 import { upsertAuthUser } from "@/lib/users";
 import { enrollCreatorEmails, sendCreatorWelcome } from "@/lib/creator-emails";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 
 const STATE_COOKIE = "bmt_oauth_state";
 
@@ -80,8 +80,8 @@ export async function GET(req: NextRequest) {
     }
 
     // If they applied as a guest, the application (and any approval) now belongs to this account.
-    const claimed = await claimGuestApplication(user).catch((error) => {
-      logError("[claim application]", error);
+    const claimed = await claimGuestApplication(user).catch(async (error) => {
+      await reportError("[claim application]", error);
       return null;
     });
     const home = homePathFor(claimed === "approved" ? { ...user, accessStatus: "approved" } : user);
@@ -92,7 +92,7 @@ export async function GET(req: NextRequest) {
     res.cookies.delete(STATE_COOKIE);
     return res;
   } catch (error) {
-    logError("[github oauth]", error);
+    await reportError("[github oauth]", error);
     return fail();
   }
 }

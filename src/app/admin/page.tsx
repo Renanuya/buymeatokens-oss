@@ -10,6 +10,7 @@ import { creatorsWithoutConsent, registrationOverview, type Registration } from 
 import { first, formatDate, timeAgo } from "@/lib/format";
 import { getCurrentUser } from "@/lib/session";
 import { emailConfigured } from "@/lib/email";
+import { opsAlertRecipient, recentOpsEvents, type OpsEvent } from "@/lib/ops";
 import { TERMS_VERSION } from "@/lib/legal/config";
 
 export const metadata: Metadata = { title: "Admin · Registrations", robots: { index: false } };
@@ -65,14 +66,48 @@ function RegistrationRow({ user }: { user: Registration }) {
   );
 }
 
+/** Server errors and payment problems from the last seven days (src/lib/ops.ts), newest first. */
+function Alerts({ events }: { events: OpsEvent[] | null }) {
+  const mailed = Boolean(opsAlertRecipient()) && emailConfigured();
+  return (
+    <section id="alerts" aria-labelledby="alerts-heading" className="scroll-mt-8">
+      <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <h2 id="alerts-heading" className="font-display text-2xl font-semibold tracking-tight">Alerts</h2>
+        <p className="text-xs text-muted">Last 7 days · {mailed ? "new problems are emailed to you" : "set OPS_ALERT_TO or EMAIL_TEST_TO to get them by email"}</p>
+      </div>
+      {events === null ? (
+        <p className="border-y border-line py-6 text-sm text-muted">Alerts couldn&apos;t be loaded.</p>
+      ) : events.length === 0 ? (
+        <p className="border-y border-line py-6 text-sm text-muted">No server errors or payment problems in the last seven days.</p>
+      ) : (
+        <ul className="border-b border-line">
+          {events.map((event) => (
+            <li key={event.key} className="grid grid-cols-1 gap-2 border-t border-line py-4 sm:grid-cols-[minmax(0,1fr)_auto] sm:gap-6">
+              <div className="min-w-0">
+                <p className="break-words font-semibold">{event.tag}</p>
+                {event.detail && <p className="mt-1 break-words font-mono text-xs leading-relaxed text-muted">{event.detail}</p>}
+              </div>
+              <div className="text-sm sm:text-right">
+                <p className="font-semibold">{event.count.toLocaleString("en-US")}&times;</p>
+                <p className="mt-1 text-xs text-muted">Last {timeAgo(event.lastAt)} · first {timeAgo(event.firstAt)}</p>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )}
+    </section>
+  );
+}
+
 export default async function AdminPage({ searchParams }: {
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
   if (!isAdmin(await getCurrentUser())) notFound();
   const requestedPage = Number(first((await searchParams).page) ?? 1);
-  const [{ stats, registrations, page, pages }, withoutConsent] = await Promise.all([
+  const [{ stats, registrations, page, pages }, withoutConsent, alerts] = await Promise.all([
     registrationOverview(requestedPage),
     creatorsWithoutConsent(TERMS_VERSION),
+    recentOpsEvents(Date.now() - 7 * 86_400_000).catch(() => null),
   ]);
   return (
     <div className="min-h-dvh">
@@ -107,6 +142,7 @@ export default async function AdminPage({ searchParams }: {
           <span className="font-mono text-ink">{TERMS_VERSION}</span> yet. They see the acceptance dialog on their next visit;
           their pages stay online.
         </p>
+        <Alerts events={alerts} />
         <section aria-labelledby="registrations-heading">
           {!emailConfigured() && (
             <p className="mb-6 rounded-xl border border-line bg-lilac-soft p-4 text-sm leading-relaxed">Email delivery is waiting for provider setup. You can preview each creator&apos;s welcome email below.</p>

@@ -102,12 +102,12 @@ describe("/terms and /privacy", () => {
     expect(unfilledPlaceholders(doc.markdown)).toEqual([]);
     expect(doc.markdown).toContain("then remove it within 30 days");
     expect(doc.markdown).toContain("Technical logs are kept for 90 days.");
-    expect(doc.markdown).toContain("Last updated: November 26, 2026.");
+    expect(doc.markdown).toContain("Last updated: November 27, 2026.");
     expect(doc.markdown).toContain(
       "Hosting, database and email providers process data for us under their own terms: Vercel (hosting), Supabase (database) and Mailjet (email delivery).",
     );
     expect(doc.markdown).toContain("are sent to Groq to draft their project description. No account data is sent with it.");
-    expect(doc.markdown).toContain("send you account emails: a welcome and at most one setup reminder");
+    expect(doc.markdown).toContain("send you account emails: a welcome, at most one setup reminder, and an email when someone supports you");
     expect(doc.markdown).toContain("- We do not use third-party analytics or advertising tools.");
     expect(doc.markdown).toContain("No cookies are used and no IP address is stored");
     expect(doc.markdown).not.toContain("analytics providers");
