@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { accessCopy } from "@/lib/access-copy";
 import { Avatar } from "./avatar";
-import { ArrowUpRight, GitHubIcon } from "./icons";
+import { ArrowUpRight, GitHubIcon, PlusIcon } from "./icons";
 import { SignedInSwitch } from "./signed-in-switch";
 
 const BUTTON =
@@ -50,19 +50,41 @@ export function StartCta({ livePageHref, creators = [] }: { livePageHref: string
         </Link>
       </div>
       {shown.length > 0 && (
-        <div className="mt-7 flex flex-wrap items-center gap-3 pl-2">
-          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink/55">Already here</span>
-          <div className="flex min-w-0 flex-wrap gap-2">
+        <div className="mt-7 flex flex-wrap items-center gap-x-5 gap-y-3 border-t border-ink/10 pt-5">
+          <div className="isolate flex shrink-0 items-center -space-x-2.5 pl-1">
             {shown.map((c) => (
               <Link
                 key={c.username}
                 href={`/${c.username}`}
-                className="inline-flex max-w-full items-center gap-2 rounded-full bg-white/70 py-1 pl-1 pr-3 text-xs font-semibold text-ink transition hover:bg-white"
+                title={c.displayName || c.username}
+                aria-label={`Visit ${c.displayName || c.username}'s page`}
+                className="relative rounded-full transition-transform duration-200 hover:z-10 hover:-translate-y-1 focus-visible:z-10 focus-visible:-translate-y-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-iris motion-reduce:transform-none motion-reduce:transition-none"
               >
-                <Avatar name={c.displayName || c.username} url={c.avatarUrl} className="size-6 rounded-full! text-[9px]" />
-                <span className="min-w-0 truncate">{c.displayName || c.username}</span>
+                <Avatar
+                  name={c.displayName || c.username}
+                  url={c.avatarUrl}
+                  className="size-11 rounded-full! bg-white! text-xs text-iris ring-[3px] ring-lilac"
+                />
               </Link>
             ))}
+            <Link
+              href="/directory"
+              aria-label="Explore more creators"
+              className="relative inline-flex h-11 items-center gap-1 rounded-full border border-dashed border-iris/35 bg-lilac-soft pl-3 pr-3.5 text-[11px] font-semibold text-iris ring-[3px] ring-lilac transition-colors hover:border-iris hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-iris"
+            >
+              <PlusIcon className="size-3" />
+              more
+            </Link>
+          </div>
+          <div>
+            <p className="text-[13px] font-semibold tracking-[-0.02em] text-ink">Already in good company</p>
+            <Link
+              href="/directory"
+              className="group mt-1 inline-flex items-center gap-1.5 text-xs text-ink/60 transition-colors hover:text-iris focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-iris"
+            >
+              Meet the community
+              <ArrowUpRight className="size-3 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 motion-reduce:transform-none" />
+            </Link>
           </div>
         </div>
       )}
