@@ -8,6 +8,13 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Discord notifications**: a creator can paste a Discord webhook URL under Account and get a message in their channel
+  when someone supports them, batched like the email (up to five supporters, then "and N more"), with the supporter's
+  name, tokens and message as the public page shows them, and no dollar amounts. The URL is stored encrypted, never shown
+  again and redacted from logs; it is validated against an exact list of Discord hostnames when saved and before every
+  request, and requests never follow a redirect. Names and messages are made inert (no mentions, links or markdown) and
+  nothing can ping anyone. A 429 is retried, a deleted webhook is disconnected, and an ambiguous failure is never resent.
+  See [docs/emails.md](docs/emails.md#discord-notifications).
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

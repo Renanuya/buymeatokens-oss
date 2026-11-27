@@ -47,6 +47,55 @@ Stripe payments are confirmed when the supporter returns to the thank-you page, 
 or by the daily reconcile cron, so a Stripe support email can lag behind the payment. PayPal (IPN) and USDC are
 confirmed as they happen.
 
+## Discord notifications
+
+A creator can also get the same news in their own Discord channel. It is optional and off until they connect it.
+
+**Setup.** In Discord: channel settings, Integrations, Webhooks, New Webhook, Copy Webhook URL. Paste it under
+*Dashboard → Account → Discord*. We check its shape and ask Discord (a `GET`, which posts nothing) that it exists, then
+store it encrypted (`users.discord_webhook_enc`). It is never sent back to the browser; the page shows only the last four
+characters of its token. The URL is a credential: anyone who has it can post to that channel, so it is redacted from logs.
+
+**What is posted.** One plain message per batch, listing up to five supporters and counting the rest:
+
+```
+**New support on buymeatokens**
+• **Grace** bought 3M AI tokens
+> Love the CLI!
+<https://buymeatokens.com/dashboard#recent-support>
+```
+
+It follows what the public page shows of a supporter: the name (blank means "Someone"), the message and the tokens.
+**No dollar amounts**: the page shows tokens only, and a Discord server is a wider audience than the creator's inbox. Test-mode
+payments are included and marked "(test)", as in the email. Supporters' words are hostile input headed for someone's
+community, so the name and message are cut to one short line, stripped of control, zero-width and bidi characters, have
+mentions, links, invites and markdown made inert, and every request carries `allowed_mentions: { "parse": [] }` and
+`flags: 4` (no link previews). The message always stays under Discord's 2000 characters.
+
+**Delivery rules** (`src/lib/discord-notifications.ts`; the email design with its own claim table, `discord_notifications`,
+so one channel can't block or repeat the other):
+
+- One row per payment, claimed atomically before posting. At most one message per creator every ten minutes.
+- Only support paid after the webhook was connected (and within seven days) is announced. Replacing the URL starts again
+  from that moment, so connecting never posts history.
+- Runs in the same minute worker, only when `EMAIL_LIVE_ENABLED=true`, as its own isolated job: up to five creators per
+  tick, none started after 15 seconds, 5 second timeout per request.
+- `204`: sent. `429`: nothing was posted; retried after the longer of Discord's `retry_after` and five minutes, three
+  attempts at most.
+- `401`, `403`, `404`: the webhook is gone. It is disconnected, waiting rows are skipped, an ops alert is recorded and
+  Account shows "The webhook stopped working".
+- `5xx`, a timeout or a network error: marked `unknown` and **never resent**, like email. A webhook post has no
+  idempotency key, so a retry can post twice in someone's community, while a missed message costs little (the dashboard
+  still lists the payment). Other `4xx` and any redirect: not posted, not retried.
+
+**Safety.** The URL is validated when saved and again before every request: `https`, host exactly `discord.com`,
+`discordapp.com`, `canary.discord.com` or `ptb.discord.com` (an exact list, never a suffix match; all four are requested as
+`discord.com`), no port or credentials, path exactly `/api/webhooks/<id>/<token>`. Any query string or fragment is dropped.
+Requests use `redirect: "manual"` and never follow a redirect.
+
+**Privacy.** Names and messages go to the creator's Discord, a third party. Deleting the account removes the stored URL and
+the delivery rows; it can't delete what was already posted in the channel.
+
 ## Site alerts (operators)
 
 `src/lib/ops.ts` collects what a person should look at into `ops_events`:
@@ -104,7 +153,7 @@ EMAIL_TEST_TO=you@example.com npx tsx scripts/send-welcome-test.ts <username> [w
 ## Scheduler (operators)
 
 Supabase `pg_cron` + `pg_net` POST to `/api/cron/emails` every minute. Each tick runs the setup emails (up to five),
-the support emails (up to ten creators) and the site alerts, each on its own so one failing doesn't stop the others.
+the support emails (up to ten creators), the Discord messages (up to five creators) and the site alerts, each on its own so one failing doesn't stop the others.
 The daily reconcile cron doesn't send email.
 
 Pass the database explicitly for these commands (`PROD_POSTGRES_URL='postgres://…' npx tsx …`); the script prints

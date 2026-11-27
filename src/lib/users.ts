@@ -40,6 +40,12 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** The creator's Discord webhook URL, encrypted (src/lib/discord-notifications.ts). Never send it to the browser. */
+  discordWebhookEnc: string | null;
+  /** When it was connected (Unix ms); only support paid after this is announced. */
+  discordConnectedAt: number | null;
+  /** When Discord said the webhook no longer exists and we disconnected it. */
+  discordFailedAt: number | null;
   createdAt: number;
 };
 
@@ -75,6 +81,9 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    discordWebhookEnc: str(r.discord_webhook_enc),
+    discordConnectedAt: num(r.discord_connected_at),
+    discordFailedAt: num(r.discord_failed_at),
     createdAt: num(r.created_at) ?? 0,
   };
 }
@@ -257,6 +266,14 @@ export async function setUsdcAddress(id: string, address: string | null) {
 
 export async function setSupportEmails(id: string, on: boolean) {
   await run("UPDATE users SET support_emails = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
+}
+
+/** Connects (or replaces) the Discord webhook, or disconnects it with null. Clears the "stopped working" notice. */
+export async function setDiscordWebhook(id: string, encrypted: string | null, now = Date.now()) {
+  await run(
+    "UPDATE users SET discord_webhook_enc = ?, discord_connected_at = ?, discord_failed_at = NULL WHERE id = ?",
+    [encrypted, encrypted ? now : null, id],
+  );
 }
 
 export async function setAccessStatus(id: string, status: AccessStatus) {

@@ -5,6 +5,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /\b(?:sk|rk|pk)_(?:live|test)_[A-Za-z0-9]+/g, // Stripe API keys (secret, restricted, publishable)
   /\bwhsec_[A-Za-z0-9]+/g, // webhook signing secrets
   /\bgh[pousr]_[A-Za-z0-9]{20,}/g, // GitHub tokens
+  /\bhttps?:\/\/(?:[a-z]+\.)?discord(?:app)?\.com\/api\/webhooks\/\d+\/[\w-]+/gi, // Discord webhook URLs (the token is the credential)
   /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/g, // Authorization headers
 ];
 

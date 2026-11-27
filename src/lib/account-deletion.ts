@@ -7,7 +7,7 @@ import { accountDeleteDays } from "./legal/config";
 //     address) and the encrypted Stripe key, subscription fields and the Terms acceptance
 //   - the support recorded on the page (supporter names, messages, replies, amounts, references)
 //   - early-access applications and waitlist entries made with the same GitHub login or email
-//   - badge copy counts, email-flow rows, support email rows and "Write with AI" draft counts (deleted with the user
+//   - badge copy counts, email-flow rows, support email rows, Discord message rows, the encrypted Discord webhook URL (a column of the users row) and "Write with AI" draft counts (deleted with the user
 //     through ON DELETE CASCADE)
 // Other people's applications that named this creator as referrer keep their row with the link cleared.
 // GitHub OAuth tokens are never stored, so there is nothing to revoke on our side.
