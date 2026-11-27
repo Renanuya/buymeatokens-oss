@@ -125,7 +125,7 @@ async function stepForm(step: SetupSlug, user: User, nav: StepNav, host: string)
       return <DescriptionStep defaultValue={value} note={note} ai={aiSource(user)} nav={nav} />;
     }
     case "tokens":
-      return <TokensStep defaultValue={user.tokenUse || application?.tokenUse || ""} nav={nav} />;
+      return <TokensStep defaultValue={user.tokenUse || application?.tokenUse || ""} thankYou={user.thankYou} nav={nav} />;
     case "goal":
       return <GoalStep defaultValue={user.goalUnits} priceUsd={Math.round(user.unitPriceCents / 100)} nav={nav} />;
     case "socials":

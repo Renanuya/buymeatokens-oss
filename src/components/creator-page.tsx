@@ -31,6 +31,7 @@ export type CreatorPageModel = {
   avatarUrl: string | null;
   bio: string;
   tokenUse: string;
+  thankYou: string;
   projectUrl: string | null;
   projectName: string | null;
   socials: Socials;
@@ -153,6 +154,14 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
               </h2>
               <p className="eyebrow">Good work deserves fuel</p>
             </div>
+            {page.thankYou && (
+              <div className="mt-5 flex items-center gap-4 rounded-2xl bg-paper p-5">
+                <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+                  <Glyph name="heart" strokeWidth={2} className="size-5" />
+                </span>
+                <p className="min-w-0 text-sm leading-relaxed [overflow-wrap:anywhere]">{page.thankYou}</p>
+              </div>
+            )}
             {page.supporters.length === 0 ? (
               <div className="mt-5 flex items-center gap-4 rounded-2xl bg-paper p-5">
                 <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">

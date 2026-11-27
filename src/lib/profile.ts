@@ -1,7 +1,10 @@
 // Limits and parsing for what creators put on their page. Pure functions, used by forms and server actions.
 
+import { oneLine } from "./format";
+
 export const BIO_MAX_LENGTH = 1_000;
 export const TOKEN_USE_MAX_LENGTH = 500;
+export const THANK_YOU_MAX_LENGTH = 280;
 export const PROJECT_NAME_MAX_LENGTH = 80;
 export const PRICE_MIN_USD = 1;
 export const PRICE_MAX_USD = 100;
@@ -20,6 +23,17 @@ export function validateTokenUse(text: string): string | null {
   return text.length > TOKEN_USE_MAX_LENGTH
     ? `Please keep this to ${TOKEN_USE_MAX_LENGTH.toLocaleString("en-US")} characters or fewer.`
     : null;
+}
+
+// Zero-width, bidi and other invisible format characters: they can hide or reorder text on the page.
+const INVISIBLE_RE = /[\u00ad\u034f\u061c\u115f\u1160\u17b4\u17b5\u180e\u200b-\u200f\u202a-\u202e\u2060-\u206f\u3164\ufeff\uffa0]/g;
+
+/** The thank-you note as plain text on one line: invisible and control characters removed, whitespace collapsed, trimmed. */
+export function parseThankYou(input: unknown): { text: string } | { error: string } {
+  const text = oneLine(String(input ?? "").replace(INVISIBLE_RE, ""), Infinity);
+  return Array.from(text).length > THANK_YOU_MAX_LENGTH
+    ? { error: `Please keep your thank-you note to ${THANK_YOU_MAX_LENGTH} characters or fewer.` }
+    : { text };
 }
 
 /** Whole dollars between the limits, or null. */

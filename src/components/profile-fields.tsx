@@ -21,6 +21,7 @@ import {
   PRICE_MIN_USD,
   PRICE_PRESETS_USD,
   PROJECT_NAME_MAX_LENGTH,
+  THANK_YOU_MAX_LENGTH,
   TOKEN_USE_MAX_LENGTH,
   normalizeProjectUrl,
   parseGoalUnits,
@@ -607,6 +608,32 @@ const TOKEN_IDEAS = [
   "Writing docs and examples",
   "Answering issues faster",
 ];
+
+export function ThankYouField({ defaultValue }: { defaultValue: string }) {
+  const [text, setText] = useState(defaultValue);
+  return (
+    <div>
+      <label htmlFor="thankYou" className="label">
+        Thank-you note <span className="font-normal text-muted">(optional)</span>
+      </label>
+      <textarea
+        id="thankYou"
+        name="thankYou"
+        rows={2}
+        maxLength={THANK_YOU_MAX_LENGTH}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        aria-describedby="thankYou-count"
+        placeholder="Thank you for fueling this. Every token goes straight into the project."
+        className="field resize-none py-3 leading-relaxed"
+      />
+      <div className="mt-2 flex items-start justify-between gap-4 text-xs text-muted">
+        <p>Plain text, shown above your supporters.</p>
+        <Counter id="thankYou-count" length={text.length} max={THANK_YOU_MAX_LENGTH} />
+      </div>
+    </div>
+  );
+}
 
 export function TokenUseField({
   defaultValue,

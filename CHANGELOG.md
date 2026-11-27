@@ -8,6 +8,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Thank-you note**: creators can pin a short note (up to 280 characters, plain text) to their page. It shows above the
+  supporter list, only when set, and is editable in the settings form (with the live preview) and in the guided
+  setup's token-use step. Control, zero-width and bidi characters are removed and whitespace is collapsed. One
+  additive column, `users.thank_you`; setup progress is unchanged.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a
