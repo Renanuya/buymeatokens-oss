@@ -270,3 +270,37 @@ export async function listPending(creatorId: string | null, since: number, limit
 export async function expireStale(before: number) {
   await query("UPDATE donations SET status = 'expired' WHERE status = 'pending' AND created_at < ?", [before]);
 }
+
+/** Who supported a creator, for the README supporter wall. Names are the most recent first, one per person. */
+export type SupporterSummary = {
+  /** Distinct named supporters plus every anonymous payment. */
+  people: number;
+  units: number;
+  /** Recent supporter names, one per person (matched case-insensitively), newest first. */
+  names: string[];
+};
+
+export async function supporterSummary(creatorId: string, mode: StripeMode, limit: number): Promise<SupporterSummary> {
+  const [totals, recent] = await Promise.all([
+    query(
+      `SELECT COUNT(DISTINCT lower(btrim(supporter_name))) FILTER (WHERE btrim(supporter_name) <> '') AS named,
+         COUNT(*) FILTER (WHERE btrim(supporter_name) = '') AS anonymous,
+         COALESCE(SUM(units), 0) AS units
+       FROM donations WHERE creator_id = ? AND status = 'paid' AND stripe_mode = ?`,
+      [creatorId, mode],
+    ),
+    query(
+      `SELECT (array_agg(btrim(supporter_name) ORDER BY COALESCE(paid_at, created_at) DESC))[1] AS name,
+         MAX(COALESCE(paid_at, created_at)) AS last_at
+       FROM donations WHERE creator_id = ? AND status = 'paid' AND stripe_mode = ? AND btrim(supporter_name) <> ''
+       GROUP BY lower(btrim(supporter_name)) ORDER BY last_at DESC LIMIT ?`,
+      [creatorId, mode, limit],
+    ),
+  ]);
+  const row = totals.rows[0];
+  return {
+    people: (num(row?.named) ?? 0) + (num(row?.anonymous) ?? 0),
+    units: num(row?.units) ?? 0,
+    names: recent.rows.map((r) => str(r.name) ?? "").filter(Boolean),
+  };
+}

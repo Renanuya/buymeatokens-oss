@@ -37,6 +37,9 @@ CREATE TABLE IF NOT EXISTS badge_copy_stats (
   PRIMARY KEY (user_id, style)
 );
 ALTER TABLE badge_copy_stats ENABLE ROW LEVEL SECURITY;
+-- The README supporter wall (src/lib/wall.ts) counts as a badge copy too.
+ALTER TABLE badge_copy_stats DROP CONSTRAINT IF EXISTS badge_copy_stats_style_check;
+ALTER TABLE badge_copy_stats ADD CONSTRAINT badge_copy_stats_style_check CHECK (style IN ('button', 'compact', 'wall'));
 
 CREATE TABLE IF NOT EXISTS creator_email_deliveries (
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

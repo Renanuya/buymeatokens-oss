@@ -53,7 +53,7 @@ function RegistrationRow({ user }: { user: Registration }) {
         <p className="mb-1 text-xs text-muted lg:hidden">Badge copies</p>
         <p className="font-semibold">{user.badgeCopies.toLocaleString("en-US")} <span className="font-normal text-muted">copies</span></p>
         {user.badgeCopies > 0 && (
-          <p className="mt-1 text-xs text-muted">Button {user.buttonCopies} · Compact {user.compactCopies}</p>
+          <p className="mt-1 text-xs text-muted">Button {user.buttonCopies} · Compact {user.compactCopies} · Wall {user.wallCopies}</p>
         )}
         {user.lastCopiedAt !== null && <p className="mt-1 text-xs text-muted">Last copied {timeAgo(user.lastCopiedAt)}</p>}
         {user.email && (

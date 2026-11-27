@@ -2,6 +2,9 @@
 // everywhere (GitHub serves SVGs as images, so web fonts never load there).
 // Run after changing the character set or weights: node scripts/build-badge-font.mjs
 // Touches: rewrites src/lib/badge-font.ts only.
+//
+// The 600 weight also carries accented Latin letters (Latin-1 and Latin Extended-A) for supporter names on the
+// supporter wall (src/lib/wall.ts). A name with any other character falls back to the viewer's system font there.
 import { readFileSync, writeFileSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import opentype from "opentype.js";
@@ -10,18 +13,27 @@ const root = fileURLToPath(new URL("..", import.meta.url));
 const CHARS = " ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789.,+-!?'&@#/:";
 const WEIGHTS = [600, 700];
 
-function load(weight) {
-  const file = `${root}node_modules/@fontsource/inter-tight/files/inter-tight-latin-${weight}-normal.woff`;
+const range = (from, to) => Array.from({ length: to - from + 1 }, (_, i) => String.fromCodePoint(from + i)).join("");
+// Latin-1 letters without × and ÷, Latin Extended-A, and a little punctuation that shows up in names.
+const NAME_CHARS = range(0xc0, 0xd6) + range(0xd8, 0xf6) + range(0xf8, 0xff) + range(0x100, 0x17f) + "…·()_~*=$%";
+const EXTRA = { 600: NAME_CHARS, 700: "" };
+
+function load(weight, subset) {
+  const file = `${root}node_modules/@fontsource/inter-tight/files/inter-tight-${subset}-${weight}-normal.woff`;
   const buf = readFileSync(file);
   return opentype.parse(buf.buffer.slice(buf.byteOffset, buf.byteOffset + buf.byteLength));
 }
 
-function extract(font) {
+function extract(font, ext, extra) {
   const glyphs = {};
-  for (const ch of CHARS) {
-    const g = font.charToGlyph(ch);
+  for (const ch of CHARS + extra) {
+    if (glyphs[ch]) continue;
+    // Each subset file only has its own letters; anything else maps to .notdef (glyph index 0).
+    const source = font.charToGlyphIndex(ch) ? font : ext.charToGlyphIndex(ch) ? ext : null;
+    if (!source) continue;
+    const g = source.charToGlyph(ch);
     // Font units, y pointing down (SVG coordinates), baseline at y = 0.
-    glyphs[ch] = [g.advanceWidth, g.getPath(0, 0, font.unitsPerEm).toPathData(0)];
+    glyphs[ch] = [g.advanceWidth, g.getPath(0, 0, source.unitsPerEm).toPathData(0)];
   }
   const kern = {};
   for (const a of CHARS) {
@@ -45,7 +57,7 @@ export type BadgeFont = {
 };
 `;
 for (const w of WEIGHTS) {
-  out += `\nexport const INTER_TIGHT_${w}: BadgeFont = ${JSON.stringify(extract(load(w)))};\n`;
+  out += `\nexport const INTER_TIGHT_${w}: BadgeFont = ${JSON.stringify(extract(load(w, "latin"), load(w, "latin-ext"), EXTRA[w]))};\n`;
 }
 writeFileSync(`${root}src/lib/badge-font.ts`, out);
 console.log(`wrote src/lib/badge-font.ts (${(out.length / 1024).toFixed(1)} KB)`);

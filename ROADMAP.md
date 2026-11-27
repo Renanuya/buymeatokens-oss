@@ -53,7 +53,6 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 | [#28] | Recurring monthly support | A decision on the payment rails |
 | [#29] | Developer API and signed webhooks | API design |
 | [#30] | Discord supporter roles | [#29], verified supporter identity |
-| [#31] | Auto-updating README supporter list | [#29] |
 | [#32] | Research pooled payments for creators without their own payment account | Legal research; we don't hold funds today |
 | [#33] | Decide whether self-hosting is officially supported | A decision |
 
@@ -62,6 +61,10 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 **v0.1, open source launch** ([milestone][m1], 2026-11-26): the full platform published with a fresh history
 under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
 [changelog](CHANGELOG.md#010---2026-11-26).
+
+**Get found on GitHub** ([#31], 2026-11-27): a README supporter wall that lists a creator's latest supporters by
+name and follows GitHub's light and dark mode, and GitHub's Sponsor button for one repository or all of them, set up
+from the dashboard in one click.
 
 **Support emails and site alerts** ([#19], 2026-11-27): creators get an email when someone supports them, bundled
 on busy days and easy to turn off, and the operator is emailed about server errors and payment problems.

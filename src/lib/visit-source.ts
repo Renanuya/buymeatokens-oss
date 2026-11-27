@@ -3,6 +3,9 @@
 
 export const SOURCE_KEYS = [
   "badge",
+  "wall",
+  "sponsor",
+  "npm",
   "github",
   "x",
   "linkedin",
@@ -34,6 +37,11 @@ const NAME_MAX = 32;
 const TAG_SOURCES: Record<string, SourceKey> = {
   badge: "badge",
   readme: "badge",
+  wall: "wall",
+  supporters: "wall",
+  sponsor: "sponsor",
+  funding: "sponsor",
+  npm: "npm",
   github: "github",
   x: "x",
   twitter: "x",
@@ -141,6 +149,9 @@ export function decodeSource(value: string | null | undefined): VisitSource {
 
 const LABELS: Record<SourceKey, string> = {
   badge: "README badge",
+  wall: "Supporter wall",
+  sponsor: "GitHub Sponsor button",
+  npm: "npm package",
   github: "GitHub",
   x: "X",
   linkedin: "LinkedIn",

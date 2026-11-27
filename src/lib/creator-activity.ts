@@ -1,6 +1,7 @@
 import { num, query, str } from "./db";
 
-export type BadgeStyle = "button" | "compact";
+/** What was copied from the dashboard: the button badge, a compact badge (pill or flat), or the supporter wall. */
+export type BadgeStyle = "button" | "compact" | "wall";
 export const REGISTRATIONS_PAGE_SIZE = 25;
 
 export async function recordBadgeCopy(userId: string, style: BadgeStyle): Promise<void> {
@@ -26,6 +27,7 @@ export type Registration = {
   badgeCopies: number;
   buttonCopies: number;
   compactCopies: number;
+  wallCopies: number;
   lastCopiedAt: number | null;
   welcomeStatus: string | null;
 };
@@ -67,12 +69,14 @@ export async function registrationOverview(requestedPage = 1) {
        COALESCE(b.copies, 0) AS badge_copies,
        COALESCE(b.button_copies, 0) AS button_copies,
        COALESCE(b.compact_copies, 0) AS compact_copies,
+       COALESCE(b.wall_copies, 0) AS wall_copies,
        b.last_copied_at, e.status AS welcome_status
      FROM users u
      LEFT JOIN (
        SELECT user_id, SUM(copy_count) AS copies,
          SUM(copy_count) FILTER (WHERE style = 'button') AS button_copies,
          SUM(copy_count) FILTER (WHERE style = 'compact') AS compact_copies,
+         SUM(copy_count) FILTER (WHERE style = 'wall') AS wall_copies,
          MAX(last_copied_at) AS last_copied_at
        FROM badge_copy_stats GROUP BY user_id
      ) b ON b.user_id = u.id
@@ -85,7 +89,7 @@ export async function registrationOverview(requestedPage = 1) {
     id: String(r.id), login: str(r.login), username: str(r.username), displayName: String(r.display_name),
     avatarUrl: str(r.avatar_url), email: str(r.email), createdAt: num(r.created_at) ?? 0,
     badgeCopies: num(r.badge_copies) ?? 0, buttonCopies: num(r.button_copies) ?? 0,
-    compactCopies: num(r.compact_copies) ?? 0, lastCopiedAt: num(r.last_copied_at),
+    compactCopies: num(r.compact_copies) ?? 0, wallCopies: num(r.wall_copies) ?? 0, lastCopiedAt: num(r.last_copied_at),
     welcomeStatus: str(r.welcome_status),
   }));
   return { stats, registrations, page, pages };
