@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import { HtmlFlags, InlineScript } from "@/components/inline-script";
 import { SoundEffects } from "@/components/sound-effects";
+import { INTRO_SCRIPT } from "@/lib/intro";
 import { SIGNED_IN_SCRIPT } from "@/lib/signed-in-hint";
 import "./globals.css";
 
@@ -50,6 +51,8 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         <InlineScript html="document.documentElement.classList.add('js')" />
         {/* Shows "Dashboard" instead of "Create your page" to signed-in visitors on static pages; see signed-in-hint.ts. */}
         <InlineScript html={SIGNED_IN_SCRIPT} />
+        {/* Hides the landing intro when it already played in this tab; see intro.ts. */}
+        <InlineScript html={INTRO_SCRIPT} />
       </head>
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
         <HtmlFlags />

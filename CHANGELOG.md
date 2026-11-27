@@ -148,6 +148,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 - The 404 page no longer logs "Encountered a script tag while rendering React component" in development, and keeps the
   signed-in header buttons: the two inline scripts in `<head>` follow Next.js's pattern for scripts that run before
   hydration.
+- The landing intro plays once per tab: a reload, a full page load (the header and footer links) or a client-side
+  navigation back to `/` no longer shows it again, not even for a frame. A new tab still shows it once.
 
 ## [0.1.0] - 2026-11-26
 
