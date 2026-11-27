@@ -236,6 +236,10 @@ html[data-auth="in"] .auth-in { display: contents; }
   /* Without JavaScript nothing would lift it, so it hides itself after a few seconds. */
   animation: preloader-fallback 0s linear 4s forwards;
 }
+/* The intro already played in this tab (src/lib/intro.ts): never paint it, not even for a frame. */
+.bmt-intro-seen .preloader {
+  display: none;
+}
 .preloader-out {
   transform: translateY(-100%);
 }

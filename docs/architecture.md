@@ -81,7 +81,7 @@ Key modules in `src/lib`:
 | `github.ts`, `contributors.ts` | GitHub API: repo stats, the README brief for AI drafts, the Contributor badge |
 | `crypto.ts` | AES-256-GCM encryption of creators' Stripe keys with `ENCRYPTION_KEY`, HMAC signing |
 | `redact.ts` | `logError`, which blanks out anything shaped like a key before it reaches the logs |
-| `stripe.ts`, `paypal.ts`, `usdc.ts` | The three payment rails ([payments.md](payments.md)) |
+| `stripe.ts`, `paypal.ts`, `usdc.ts`, `usdc-payments.ts` | The three payment rails and USDC payment records ([payments.md](payments.md)) |
 | `donations.ts`, `reconcile.ts` | Recording support and confirming pending payments |
 | `access.ts`, `billing.ts`, `access-copy.ts` | Signup gate and admins; the creator's plan (lifetime free or early access) and its wording |
 | `users.ts` | Accounts; claiming a username, which also grants lifetime free access |
