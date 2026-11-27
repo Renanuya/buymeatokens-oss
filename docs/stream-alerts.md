@@ -29,7 +29,11 @@ Add them to the URL, for example `.../alerts/<token>?duration=10&sound=1&amount=
 | `theme=light` | Light card. The default is dark. |
 | `test=1` | Shows one sample alert and nothing else. Never contacts the server. |
 
-Alerts queue and show one at a time. With `prefers-reduced-motion` set, the alert appears without animation.
+Alerts queue and show one at a time. With `prefers-reduced-motion` set, the alert appears without animation. The
+queue holds 50 alerts: in a larger burst the oldest are dropped rather than shown many minutes late. *Disable* and
+*Regenerate* also empty the queue of a source that is still open, within one poll.
+
+While your page is in Stripe test mode, alerts carry a "Test payment" label, because a test card costs nothing.
 
 ## What is shown, and what is not
 

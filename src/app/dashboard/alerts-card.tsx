@@ -47,7 +47,12 @@ export function AlertsCard({ enabled }: { enabled: boolean }) {
             >
               Regenerate
             </button>
-            <button type="button" disabled={pending} onClick={turnOff} className="btn-line">
+            <button
+              type="button"
+              disabled={pending}
+              onClick={() => confirm("Alerts will stop on your stream. Continue?") && turnOff()}
+              className="btn-line"
+            >
               Disable
             </button>
             <a href="/alerts/preview?test=1&amount=1" target="_blank" rel="noopener noreferrer" className="btn-line">

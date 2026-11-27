@@ -12,7 +12,7 @@ const TOKEN_RE = /^bmta_[A-Za-z0-9_-]{43}$/;
 export const ALERTS_PAGE_SIZE = 20;
 
 /** What the widget needs and nothing else: no email, payment id, method or amount of anything but this payment. */
-export type StreamAlert = { id: string; name: string; units: number; message: string; amountCents: number };
+export type StreamAlert = { id: string; name: string; units: number; message: string; amountCents: number; test: boolean };
 
 const hashToken = (token: string) => createHash("sha256").update(token).digest("hex");
 
@@ -71,6 +71,7 @@ export async function alertsAfter(
       units: num(r.units) ?? 0,
       message: str(r.message) ?? "",
       amountCents: num(r.amount_cents) ?? 0,
+      test: creator.mode === "test", // test-card payments cost nothing: the widget labels them
     })),
   };
 }

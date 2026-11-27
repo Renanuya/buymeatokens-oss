@@ -296,6 +296,9 @@ ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 -- Stream alerts (src/lib/stream-alerts.ts): SHA-256 of the secret in the creator's browser source URL. NULL = off.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_token_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS users_alerts_token_hash ON users(alerts_token_hash);
+-- The feed is polled every few seconds per open stream: it must not scan and sort a creator's whole history.
+CREATE INDEX IF NOT EXISTS donations_alerts_feed
+  ON donations (creator_id, stripe_mode, (COALESCE(paid_at, created_at)), id) WHERE status = 'paid';
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;

@@ -7,12 +7,15 @@ import type { AlertOptions, StreamAlert } from "@/lib/stream-alerts";
 const POLL_MS = 5000;
 const MAX_BACKOFF_MS = 60_000;
 const GAP_MS = 600; // between one alert and the next
-const SAMPLE: StreamAlert = { id: "sample", name: "Alex", units: 1, message: "Thanks for the stream!", amountCents: 500 };
+const MAX_QUEUE = 50; // a burst shows its newest alerts; older ones are dropped rather than aired minutes late
+const SAMPLE: StreamAlert = { id: "sample", name: "Alex", units: 1, message: "Thanks for the stream!", amountCents: 500, test: false };
+
+let audio: AudioContext | undefined;
 
 /** A short beep from the Web Audio API, so there is no audio file. Browsers that block autoplay stay silent. */
 function beep() {
   try {
-    const ctx = new AudioContext();
+    const ctx = (audio ??= new AudioContext()); // one for the page: a blocked context never ends, so never closes
     const osc = ctx.createOscillator();
     const gain = ctx.createGain();
     osc.frequency.value = 880;
@@ -21,7 +24,6 @@ function beep() {
     osc.connect(gain).connect(ctx.destination);
     osc.start();
     osc.stop(ctx.currentTime + 0.35);
-    osc.onended = () => void ctx.close();
   } catch {
     // No audio available: the alert still shows.
   }
@@ -32,14 +34,18 @@ export function AlertCard({ alert, options }: { alert: StreamAlert; options: Pic
   const dark = options.theme === "dark";
   return (
     <div
-      className={`rise-in max-w-[90vw] rounded-2xl px-6 py-4 text-center shadow-lg ${dark ? "bg-ink text-white" : "bg-white text-ink"}`}
+      className={`rise-in max-w-[90vw] overflow-hidden rounded-2xl px-6 py-4 text-center shadow-lg ${dark ? "bg-ink text-white" : "bg-white text-ink"}`}
     >
+      {alert.test && <p className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-70">Test payment</p>}
       <p className="font-display text-2xl font-semibold tracking-[-0.02em] [overflow-wrap:anywhere]">
-        {alert.name} supported you with <span className={dark ? "text-fuel" : "text-iris"}>{formatTokens(alert.units)} tokens</span>!
+        {/* <bdi> and dir="auto": a supporter's text can't reorder the sentence around it. */}
+        <bdi>{alert.name}</bdi> supported you with <span className={dark ? "text-fuel" : "text-iris"}>{formatTokens(alert.units)} tokens</span>!
       </p>
       {options.amount && <p className="mt-1 text-lg font-semibold tabular-nums">{formatUsd(alert.amountCents)}</p>}
       {options.message && alert.message && (
-        <p className={`mt-2 text-base [overflow-wrap:anywhere] ${dark ? "text-white/80" : "text-muted"}`}>{alert.message}</p>
+        <p dir="auto" className={`mt-2 line-clamp-4 text-base [overflow-wrap:anywhere] ${dark ? "text-white/80" : "text-muted"}`}>
+          {alert.message}
+        </p>
       )}
     </div>
   );
@@ -87,11 +93,19 @@ export function StreamAlerts({ token, options }: { token: string; options: Alert
         const res = await fetch(`/api/alerts/${encodeURIComponent(token)}${cursor ? `?after=${encodeURIComponent(cursor)}` : ""}`, {
           cache: "no-store",
         });
-        if (res.status === 404) return;
+        if (res.status === 404) {
+          // Rotated or disabled: stop, and drop what was still waiting to be shown.
+          stopped = true;
+          queue.length = 0;
+          timers.forEach(clearTimeout);
+          setShown(null);
+          return;
+        }
         if (!res.ok) throw new Error(String(res.status));
         const feed = (await res.json()) as { alerts: StreamAlert[]; cursor: string };
         cursor = feed.cursor;
         queue.push(...feed.alerts);
+        if (queue.length > MAX_QUEUE) queue.splice(0, queue.length - MAX_QUEUE);
         pump();
         delay = POLL_MS;
       } catch {

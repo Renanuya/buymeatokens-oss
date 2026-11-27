@@ -104,7 +104,7 @@ describe("stream alerts", () => {
 
     await paid("d2", T0 + 5000, { name: "Grace", units: 3, message: "Keep going" });
     const next = (await feed(token, cursor)).body;
-    expect(next.alerts).toEqual([{ id: "d2", name: "Grace", units: 3, message: "Keep going", amountCents: 500 }]);
+    expect(next.alerts).toEqual([{ id: "d2", name: "Grace", units: 3, message: "Keep going", amountCents: 500, test: false }]);
     expect((await feed(token, next.cursor)).body.alerts).toEqual([]);
   });
 
@@ -157,7 +157,7 @@ describe("stream alerts", () => {
     await paid("d1", T0 + 1, { name: "Alex", message: "hi" });
     const { body } = await feed(token, "0_0");
     expect(Object.keys(body).sort()).toEqual(["alerts", "cursor"]);
-    expect(Object.keys(body.alerts[0]).sort()).toEqual(["amountCents", "id", "message", "name", "units"]);
+    expect(Object.keys(body.alerts[0]).sort()).toEqual(["amountCents", "id", "message", "name", "test", "units"]);
     expect(JSON.stringify(body)).not.toMatch(/cs_secret|0xhash|stripe|paypal|usdc|@/);
   });
 
@@ -175,9 +175,9 @@ describe("stream alerts", () => {
   });
 
   it("hides the amount and message unless asked", () => {
-    const alert = { id: "x", name: "Alex", units: 1000, message: "hello", amountCents: 12345 };
+    const alert = { id: "x", name: "Alex", units: 1000, message: "hello", amountCents: 12345, test: false };
     const quiet = renderToStaticMarkup(<AlertCard alert={alert} options={{ amount: false, message: false, theme: "light" }} />);
-    expect(quiet).toContain("Alex supported you with");
+    expect(quiet).toContain("<bdi>Alex</bdi> supported you with");
     expect(quiet).toContain("1B tokens");
     expect(quiet).not.toContain("hello");
     expect(quiet).not.toContain("123.45");
@@ -210,5 +210,29 @@ describe("stream alerts", () => {
 
   it("keeps the token out of logs", () => {
     expect(redactSecrets(`GET /alerts/${token} failed`)).toBe("GET /alerts/[redacted] failed");
+    expect(redactSecrets(`next=%2Falerts%2F${token}&x=1`)).toBe("next=%2Falerts%2F[redacted]&x=1");
+  });
+
+  it("labels a payment made in test mode, where a test card costs nothing", async () => {
+    await query("UPDATE users SET stripe_mode = 'test' WHERE id = 'maker'");
+    const who = (await creatorForAlertsToken(token))!;
+    await paid("t1", T0 + 5, { mode: "test" });
+    const [alert] = (await alertsAfter(who, "0_0")).alerts;
+    expect(alert).toMatchObject({ id: "t1", test: true });
+    const html = renderToStaticMarkup(<AlertCard alert={alert} options={{ amount: false, message: true, theme: "dark" }} />);
+    expect(html).toContain("Test payment");
+  });
+
+  it("keeps a supporter's text from reordering or spilling out of the card", () => {
+    const alert = { id: "x", name: "Alex‮", units: 1, message: "hi", amountCents: 500, test: false };
+    const html = renderToStaticMarkup(<AlertCard alert={alert} options={{ amount: false, message: true, theme: "dark" }} />);
+    expect(html).toContain("<bdi>Alex‮</bdi>");
+    expect(html).toContain('dir="auto"');
+    expect(html).toContain("overflow-hidden");
+  });
+
+  it("has an index for the feed, so a poll doesn't sort a creator's whole history", async () => {
+    const rs = await query("SELECT indexdef FROM pg_indexes WHERE indexname = 'donations_alerts_feed'");
+    expect(String(rs.rows[0]?.indexdef)).toContain("WHERE (status = 'paid'");
   });
 });
