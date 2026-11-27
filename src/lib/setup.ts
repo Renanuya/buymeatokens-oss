@@ -66,6 +66,7 @@ type PageFields = SetupState & {
   projectUrl: string | null;
   bio: string;
   tokenUse: string;
+  thankYou: string;
   goalUnits: number | null;
   socials: Record<string, string | undefined>;
 };
@@ -82,7 +83,7 @@ export function filledSteps(user: PageFields): Record<SetupSlug, boolean> {
     price: passed("price"),
     project: Boolean(user.projectUrl),
     description: Boolean(user.bio.trim()),
-    tokens: Boolean(user.tokenUse.trim()),
+    tokens: Boolean(user.tokenUse.trim() || user.thankYou.trim()),
     goal: user.goalUnits !== null || passed("goal"),
     socials: Object.values(user.socials).some(Boolean),
   };

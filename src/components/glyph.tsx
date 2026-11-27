@@ -318,6 +318,11 @@ const LINE = {
 
 export type GlyphName = keyof typeof LINE;
 
+/** Whether `value` names one of the icons, for names that come from outside the code (e.g. roadmap issues). */
+export function isGlyphName(value: unknown): value is GlyphName {
+  return typeof value === "string" && Object.prototype.hasOwnProperty.call(LINE, value);
+}
+
 /** A 24px-grid line icon. `draw` traces the strokes in once, on mount. */
 export function Glyph({
   name,

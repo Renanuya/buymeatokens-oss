@@ -54,5 +54,6 @@ refused. Payment code logs through `logError` (`src/lib/redact.ts`), which blank
 
 The Privacy Policy names the providers that receive data. When you add one, update `HOSTING_PROVIDERS_TEXT` or
 `AI_PROVIDERS_TEXT`, and `PRIVACY_LAST_UPDATED`. "Write with AI" sends the public details of the creator's repository (name,
-description, topics, main language, website and README) to the configured AI provider, Gemini or Groq. No account
-data goes with it.
+description, topics, main language, website and README) to the configured AI provider, Gemini or Groq. Without a
+repository it sends the project name, link and token use from the creator's public page instead. No account data goes
+with it.
