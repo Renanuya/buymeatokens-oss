@@ -86,6 +86,20 @@ describe("who is listed", () => {
     expect((await names({})).sort()).toEqual(["bioonly", "listed"]);
   });
 
+  it("lists dev-login accounts only where dev login is on, so the directory can be tried locally", async () => {
+    await creator({ username: "devaccount", authId: "dev:x" });
+    expect(await names({})).toEqual([]);
+    vi.stubEnv("DEV_LOGIN", "true");
+    try {
+      expect(await names({})).toEqual(["devaccount"]);
+      // A production build never has dev login, whatever DEV_LOGIN says.
+      vi.stubEnv("NODE_ENV", "production");
+      expect(await names({})).toEqual([]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
+  });
+
   it("applying the schema twice changes nothing", async () => {
     await mocks.db.exec(SCHEMA);
     await creator({ username: "again" });

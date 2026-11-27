@@ -3,7 +3,7 @@
 
 import { query, str } from "./db";
 import { first, oneLine } from "./format";
-import { INDEXABLE_SQL } from "./seo";
+import { indexableSql } from "./seo";
 
 export const CATEGORIES = ["Developer tools", "AI & ML", "Web", "Mobile", "Data", "Infrastructure", "Security", "Games", "Education", "Other"];
 export const LANGUAGES = ["TypeScript", "JavaScript", "Python", "Go", "Rust", "Java", "Kotlin", "Swift", "C", "C++", "C#", "PHP", "Ruby", "Other"];
@@ -61,14 +61,14 @@ export function searchQuery(q: string): string | null {
 }
 
 /**
- * One bounded query. Eligible = opted in, public by the sitemap's rule (INDEXABLE_SQL) and a project name or a bio.
+ * One bounded query. Eligible = opted in, public by the sitemap's rule (indexableSql) and a project name or a bio.
  * With a search: name matches (project, display name, username) come before bio-only matches, then newest listing first.
  */
 export async function listDirectory(input: Parameters<typeof parseFilters>[0]): Promise<DirectoryResult> {
   const filters = parseFilters(input);
   const where = [
     "listed_at IS NOT NULL",
-    INDEXABLE_SQL,
+    indexableSql(),
     // The public page's rule: a page in Stripe test mode takes no real support, so it isn't listed.
     "stripe_mode IS DISTINCT FROM 'test'",
     "(btrim(COALESCE(project_name, '')) <> '' OR btrim(bio) <> '')",

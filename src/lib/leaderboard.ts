@@ -1,5 +1,5 @@
 import { num, query, str } from "./db";
-import { INDEXABLE_SQL } from "./seo";
+import { indexableSql } from "./seo";
 
 export type Period = "daily" | "weekly" | "monthly" | "lifetime";
 export const PERIODS: Period[] = ["daily", "weekly", "monthly", "lifetime"];
@@ -31,7 +31,7 @@ export type LeaderboardEntry = {
  *
  * USDC isn't counted: we can't see who sent a transfer, and moving the same dollar between two of your own wallets
  * costs only gas, so it would let anyone buy the top spot. Card and PayPal payments cost the creator fees to fake.
- * The eligible creators are picked in their own subquery, so the users columns in INDEXABLE_SQL can never become
+ * The eligible creators are picked in their own subquery, so the users columns in indexableSql() can never become
  * ambiguous against a donations column added later.
  */
 export async function topCreators(period: Period, now = Date.now()): Promise<LeaderboardEntry[]> {
@@ -41,7 +41,7 @@ export async function topCreators(period: Period, now = Date.now()): Promise<Lea
      FROM donations d
      JOIN (
        SELECT id, username, display_name, avatar_url FROM users
-       WHERE leaderboard_opt_in AND stripe_mode IS DISTINCT FROM 'test' AND ${INDEXABLE_SQL}
+       WHERE leaderboard_opt_in AND stripe_mode IS DISTINCT FROM 'test' AND ${indexableSql()}
      ) u ON u.id = d.creator_id
      WHERE d.status = 'paid' AND d.stripe_mode = 'live' AND d.method <> 'usdc' AND (?::bigint IS NULL OR d.paid_at >= ?::bigint)
      GROUP BY u.id, u.username, u.display_name, u.avatar_url
