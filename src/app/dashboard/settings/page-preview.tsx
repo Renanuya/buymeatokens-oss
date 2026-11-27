@@ -7,7 +7,15 @@ import { CreatorPageBody, type CreatorPageModel } from "@/components/creator-pag
 import { Glyph } from "@/components/glyph";
 import { ArrowUpRight } from "@/components/icons";
 import { LogoMark } from "@/components/logo";
-import { githubRepo, normalizeProjectUrl, parseGoalUnits, parsePriceUsd, parseThankYou, projectNameFromUrl } from "@/lib/profile";
+import {
+  githubRepo,
+  normalizeProjectUrl,
+  parseGoalPeriod,
+  parseGoalUnits,
+  parsePriceUsd,
+  parseThankYou,
+  projectNameFromUrl,
+} from "@/lib/profile";
 import { socialsFromForm } from "@/lib/socials";
 import { previewRepoStatsAction } from "./preview-actions";
 
@@ -19,6 +27,7 @@ export function draftPage(saved: CreatorPageModel, form: FormData): CreatorPageM
   const projectUrl = "url" in link ? link.url : saved.projectUrl;
   const projectName = projectUrl ? String(form.get("projectName") ?? "").trim() || projectNameFromUrl(projectUrl) : null;
   const goal = parseGoalUnits(form.get("goal"));
+  const period = parseGoalPeriod(form.get("goalPeriod"));
   const goalUnits = "units" in goal ? goal.units : (saved.goal?.units ?? null);
   const thanks = parseThankYou(form.get("thankYou") ?? saved.thankYou);
   const socials = socialsFromForm(form);
@@ -33,7 +42,7 @@ export function draftPage(saved: CreatorPageModel, form: FormData): CreatorPageM
     projectUrl,
     projectName,
     repo: sameRepo ? saved.repo : null,
-    goal: goalUnits ? { units: goalUnits, reached: saved.goal?.reached ?? 0 } : null,
+    goal: goalUnits ? { units: goalUnits, reached: saved.goal?.reached ?? 0, period: ("period" in period && period.period) || (saved.goal?.period ?? "one-time") } : null,
     socials: "socials" in socials ? socials.socials : saved.socials,
   };
 }

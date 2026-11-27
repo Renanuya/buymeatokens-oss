@@ -8,6 +8,13 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Monthly funding goals**: a goal is now one-time (as before, the default) or monthly. A monthly goal counts the
+  confirmed support of the current calendar month, across card, PayPal and USDC, in the creator's current mode, and
+  starts over on the 1st with no job or stored counter: progress is summed when the page loads, by confirmation
+  time, so a late-confirmed payment counts in the month it was confirmed and a reversed one drops out. Months are UTC.
+  The setup's goal step and the settings form got a "Resets" choice, and the public bar says "this month". One
+  function, `goalReached` in `src/lib/donations.ts`, feeds the page, the dashboard and the link-preview image. New
+  column `users.goal_period`, index `donations_paid_window` and statistics `donations_paid_at_stats`.
 - **Thank-you note**: creators can pin a short note (up to 280 characters, plain text) to their page. It shows above the
   supporter list, only when set, and is editable in the settings form (with the live preview) and in the guided
   setup's token-use step. Control, zero-width and bidi characters are removed and whitespace is collapsed. One

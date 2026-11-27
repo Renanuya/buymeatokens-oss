@@ -15,6 +15,7 @@ import {
 } from "@/components/profile-fields";
 import { SubmitButton } from "@/components/submit-button";
 import type { RepoSuggestion } from "@/lib/github";
+import type { GoalPeriod } from "@/lib/profile";
 import type { Socials } from "@/lib/socials";
 import { updateProfileAction } from "../actions";
 import { PagePreview, draftPage } from "./page-preview";
@@ -28,6 +29,7 @@ export type ProfileDefaults = {
   tokenUse: string;
   thankYou: string;
   goalUnits: number | null;
+  goalPeriod: GoalPeriod;
   socials: Socials;
 };
 
@@ -98,8 +100,8 @@ export function ProfileForm({
         <ThankYouField defaultValue={defaults.thankYou} />
       </Section>
 
-      <Section title="Goal" hint="A progress bar on your page. It counts from the day you set it.">
-        <GoalField defaultValue={defaults.goalUnits} priceUsd={priceUsd ?? defaults.priceUsd} />
+      <Section title="Goal" hint="A progress bar on your page.">
+        <GoalField defaultValue={defaults.goalUnits} defaultPeriod={defaults.goalPeriod} priceUsd={priceUsd ?? defaults.priceUsd} />
       </Section>
 
       <Section title="Links" hint="Shown under your name. Leave a field empty to remove it.">

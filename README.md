@@ -35,7 +35,7 @@ Payments go straight to the creator's own Stripe, PayPal or USDC wallet. The pla
 
 | | |
 |---|---|
-| **Creator pages** | GitHub login and an eight-step guided setup: name, payment method, price, project link with live GitHub stats, description, "where the tokens go" with an optional thank-you note, a funding goal and socials. Creators can reply to and like supporters' messages. |
+| **Creator pages** | GitHub login and an eight-step guided setup: name, payment method, price, project link with live GitHub stats, description, "where the tokens go" with an optional thank-you note, a funding goal (one-time, or monthly and counted per UTC month) and socials. Creators can reply to and like supporters' messages. |
 | **Write with AI** | Optional: drafts the project description from the repository's README, or from the project name and link without one (Gemini or Groq free tiers, capped per creator and per day). |
 | **Stripe** | Checkout runs on the creator's own *restricted* key (Checkout Sessions: write only), stored encrypted with AES-256-GCM. No webhooks needed; pending sessions are reconciled. |
 | **PayPal** | Classic "Buy Now" links straight to the creator, confirmed through verified IPN messages. |
