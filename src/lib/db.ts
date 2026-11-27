@@ -293,6 +293,32 @@ CREATE TABLE IF NOT EXISTS ops_events (
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 
+-- USDC payment records (src/lib/usdc-payments.ts): one row per submitted transaction, written before the chain is asked,
+-- so an RPC outage leaves something to re-check. status: sent -> verifying -> confirmed | failed | expired.
+-- A verifying row older than its lease is taken over (the process holding it died). The counted payment is still the
+-- donations row; its unique tx_hash is what keeps a transfer from counting twice.
+CREATE TABLE IF NOT EXISTS usdc_payments (
+  id TEXT PRIMARY KEY,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  address TEXT NOT NULL,
+  network TEXT NOT NULL DEFAULT 'base',
+  tx_hash TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'verifying', 'confirmed', 'failed', 'expired')),
+  amount_cents INTEGER,
+  reason TEXT,
+  supporter_name TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  visit_source TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  last_checked_at BIGINT,
+  confirmed_at BIGINT
+);
+CREATE INDEX IF NOT EXISTS usdc_payments_open ON usdc_payments(status, last_checked_at);
+CREATE INDEX IF NOT EXISTS usdc_payments_creator ON usdc_payments(creator_id);
+ALTER TABLE usdc_payments ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 `;
