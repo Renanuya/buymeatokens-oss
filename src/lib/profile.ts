@@ -1,5 +1,7 @@
 // Limits and parsing for what creators put on their page. Pure functions, used by forms and server actions.
 
+import { hasOffensiveLanguage } from "./name-moderation";
+
 export const BIO_MAX_LENGTH = 1_000;
 export const TOKEN_USE_MAX_LENGTH = 500;
 export const PROJECT_NAME_MAX_LENGTH = 80;
@@ -20,6 +22,10 @@ export function validateTokenUse(text: string): string | null {
   return text.length > TOKEN_USE_MAX_LENGTH
     ? `Please keep this to ${TOKEN_USE_MAX_LENGTH.toLocaleString("en-US")} characters or fewer.`
     : null;
+}
+
+export function validateProjectName(name: string): string | null {
+  return hasOffensiveLanguage(name) ? "Please choose a project name without explicit or offensive language." : null;
 }
 
 /** Whole dollars between the limits, or null. */
@@ -86,6 +92,19 @@ export function projectNameFromUrl(url: string): string {
   } catch {
     return "";
   }
+}
+
+/**
+ * The name to save for a project link: the typed name once it passes the content check, or one taken from the
+ * link when nothing was typed. A name taken from the link that fails the check is dropped (null); the page then
+ * shows the link itself.
+ */
+export function resolveProjectName(input: string, url: string): { name: string | null } | { error: string } {
+  const typed = input.trim().slice(0, PROJECT_NAME_MAX_LENGTH);
+  const invalid = validateProjectName(typed);
+  if (typed) return invalid ? { error: invalid } : { name: typed };
+  const derived = projectNameFromUrl(url);
+  return { name: validateProjectName(derived) ? null : derived };
 }
 
 /** "github.com/owner/repo" style text for showing a link. */
