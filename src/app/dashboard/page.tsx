@@ -4,7 +4,7 @@ import { Avatar } from "@/components/avatar";
 import { BillingBanner } from "@/components/billing-banner";
 import { LinkField } from "@/components/copy-field";
 import { SupportItem, goalPercent } from "@/components/creator-profile";
-import { BadgeBuilder } from "@/components/badge-builder";
+import { ReadmeTools } from "@/components/readme-tools";
 import { CreatorBadges } from "@/components/early-supporter-badge";
 import { EarningsCard } from "./earnings-card";
 import { Glyph, PaymentMark } from "@/components/glyph";
@@ -271,8 +271,8 @@ export default async function DashboardPage() {
           </Reveal>
           <Reveal delay={270}>
             <div className="card flex h-full flex-col p-6 sm:p-7">
-              <CardHead title="README badge" id="readme-badge" />
-              <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="mt-4 flex flex-1 flex-col" />
+              <CardHead title="Get found on GitHub" id="readme-badge" />
+              <ReadmeTools username={username} pageUrl={pageUrl} base={base} />
             </div>
           </Reveal>
 

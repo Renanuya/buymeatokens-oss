@@ -222,3 +222,36 @@ export async function repoBrief(repo: string): Promise<RepoBrief | null> {
     readme: readme ?? "",
   };
 }
+
+/**
+ * A repo's default branch. "missing" when GitHub says there's no such repo (or it's private), null when GitHub
+ * didn't answer. Cached for ten minutes.
+ */
+export async function repoDefaultBranch(repo: string): Promise<string | "missing" | null> {
+  const res = await ghFetch(`/repos/${repo}`, 600);
+  if (!res) return null;
+  if (res.status === 404) return "missing";
+  if (!res.ok) return null;
+  try {
+    const data = (await res.json()) as { default_branch?: unknown };
+    return typeof data.default_branch === "string" && data.default_branch ? data.default_branch : null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A file's text on the default branch: "missing" when there's no such file, null when GitHub didn't answer.
+ * Not cached, so a file the creator added a moment ago shows up when they come back.
+ */
+export async function repoFileText(repo: string, path: string): Promise<string | "missing" | null> {
+  const res = await ghFetch(`/repos/${repo}/contents/${path}`, 0, "application/vnd.github.raw+json");
+  if (!res) return null;
+  if (res.status === 404) return "missing";
+  if (!res.ok) return null;
+  try {
+    return (await res.text()).slice(0, 20_000);
+  } catch {
+    return null;
+  }
+}

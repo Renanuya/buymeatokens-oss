@@ -99,6 +99,17 @@ const milestones: Milestone[] = [
     links: [{ href: "/dashboard/account#emails", label: "Email settings" }],
   },
   {
+    title: "Get found on GitHub.",
+    description: "Creators add a supporter wall to their README that lists their latest supporters by name and follows GitHub's light and dark mode, and turn on GitHub's Sponsor button for one repository or all of them in one click.",
+    category: "GitHub",
+    icon: "users",
+    done: true,
+    links: [
+      { href: "/dashboard#supporter-wall", label: "Add your supporter wall" },
+      { href: "/dashboard#sponsor-button", label: "Turn on the Sponsor button" },
+    ],
+  },
+  {
     title: "Help people discover projects.",
     description: "Build a searchable project directory with categories, tags and programming languages. Give people ways to find new projects alongside the most-supported ones.",
     category: "Project discovery",
@@ -144,8 +155,8 @@ const milestones: Milestone[] = [
         icon: "users",
       },
       {
-        title: "Keep README supporter lists up to date.",
-        description: "Provide a GitHub Action or embeddable supporter widget that uses the API to display supporters who opt in, and automatically refresh their names and profile links.",
+        title: "Show supporters anywhere you like.",
+        description: "Use the API from a GitHub Action or your own site to show supporters who opt in, with their profile links, beyond the README supporter wall.",
         icon: "list",
       },
     ],

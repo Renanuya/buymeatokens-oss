@@ -58,3 +58,12 @@ export function compactNumber(n: number): string {
   if (n < 1_000_000) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0).replace(/\.0$/, "")}k`;
   return `${(n / 1_000_000).toFixed(1).replace(/\.0$/, "")}m`;
 }
+
+const CONTROL_RE = /[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g;
+
+/** Text someone typed, as one tidy line: no control characters or line breaks, spaces collapsed, at most `max` characters (by code point, with "…"). */
+export function oneLine(text: string, max = 40): string {
+  const line = text.replace(CONTROL_RE, " ").replace(/\s+/g, " ").trim();
+  const chars = Array.from(line);
+  return chars.length > max ? `${chars.slice(0, max - 1).join("").trimEnd()}…` : line;
+}

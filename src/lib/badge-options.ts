@@ -23,3 +23,11 @@ export function badgeQuery(style: BadgeStyle, theme: BadgeTheme): string {
   const query = params.toString();
   return query ? `?${query}` : "";
 }
+
+/** The README supporter wall (src/lib/wall.ts) comes in two colours; README snippets can pick one per GitHub theme. */
+export const WALL_THEMES = ["light", "dark"] as const;
+export type WallTheme = (typeof WALL_THEMES)[number];
+
+export function parseWallTheme(value: string | null): WallTheme {
+  return value === "dark" ? "dark" : "light";
+}

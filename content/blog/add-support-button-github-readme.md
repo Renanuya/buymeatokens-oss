@@ -55,7 +55,7 @@ github: yourname
 custom: ["https://buymeatokens.com/yourname"]
 ```
 
-The file supports GitHub Sponsors and a list of other platforms by name (such as Patreon, Open Collective, Ko-fi and Liberapay), plus up to four **custom** URLs for anything else. Put the file in the repository's `.github` folder, or in a `.github` repository on your account or organization to apply it to every repo that doesn't have its own.
+The file supports GitHub Sponsors and a list of other platforms by name (such as Patreon, Open Collective, Ko-fi and Liberapay), plus up to four **custom** URLs for anything else. Put the file in the repository's `.github` folder, or in a `.github` repository on your account or organization to apply it to every repo that doesn't have its own. If your page is on buymeatokens, the dashboard's **Sponsor button** tab opens GitHub with the file already filled in, for one repository or all of them.
 
 A good combination is one recurring option and one one-off option. If you're choosing between platforms, see [Buy Me a Coffee alternatives for developers](/blog/buy-me-a-coffee-alternatives-developers).
 

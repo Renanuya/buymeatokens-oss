@@ -7,15 +7,15 @@ export type { BadgeStyle, BadgeTheme };
 // README badges. Text is drawn as Inter Tight outlines, so the badge looks the same on GitHub, npm and
 // everywhere else (SVGs shown as images can't load web fonts).
 
-const INK = "#1c1c1e";
-const LILAC = "#cdd2fb";
-const LILAC_SOFT = "#eef0fe";
-const IRIS = "#5b6cf2";
-const WHITE = "#ffffff";
+export const INK = "#1c1c1e";
+export const LILAC = "#cdd2fb";
+export const LILAC_SOFT = "#eef0fe";
+export const IRIS = "#5b6cf2";
+export const WHITE = "#ffffff";
 
 // The </> mark and the ↗ arrow from the site, drawn on a 16×16 grid.
-const LOGO_PATH = "M5.5 4.75 2.25 8l3.25 3.25M10.5 4.75 13.75 8l-3.25 3.25M9 3.25 7 12.75";
-const ARROW_PATH = "M4.5 11.5 11.5 4.5M5.5 4.5h6v6";
+export const LOGO_PATH = "M5.5 4.75 2.25 8l3.25 3.25M10.5 4.75 13.75 8l-3.25 3.25M9 3.25 7 12.75";
+export const ARROW_PATH = "M4.5 11.5 11.5 4.5M5.5 4.5h6v6";
 
 /**
  * Colour sets. `bg`/`fg` are the badge and its label; `tile`/`tileInk` the round logo tile; `chip`/`chipInk` the
@@ -29,13 +29,13 @@ const THEMES = {
 } as const satisfies Record<BadgeTheme, unknown>;
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
-const esc = (value: string) => value.replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);
-const n = (value: number) => String(Math.round(value * 100) / 100);
+export const esc = (value: string) => value.replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);
+export const n = (value: number) => String(Math.round(value * 100) / 100);
 
-type Run = { width: number; svg: (x: number, baseline: number, fill: string) => string };
+export type Run = { width: number; svg: (x: number, baseline: number, fill: string) => string };
 
 /** Lays out `text` with real glyph advances (+ kerning and tracking in em). */
-function run(font: BadgeFont, text: string, size: number, tracking = 0): Run {
+export function run(font: BadgeFont, text: string, size: number, tracking = 0): Run {
   const scale = size / font.unitsPerEm;
   const glyphs: { x: number; d: string }[] = [];
   let cursor = 0;
@@ -55,15 +55,15 @@ function run(font: BadgeFont, text: string, size: number, tracking = 0): Run {
 }
 
 /** Baseline that centers capital letters of `size` vertically around `centerY`. */
-function baselineFor(font: BadgeFont, size: number, centerY: number) {
+export function baselineFor(font: BadgeFont, size: number, centerY: number) {
   return centerY + (font.capHeight / font.unitsPerEm) * size * 0.5;
 }
 
-function icon(path: string, x: number, y: number, size: number, color: string, strokeWidth: number) {
+export function icon(path: string, x: number, y: number, size: number, color: string, strokeWidth: number) {
   return `<path transform="translate(${n(x)} ${n(y)}) scale(${n(size / 16)})" d="${path}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
-function wrap(width: number, height: number, title: string, body: string) {
+export function wrap(width: number, height: number, title: string, body: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${height}" viewBox="0 0 ${n(width)} ${height}" role="img" aria-label="${title}"><title>${title}</title>${body}</svg>`;
 }
 

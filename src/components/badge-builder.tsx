@@ -1,8 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CopyButton } from "@/components/copy-field";
-import { Glyph } from "@/components/glyph";
+import { ReadmePreview, Segmented, type ReadmeMode } from "@/components/readme-preview";
 import { badgeQuery, type BadgeStyle, type BadgeTheme } from "@/lib/badge-options";
 
 const STYLES: { key: BadgeStyle; label: string }[] = [
@@ -36,32 +35,16 @@ export function BadgeBuilder({
 }) {
   const [style, setStyle] = useState<BadgeStyle>("button");
   const [theme, setTheme] = useState<BadgeTheme>("dark");
-  const [readme, setReadme] = useState<"light" | "dark">("light");
+  const [readme, setReadme] = useState<ReadmeMode>("light");
   const query = badgeQuery(style, theme);
   const src = `/api/badge/${username}${query}`;
   // ?ref=badge credits visits from the badge in the creator's Analytics tab.
   const markdown = `[![Buy me AI tokens](${base}/api/badge/${username}${query})](${pageUrl}?ref=badge)`;
-  const dark = readme === "dark";
 
   return (
     <div className={className}>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <div role="radiogroup" aria-label="Badge shape" className="flex rounded-full bg-paper p-1">
-          {STYLES.map((s) => (
-            <button
-              key={s.key}
-              type="button"
-              role="radio"
-              aria-checked={style === s.key}
-              onClick={() => setStyle(s.key)}
-              className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
-                style === s.key ? "bg-white text-ink shadow-[0_1px_3px_rgba(28,28,30,0.12)]" : "text-muted hover:text-ink"
-              }`}
-            >
-              {s.label}
-            </button>
-          ))}
-        </div>
+        <Segmented label="Badge shape" value={style} options={STYLES} onChange={setStyle} />
         <div role="radiogroup" aria-label="Badge colours" className="flex items-center gap-2">
           {THEMES.map((t) => (
             <button
@@ -80,54 +63,16 @@ export function BadgeBuilder({
         </div>
       </div>
 
-      <div
-        className={`relative mt-3 flex flex-1 flex-col overflow-hidden rounded-xl border transition-colors duration-300 ${
-          dark ? "border-[#30363d] bg-[#0d1117]" : "border-line bg-white"
-        }`}
+      <ReadmePreview
+        readme={readme}
+        onReadme={setReadme}
+        copyValue={markdown}
+        copyLabel="Copy Markdown"
+        badgeStyle={style === "button" ? "button" : "compact"}
       >
-        <div
-          role="radiogroup"
-          aria-label="README background"
-          className={`absolute left-2 top-2 flex rounded-lg p-0.5 ${dark ? "bg-white/10" : "bg-paper"}`}
-        >
-          {(["light", "dark"] as const).map((mode) => (
-            <button
-              key={mode}
-              type="button"
-              role="radio"
-              aria-checked={readme === mode}
-              aria-label={`${mode === "light" ? "Light" : "Dark"} README`}
-              title={`On a ${mode} README`}
-              onClick={() => setReadme(mode)}
-              className={`grid size-7 place-items-center rounded-md transition ${
-                readme === mode
-                  ? dark
-                    ? "bg-white/20 text-white"
-                    : "bg-white text-ink shadow-[0_1px_3px_rgba(28,28,30,0.12)]"
-                  : dark
-                    ? "text-white/50 hover:text-white"
-                    : "text-muted hover:text-ink"
-              }`}
-            >
-              <Glyph name={mode === "light" ? "sun" : "moon"} className="size-3.5" />
-            </button>
-          ))}
-        </div>
-        <div className="absolute right-2 top-2">
-          <CopyButton
-            value={markdown}
-            label="Copy Markdown"
-            badgeStyle={style === "button" ? "button" : "compact"}
-            className={`size-8 rounded-lg ${
-              dark ? "bg-white/10 text-white hover:bg-white/20" : "border border-line bg-white hover:border-ink/30"
-            }`}
-          />
-        </div>
-        <div className="grid min-h-[124px] flex-1 place-items-center px-6 pb-7 pt-12">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
-        </div>
-      </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
+      </ReadmePreview>
       <p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
     </div>
   );

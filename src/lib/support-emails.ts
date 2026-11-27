@@ -15,7 +15,7 @@ import { appUrl } from "./config";
 import { num, query, str } from "./db";
 import { deliverEmail, emailConfigured, liveEmailEnabled } from "./email";
 import { listPanel, renderEmail, supportRow } from "./email-layout";
-import { formatTokens, formatUsd, shortName } from "./format";
+import { formatTokens, formatUsd, oneLine, shortName } from "./format";
 import { recordOpsEvent } from "./ops";
 
 export const SUPPORT_LEDGER = "support-notifications-v1";
@@ -46,11 +46,7 @@ export type SupportEmailResult = "sent" | "skipped" | "failed" | "unknown" | "no
 const METHOD_LABEL: Record<string, string> = { stripe: "card", paypal: "PayPal", usdc: "USDC on Base" };
 
 /** A supporter name that is safe in a subject line: one line, no control characters, not too long. */
-export function cleanName(name: string, max = 40): string {
-  const one = name.replace(/[\u0000-\u001f\u007f-\u009f\u2028\u2029]/g, " ").replace(/\s+/g, " ").trim();
-  const chars = Array.from(one);
-  return chars.length > max ? `${chars.slice(0, max - 1).join("").trimEnd()}…` : one;
-}
+export const cleanName = (name: string, max = 40) => oneLine(name, max);
 
 export function supportEmail(creator: { displayName: string; username: string }, items: SupportItem[], base = appUrl()) {
   const firstName = shortName(creator.displayName) || creator.username;
