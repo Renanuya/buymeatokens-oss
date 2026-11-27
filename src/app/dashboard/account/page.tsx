@@ -9,11 +9,13 @@ import { storedDiscordHint } from "@/lib/discord";
 import { formatDate } from "@/lib/format";
 import { contactEmail, legalValue } from "@/lib/legal/config";
 import { requireCreator } from "@/lib/session";
+import { listEndpoints } from "@/lib/webhooks";
 import { deletionConfirmationName } from "./confirm";
 import { DeleteAccountForm } from "./delete-account-form";
 import { DiscordWebhookForm } from "./discord-webhook-form";
 import { LeaderboardToggle } from "./leaderboard-toggle";
 import { SupportEmailToggle } from "./support-email-toggle";
+import { WebhooksCard } from "./webhooks-card";
 
 export const metadata: Metadata = { title: { absolute: "Account · buymeatokens" }, robots: { index: false, follow: false } };
 
@@ -32,6 +34,7 @@ export default async function AccountPage() {
   const user = await requireCreator();
   const accepted = hasCurrentConsent(user);
   const email = contactEmail();
+  const endpoints = await listEndpoints(user.id);
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -76,6 +79,14 @@ export default async function AccountPage() {
             <DiscordWebhookForm hint={storedDiscordHint(user.discordWebhookEnc)} stopped={user.discordFailedAt !== null} />
           </div>
         </div>
+      </Section>
+
+      <Section id="webhooks" title="Webhooks">
+        <p>
+          We send a signed event to your server when a payment is confirmed or reversed (up to 3 HTTPS endpoints). It has
+          the supporter&apos;s name (if given), message, amount and method, never an email or a transaction id.
+        </p>
+        <WebhooksCard endpoints={endpoints} />
       </Section>
 
       <Section id="leaderboard" title="Leaderboard">

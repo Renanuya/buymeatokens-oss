@@ -15,6 +15,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
   request, and requests never follow a redirect. Names and messages are made inert (no mentions, links or markdown) and
   nothing can ping anyone. A 429 is retried, a deleted webhook is disconnected, and an ambiguous failure is never resent.
   See [docs/emails.md](docs/emails.md#discord-notifications).
+- **Signed webhooks**: creators can add up to 3 HTTPS endpoints under Account > Webhooks and get a signed
+  `support.confirmed` event when a payment is confirmed (Stripe, PayPal or USDC) and `support.reversed` when a PayPal
+  payment is reversed. The event is written by the same SQL statement that confirms the payment, so it is never lost
+  or doubled. Deliveries retry with backoff, endpoints that keep failing are disabled, secrets are shown once and can
+  be rotated with a 24 hour overlap, and every URL is checked against private and internal addresses before each send.
+  See [docs/webhooks.md](docs/webhooks.md). The developer API and Discord roles are still to come.
 - **Stream alerts**: an opt-in browser source for OBS Studio and Streamlabs Desktop that shows "Alex supported you with 1M tokens!"
   when a payment is confirmed. The dashboard's *Stream alerts* card makes a private URL (shown once; only its hash is
   stored), regenerates or disables it, and previews a test alert that creates nothing. Duration, sound, amount, message
@@ -147,6 +153,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Fixed
 
+- The project directory and the leaderboard showed nobody in local development: accounts from "Continue without
+  GitHub" were left out everywhere. They now count wherever dev login is on, and production is unchanged.
 - **Project names are checked for explicit or offensive language** on the server: in the guided setup, the settings
   form and the application form (`src/lib/name-moderation.ts`). Case, spacing, look-alike letters and leetspeak
   are handled, and ordinary words that merely contain a term (Scunthorpe, cockpit) pass. A name taken from the project

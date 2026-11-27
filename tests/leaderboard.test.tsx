@@ -93,6 +93,14 @@ describe("leaderboard", () => {
     await paid("pending", 5, NOW - HOUR, { status: "failed" });
     expect(await names("lifetime")).toEqual(["ok"]);
     expect((await topCreators("lifetime", NOW))[0]).toMatchObject({ rank: 1, units: 5, supporters: 1 });
+
+    // With dev login on (local development only), the dev-login account counts too, so the board can be tried.
+    vi.stubEnv("DEV_LOGIN", "true");
+    try {
+      expect((await names("lifetime")).sort()).toEqual(["dev", "ok"]);
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it("doesn't count USDC, which costs only gas to send to yourself", async () => {

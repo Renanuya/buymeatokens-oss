@@ -13,3 +13,9 @@ description = "The IndexNow key is public by design: the same value is served at
 condition = "AND"
 paths = ['''^scripts/indexnow\.ts$''']
 regexes = ['''^[0-9a-f]{32}$''']
+
+[[allowlists]]
+description = "A made-up webhook secret in the log-redaction test, not a real key."
+condition = "AND"
+paths = ['''^tests/webhook-send\.test\.ts$''']
+regexes = ['''bmtwh_AbC-123_xyz''']

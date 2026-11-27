@@ -93,6 +93,7 @@ Key modules in `src/lib`:
 | `leaderboard.ts` | The leaderboard query: opted-in (`users.leaderboard_opt_in`), listable (`LISTABLE_SQL` in `seo.ts`), live-mode creators ranked by tokens of confirmed live support over rolling 24h / 7d / 30d / all-time windows, top 50, one grouped query per period served by `donations_paid_at`. Pages revalidate every 5 minutes. It shows only what the creator's page already shows (name, avatar, tokens, supporter count), never dollars. It ranks recorded support, not verified popularity: payers are not verified, so self-support can't be prevented |
 | `seo.ts`, `blog.ts` | Structured data, sitemap inputs and blog loading |
 | `legal/`, `consent.ts` | Legal values and copy, Terms acceptance and its version ([legal.md](legal.md)) |
+| `webhooks.ts`, `webhook-events.ts`, `webhook-url.ts`, `webhook-sign.ts`, `webhook-send.ts`, `webhook-delivery.ts` | Signed webhooks to creators' endpoints: enqueued by the confirming statement, SSRF-checked, sent by the minute worker ([webhooks.md](webhooks.md)) |
 | `account-deletion.ts`, `payment-export.ts` | Self-service account deletion and the payment history CSV |
 | `stream-alerts.ts` | Stream alert token (stored as a hash), the feed query and its cursor, the widget's URL options ([stream-alerts.md](stream-alerts.md)) |
 | `ai-draft.ts` | Prompts, provider chain and daily caps for "Write with AI" |

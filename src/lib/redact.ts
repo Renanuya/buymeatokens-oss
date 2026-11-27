@@ -7,12 +7,13 @@ const SECRET_PATTERNS: RegExp[] = [
   /\bgh[pousr]_[A-Za-z0-9]{20,}/g, // GitHub tokens
   // Discord webhook URLs (the token is the credential), with or without a scheme, an API version or percent-encoding.
   /(?:https?(?::\/\/|%3A%2F%2F))?(?:[a-z]+\.)?discord(?:app)?\.com(?:\/|%2F)api(?:\/|%2F)(?:v\d+(?:\/|%2F))?webhooks(?:\/|%2F)\d+(?:\/|%2F)[\w-]+/gi,
+  /bmtwh_[A-Za-z0-9_-]+/g, // our own webhook signing secrets (no \b: one may follow a word character)
   /bmta_[A-Za-z0-9_-]{20,}/g, // stream alert URLs; no \b, the token may follow "%2F" in an encoded URL
   /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/g, // Authorization headers
 ];
 
 /** Common key prefixes that must never appear in log output. Used by the tests as well. */
-export const SECRET_PREFIX_RE = /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{6,}|\bwhsec_[A-Za-z0-9]{6,}|\bgh[pousr]_[A-Za-z0-9]{20,}/;
+export const SECRET_PREFIX_RE = /\b(?:sk|rk)_(?:live|test)_[A-Za-z0-9]{6,}|\bwhsec_[A-Za-z0-9]{6,}|\bbmtwh_[A-Za-z0-9_-]{6,}|\bgh[pousr]_[A-Za-z0-9]{20,}/;
 
 export function redactSecrets(text: string): string {
   return SECRET_PATTERNS.reduce((out, pattern) => out.replace(pattern, "[redacted]"), text);

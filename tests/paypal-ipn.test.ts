@@ -255,6 +255,22 @@ describe("POST /api/paypal/ipn", () => {
     });
   });
 
+  it("answers 503 when the payment couldn't be recorded, so PayPal sends it again", async () => {
+    await mocks.db.exec(`
+      CREATE OR REPLACE FUNCTION ipn_boom() RETURNS trigger AS $$ BEGIN RAISE EXCEPTION 'disk full'; END $$ LANGUAGE plpgsql;
+      CREATE TRIGGER ipn_boom BEFORE UPDATE ON donations FOR EACH ROW EXECUTE FUNCTION ipn_boom();`);
+    try {
+      const res = await postIpn(ipnBody());
+      expect(res.status).toBe(503);
+      expect(await donationRow()).toMatchObject({ status: "pending", tx_hash: null });
+    } finally {
+      await mocks.db.exec("DROP TRIGGER ipn_boom ON donations");
+    }
+    // PayPal's retry then goes through.
+    expect((await postIpn(ipnBody())).status).toBe(200);
+    expect(await donationRow()).toMatchObject({ status: "paid", tx_hash: TXN_ID });
+  });
+
   it("answers 503 when PayPal is unreachable so PayPal retries", async () => {
     fetchMock.mockRejectedValue(new Error("fetch failed"));
 
