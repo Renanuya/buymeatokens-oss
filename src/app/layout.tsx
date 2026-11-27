@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Inter, Inter_Tight, JetBrains_Mono } from "next/font/google";
+import { HtmlFlags, InlineScript } from "@/components/inline-script";
 import { SoundEffects } from "@/components/sound-effects";
 import { SIGNED_IN_SCRIPT } from "@/lib/signed-in-hint";
 import "./globals.css";
@@ -46,11 +47,12 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="en" className={`${inter.variable} ${interTight.variable} ${mono.variable}`} suppressHydrationWarning>
       <head>
         {/* Lets animations hide content before it reveals, only when JavaScript is running. */}
-        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <InlineScript html="document.documentElement.classList.add('js')" />
         {/* Shows "Dashboard" instead of "Create your page" to signed-in visitors on static pages; see signed-in-hint.ts. */}
-        <script dangerouslySetInnerHTML={{ __html: SIGNED_IN_SCRIPT }} />
+        <InlineScript html={SIGNED_IN_SCRIPT} />
       </head>
       <body className="min-h-dvh bg-paper font-sans text-ink antialiased">
+        <HtmlFlags />
         {children}
         <SoundEffects />
       </body>

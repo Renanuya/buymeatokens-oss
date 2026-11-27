@@ -114,6 +114,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 ### Fixed
 
 - A test of account deletion failed about once in a hundred runs.
+- The 404 page no longer logs "Encountered a script tag while rendering React component" in development, and keeps the
+  signed-in header buttons: the two inline scripts in `<head>` follow Next.js's pattern for scripts that run before
+  hydration.
 
 ## [0.1.0] - 2026-11-26
 
