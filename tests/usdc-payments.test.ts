@@ -169,7 +169,10 @@ describe("USDC payment records", () => {
     chainOk(500_000n);
     expect(await attemptUsdcPayment(p, CREATOR, NOW)).toEqual({ state: "rejected", reason: "too_small" });
     expect(await donations()).toHaveLength(0);
+    expect(await payment()).toMatchObject({ status: "failed", reason: "too_small" });
+    fetchMock.mockClear();
     expect(await attemptUsdcPayment(p, CREATOR, NOW + 1)).toEqual({ state: "rejected", reason: "too_small" });
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 
   it("the background pass confirms open records and skips fresh ones", async () => {
@@ -236,5 +239,64 @@ describe("USDC payment records", () => {
     await pruneUsdcPayments(NOW + UNCONFIRMED_RETENTION_MS + 1);
     const left = (await query("SELECT status FROM usdc_payments ORDER BY status")).rows.map((r) => (r as { status: string }).status);
     expect(left).toEqual(["confirmed", "sent"]);
+  });
+
+  it("a worker that lost its lease can't release or settle the replacement's claim", async () => {
+    const p = await openUsdcPayment(input(), NOW);
+    const late = (kind: "reject" | "small") => {
+      let finish!: () => void;
+      const gate = new Promise<void>((r) => (finish = r));
+      fetchMock.mockImplementationOnce(async () => {
+        await gate;
+        if (kind === "reject") throw new TypeError("fetch failed");
+        return rpcResult({
+          status: "0x1",
+          blockNumber: "0x10",
+          logs: [{ address: USDC, topics: [TRANSFER_TOPIC, pad(SENDER), pad(WALLET)], data: "0x1" }],
+        });
+      });
+      return finish;
+    };
+    for (const kind of ["reject", "small"] as const) {
+      await query("UPDATE usdc_payments SET status = 'sent', reason = NULL, last_checked_at = NULL WHERE id = ?", [p.id]);
+      fetchMock.mockReset();
+      chainOk(1n); // the block lookup after the gated receipt
+      const finishA = late(kind);
+      const a = attemptUsdcPayment(p, CREATOR, NOW);
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(1));
+
+      // A's lease runs out and B takes over; B is still talking to the network.
+      let finishB!: () => void;
+      const gateB = new Promise<void>((r) => (finishB = r));
+      fetchMock.mockImplementationOnce(async () => {
+        await gateB;
+        return rpcResult(null);
+      });
+      const b = attemptUsdcPayment(p, CREATOR, NOW + VERIFY_LEASE_MS + 1);
+      await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+
+      finishA();
+      await a;
+      expect(await payment()).toMatchObject({ status: "verifying", reason: null });
+
+      finishB();
+      expect(await b).toEqual({ state: "pending" });
+      expect(await payment()).toMatchObject({ status: "sent", reason: "pending" });
+    }
+  });
+
+  it("reopens a failed record when the creator has fixed the wallet address, and counts once", async () => {
+    const OLD_WALLET = "0x5555555555555555555555555555555555555555";
+    chainOk(); // the money went to WALLET
+    const stale = await openUsdcPayment({ ...input(), address: OLD_WALLET }, NOW);
+    expect(await attemptUsdcPayment(stale, CREATOR, NOW)).toEqual({ state: "rejected", reason: "no_transfer" });
+    // Same address again: the verdict stands.
+    expect(await openUsdcPayment({ ...input(), address: OLD_WALLET }, NOW + 1)).toMatchObject({ status: "failed" });
+
+    const reopened = await openUsdcPayment(input(), NOW + 2);
+    expect(reopened).toMatchObject({ id: stale.id, status: "sent", address: WALLET, reason: null });
+    expect(await attemptUsdcPayment(reopened, CREATOR, NOW + 3)).toMatchObject({ state: "confirmed", counted: true });
+    expect(await attemptUsdcPayment(reopened, CREATOR, NOW + 4)).toMatchObject({ state: "confirmed", counted: false });
+    expect(await donations()).toHaveLength(1);
   });
 });

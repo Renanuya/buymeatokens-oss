@@ -318,7 +318,6 @@ CREATE TABLE IF NOT EXISTS usdc_payments (
   UNIQUE (creator_id, tx_hash)
 );
 CREATE INDEX IF NOT EXISTS usdc_payments_open ON usdc_payments(status, last_checked_at);
-CREATE INDEX IF NOT EXISTS usdc_payments_creator ON usdc_payments(creator_id);
 ALTER TABLE usdc_payments ENABLE ROW LEVEL SECURITY;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;

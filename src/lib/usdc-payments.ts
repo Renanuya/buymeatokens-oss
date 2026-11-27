@@ -56,7 +56,8 @@ function mapPayment(r: Row): UsdcPayment {
 
 /**
  * Records a submitted transaction for the creator's wallet. Submitting the same hash again (double click, retry after an
- * error) returns the existing record instead of creating another one.
+ * error) returns the existing record instead of creating another one. A record that failed against a different wallet
+ * address (the creator has fixed it since) is reopened with the current one.
  */
 export async function openUsdcPayment(
   input: { creatorId: string; address: string; txHash: string; supporterName: string; message: string; visitSource?: string | null },
@@ -65,7 +66,9 @@ export async function openUsdcPayment(
   await query(
     `INSERT INTO usdc_payments (id, creator_id, address, network, tx_hash, supporter_name, message, visit_source, created_at, expires_at)
      VALUES (?, ?, ?, 'base', ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (creator_id, tx_hash) DO NOTHING`,
+     ON CONFLICT (creator_id, tx_hash) DO UPDATE
+       SET address = EXCLUDED.address, status = 'sent', reason = NULL, amount_cents = NULL
+       WHERE usdc_payments.status = 'failed' AND lower(usdc_payments.address) <> lower(EXCLUDED.address)`,
     [newId(), input.creatorId, input.address, input.txHash, input.supporterName, input.message, input.visitSource ?? null, now, now + USDC_MAX_AGE_MS],
   );
   const rs = await query("SELECT * FROM usdc_payments WHERE creator_id = ? AND tx_hash = ?", [input.creatorId, input.txHash]);
@@ -99,16 +102,23 @@ export type UsdcAttempt =
   | { state: "busy" }
   | { state: "expired" };
 
+// release and settle only act on the claim that started the check: a claim writes last_checked_at = its own `now`, so a
+// worker whose lease ran out and was taken over can't touch the replacement's claim.
+
 /** Puts a claimed record back so it can be checked again. */
-async function release(id: string, reason: string) {
-  await query("UPDATE usdc_payments SET status = 'sent', reason = ? WHERE id = ? AND status = 'verifying'", [reason, id]);
+async function release(id: string, reason: string, claimedAt: number) {
+  await query("UPDATE usdc_payments SET status = 'sent', reason = ? WHERE id = ? AND status = 'verifying' AND last_checked_at = ?", [
+    reason,
+    id,
+    claimedAt,
+  ]);
 }
 
 async function settle(id: string, status: "failed" | "confirmed", reason: string | null, amountCents: number | null, now: number) {
   await query(
     `UPDATE usdc_payments SET status = ?, reason = ?, amount_cents = ?, confirmed_at = ?
-     WHERE id = ? AND status = 'verifying'`,
-    [status, reason, amountCents, status === "confirmed" ? now : null, id],
+     WHERE id = ? AND status = 'verifying' AND last_checked_at = ?`,
+    [status, reason, amountCents, status === "confirmed" ? now : null, id, now],
   );
 }
 
@@ -118,7 +128,8 @@ function unitsFor(amountCents: number, creator: Pick<User, "unitPriceCents">): n
 
 /**
  * Checks one record against the chain, once. Only one caller at a time holds a record (sent -> verifying), so two
- * simultaneous confirmations of the same transaction can't both talk to the network or both record it. Anything
+ * simultaneous confirmations of the same transaction don't check it at the same moment; the unique donations.tx_hash is
+ * what keeps it from being counted twice. Anything
  * inconclusive (not mined yet, RPC down, block not found) puts the record back to "sent" for the next try.
  */
 export async function attemptUsdcPayment(
@@ -147,13 +158,13 @@ export async function attemptUsdcPayment(
     check = await checkUsdcTransfer(payment.txHash, payment.address, USDC_MAX_AGE_MS);
   } catch (error) {
     await reportError("[usdc]", payment.txHash, error);
-    await release(payment.id, "rpc_error");
+    await release(payment.id, "rpc_error", now);
     return { state: "unreachable" };
   }
   if (!check.ok) {
     if (check.reason === "pending" || check.reason === "too_old") {
       // Not final: a node can lag behind the receipt. The record's expiry ends it if it never resolves.
-      await release(payment.id, check.reason);
+      await release(payment.id, check.reason, now);
       return check.reason === "pending" ? { state: "pending" } : { state: "rejected", reason: "too_old" };
     }
     await settle(payment.id, "failed", check.reason, null, now);
@@ -185,7 +196,7 @@ export async function attemptUsdcPayment(
  */
 export async function recheckUsdcPayments(
   now = Date.now(),
-  limit = 20,
+  limit = 200,
   budgetMs = 20_000,
 ): Promise<{ checked: number; confirmed: number }> {
   const deadline = Date.now() + budgetMs;

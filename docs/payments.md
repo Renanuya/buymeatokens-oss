@@ -32,11 +32,14 @@ Provider and network fees still apply.
   each transaction hash can be recorded once.
 - Submitting a hash first writes a **payment record** (`usdc_payments`): creator, wallet address, network, expiry
   (three days, the same window as above), and a status of `sent`, `verifying`, `confirmed`, `failed` or `expired`.
-  Only one request at a time can move a record to `verifying`, so a double submit or two simultaneous requests
-  check the chain once and count the payment once. An RPC error or a not-yet-mined transaction puts the record back
-  to `sent`; the supporter can submit the same hash again, and the daily `/api/cron/reconcile` job re-checks open
-  records too. A `verifying` record that nobody finished (the process died) is taken over after two minutes.
-  The counted payment is still the `donations` row, whose unique `tx_hash` is the last guard against double counting.
+  Only one request at a time can move a record to `verifying`, so two requests never check the same record at the
+  same moment. (The polling loop does check again after a `pending` result or an RPC error.) The unique
+  `donations.tx_hash` is what prevents counting a transfer twice; a transaction that pays two creators' wallets can
+  be counted for only one of them, whoever is confirmed first, as before. An RPC error or a not-yet-mined
+  transaction puts the record back to `sent`; the supporter can submit the same hash again, and the daily
+  `/api/cron/reconcile` job re-checks open records too. A `verifying` record that nobody finished (the process died)
+  is taken over after two minutes, and the process that lost it can no longer change it. A record that failed
+  against an older wallet address is reopened when the same hash is submitted after the creator fixed the address.
   Records are per creator and hash, so submitting someone else's public hash on another creator's page can't block
   the payment on the right page. The background pass checks the least recently checked records first and stops after
   about 20 seconds. Failed and expired records, which hold a supporter's name and message, are deleted after 30 days;
