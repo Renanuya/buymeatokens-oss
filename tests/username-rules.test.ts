@@ -21,6 +21,29 @@ describe("handles nobody can take", () => {
     every(["tbmm", "tccb-official", "edevlet-destek", "cumhurbaskanligi"], "protected");
   });
 
+  it("does the same for every country: founders and national symbols by full name", () => {
+    every(
+      [
+        "george-washington", "abraham-lincoln-fan", "mahatma-gandhi", "quaid-e-azam", "nelson-mandela", "simon-bolivar",
+        "ho-chi-minh", "sun-yat-sen", "sukarno", "jomo-kenyatta", "kwame-nkrumah", "charles-de-gaulle", "giuseppe-garibaldi",
+        "genghis-khan", "skanderbeg", "lee-kuan-yew", "dalai-lama", "g3orge-washington",
+      ],
+      "protected",
+    );
+  });
+
+  it("and states and public bodies in several languages, including the usual scam shapes", () => {
+    every(
+      [
+        "us-embassy", "embajada-de-espana", "ministerio-de-salud", "ministry-of-finance", "gobierno-de-mexico",
+        "bundesregierung", "white-house", "kremlin", "unicef-help", "europeanunion", "police", "police-department",
+        "polizei", "policia-official", "army", "fbi", "fbi-support", "irs-refund", "nhs-support", "hmrc-refunds", "mi6",
+        "interpol", "who", "nato-official", "customs", "vatican", "pope",
+      ],
+      "protected",
+    );
+  });
+
   it("keeps official names, dressed up or disguised", () => {
     every(
       [
@@ -38,6 +61,17 @@ describe("handles nobody can take", () => {
         "renanuya", "philanthropic-dev", "stripes", "github-readme-stats", "metadata", "gptcli", "awesome-lists",
         "teamviewer-tools", "realtime-chat", "kemal", "mustafa", "ata-dev", "claude-fan", "trend", "helloworld", "web3",
         "applesauce", "app-store", "mail-merge",
+      ],
+      null,
+    );
+  });
+
+  it("keeps first names, look-alike words and fan projects free", () => {
+    every(
+      [
+        "nelson", "simon", "gandhi", "jose-martinez", "lincoln-park", "washington-dc", "interpolation-lab", "interpolate",
+        "policy-engine", "navy-blue-theme", "armyknife", "who-am-i", "popeye", "president-sim", "military-history",
+        "pope-francis-fan", "gov-tech", "kingdom-hearts", "queen-of-code", "zollverein", "duma-games", "presidential",
       ],
       null,
     );

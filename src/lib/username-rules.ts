@@ -1,7 +1,9 @@
 // Handles nobody can take (buymeatokens.com/<handle>). Three kinds, each with its own message in validation.ts:
 // - reserved: the app's own routes and public files, and handles made only of words that would read as the site
 //   itself ("support", "official-team"), so nobody can pose as us;
-// - protected: Atatürk and state institutions, never available to anyone;
+// - protected: national founders and symbols of any country, and states and public bodies (government, ministries,
+//   police, armies, embassies, parliaments, tax and customs, international organisations) in several languages, so
+//   it works for every country; never available to anyone;
 // - official: companies and products whose handle would let someone pose as them. The real owner can email us.
 // Variants count too: dashes and trailing numbers are ignored, look-alike digits are read as letters ("0penai",
 // "c1aude"), and official-sounding words around a name don't make it a different name ("openai-support",
@@ -23,17 +25,69 @@ const OFFICIAL_WORDS = [
   "official", "team", "support", "help", "helpdesk", "hq", "inc", "corp", "admin", "administrator", "security",
   "billing", "payments", "payment", "pay", "payout", "payouts", "refund", "refunds", "verify", "verified", "staff",
   "moderator", "trust", "safety", "abuse", "real", "the", "global", "app", "ai", "notifications", "noreply", "mail",
-  "email", "info", "hello", "press",
+  "email", "info", "hello", "press", "department", "dept", "agency", "bureau", "authority",
   // The same in Turkish: "resmi" (official), "destek" (support), "yardim" (help), "odeme" (payment), "iade" (refund),
   // "guvenlik" (security), "hesap" (account).
   "resmi", "destek", "yardim", "odeme", "odemeler", "iade", "guvenlik", "hesap", "turkiye", "tr",
 ];
 
-/** Never part of any handle, wherever they appear in it. */
-const NEVER_INSIDE = ["ataturk", "mustafakemal", "buymeatoken"];
+/** Our own name: never part of any handle. */
+const OURS_INSIDE = ["buymeatoken"];
 
-/** State institutions: never available, alone or with official-sounding words around them. */
-const PROTECTED = ["tccb", "tbmm", "cumhurbaskani", "cumhurbaskanligi", "edevlet", "turkiyecumhuriyeti"];
+/**
+ * National founders and symbols, by full name so that a first name stays free ("kemal", "nelson", "simon"):
+ * never part of any handle. One or more per country; add to it when a country is missing.
+ */
+const FIGURES_INSIDE = [
+  // Turkey
+  "ataturk", "mustafakemal",
+  // Americas
+  "georgewashington", "abrahamlincoln", "thomasjefferson", "martinlutherking", "simonbolivar", "josedesanmartin",
+  // (Not "josemarti": every "jose-martinez" would contain it.)
+  "bernardoohiggins", "miguelhidalgo", "benitojuarez", "tiradentes", "franciscodemiranda",
+  "toussaintlouverture", "joseartigas",
+  // Europe
+  "charlesdegaulle", "joanofarc", "jeannedarc", "winstonchurchill", "giuseppegaribaldi", "jozefpilsudski",
+  "tarasshevchenko", "skanderbeg", "williamwallace", "robertthebruce", "queenelizabeth", "kingcharles",
+  // Asia
+  "mahatmagandhi", "jawaharlalnehru", "bhimraoambedkar", "quaidazam", "quaideazam", "muhammadalijinnah",
+  "allamaiqbal", "bangabandhu", "sheikhmujib", "hochiminh", "sunyatsen", "sukarno", "soekarno", "joserizal",
+  "leekuanyew", "kingsejong", "genghiskhan", "chinggiskhan", "heydaraliyev", "dalailama",
+  // Africa and the Middle East
+  "nelsonmandela", "jomokenyatta", "kwamenkrumah", "juliusnyerere", "haileselassie", "gamalabdelnasser",
+  "theodorherzl", "davidbengurion",
+];
+
+/**
+ * States and public bodies whose names are distinctive enough to block anywhere in a handle ("usembassy",
+ * "ministerio-de-salud"), in several languages so it covers every country.
+ */
+const STATE_INSIDE = [
+  // government, ministry, embassy, consulate, parliament, presidency
+  "government", "gouvernement", "gobierno", "regierung", "bundesregierung", "ministry", "ministerio", "ministere",
+  "ministerium", "bakanlik", "bakanligi", "embassy", "embajada", "ambassade", "botschaft", "buyukelcilik", "consulate",
+  "konsolosluk", "parliament", "parlamento", "parlement", "bundestag", "presidency", "primeminister",
+  // "cumhurbaskan" is the stem, so cumhurbaskani, cumhurbaskanligi and the rest are all caught.
+  "cumhurbaskan", "turkiyecumhuriyeti", "edevlet",
+  // seats of government and international bodies
+  "whitehouse", "kremlin", "downingstreet", "unitednations", "unicef", "unesco", "unhcr",
+  "worldhealthorganization", "europeanunion", "worldbank", "redcross", "redcrescent", "kizilay",
+];
+
+/**
+ * States and public bodies whose names are short or ordinary words ("army", "pope", "who"): blocked alone or with
+ * official-sounding words around them ("police-department", "irs-refund", "fbi-support").
+ */
+const STATE_ALONE = [
+  "gov", "govt", "governo", "hukumet", "devlet", "pravitelstvo", "police", "polis", "policia", "polizia", "polizei",
+  "politie", "militsiya", "emniyet", "jandarma", "army", "military", "navy", "airforce", "ejercito", "armee",
+  "bundeswehr", "tsk", "congress", "senate", "duma", "knesset", "majlis", "tbmm", "president", "presidente",
+  "presidence", "praesident", "pmo", "tccb", "elysee", "taxoffice", "customs", "aduana", "douane", "zoll", "gumruk",
+  "sgk", "afad", "fbi", "cia", "nsa", "dhs", "irs", "fema", "cdc", "hmrc", "nhs", "mi5", "mi6", "kgb", "fsb",
+  "mossad", "who", "nato", "imf", "vatican", "pope",
+  // Alone, not anywhere: "interpolation" and "interpolate" contain "interpol".
+  "interpol", "europol",
+];
 
 /** Distinctive company and product names, blocked anywhere in a handle ("my-openai-wallet"). */
 const OFFICIAL_INSIDE = [
@@ -58,8 +112,9 @@ const OFFICIAL_ALONE = [
 const WORDS = `(?:${OFFICIAL_WORDS.join("|")})`;
 const ONLY_OFFICIAL_WORDS = new RegExp(`^${WORDS}+$`);
 const alone = (names: string[]) => new RegExp(`^${WORDS}*(?:${names.join("|")})${WORDS}*$`);
-const PROTECTED_RE = alone(PROTECTED);
+const STATE_ALONE_RE = alone(STATE_ALONE);
 const OFFICIAL_ALONE_RE = alone(OFFICIAL_ALONE);
+const inside = (forms: string[], names: string[]) => forms.some((f) => names.some((n) => f.includes(n)));
 
 /** The ways a handle can be read: as written without dashes, without trailing numbers, and with digits as letters. */
 function readings(handle: string): string[] {
@@ -75,10 +130,10 @@ export type NameRule = "reserved" | "protected" | "official";
 export function nameRule(handle: string): NameRule | null {
   if (ROUTES.includes(handle)) return "reserved";
   const forms = readings(handle);
-  if (forms.some((f) => NEVER_INSIDE.some((n) => f.includes(n)))) {
-    return forms.some((f) => f.includes("buymeatoken")) ? "reserved" : "protected";
+  if (inside(forms, OURS_INSIDE)) return "reserved";
+  if (inside(forms, FIGURES_INSIDE) || inside(forms, STATE_INSIDE) || forms.some((f) => STATE_ALONE_RE.test(f))) {
+    return "protected";
   }
-  if (forms.some((f) => PROTECTED_RE.test(f))) return "protected";
   if (forms.some((f) => OFFICIAL_INSIDE.some((n) => f.replace(INNOCENT_INSIDE, "").includes(n)) || OFFICIAL_ALONE_RE.test(f))) {
     return "official";
   }
