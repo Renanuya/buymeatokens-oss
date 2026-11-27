@@ -99,7 +99,7 @@ Open http://localhost:3000. The first request creates the tables.
 1. **Log in → "Continue without GitHub".**
 2. Pick a username and go through the setup steps.
 3. **Payments:** in the Stripe dashboard, first switch to **sandbox (test mode)** — the in-app guide says the
-   same — then open *Developers → API keys → Create restricted key*. Name the key `buymeatokens`. When Stripe
+   same — then open *Developers → API keys → Create restricted key*. Name the key `buymeatokens` and, if Stripe asks for a website, enter `http://localhost:3000` (your `APP_URL`). When Stripe
    asks "How will you be using this key?", pick **Providing this key to a third-party application**. Give it
    **Checkout Sessions: Write** and leave everything else at **None**. Click **Create key**, copy the
    `rk_test_…` key — Stripe shows it only once — and paste it in the app, not in `.env.local`: go to
@@ -145,7 +145,7 @@ Remove-Item Env:POSTGRES_URL
 | `ECONNREFUSED 127.0.0.1:5432` | The database isn't running: `docker compose up -d db`, then check `docker compose ps`. |
 | The first request fails with a database connection error | The database was not ready yet: run `docker compose up -d db`, wait until `docker compose ps` shows `db` as `(healthy)`, then reload. |
 | Port 5432 is already in use | Change the left side of `ports:` in `compose.yaml` to `"127.0.0.1:5433:5432"` and use `:5433` in `POSTGRES_URL`. |
-| Port 3000 is already in use | Stop the other process using port 3000, or start the dev server on another port and set `APP_URL` to match. |
+| Port 3000 is already in use | Stop the other process using port 3000, or start the dev server on another port (`npm run dev -- -p 3001`) and set `APP_URL` to `http://localhost:3001` to match. |
 | Start over with an empty database | `docker compose down -v`, then `docker compose up -d db`. |
 | `The token '&&' is not a valid statement separator in this version` (PowerShell 5.1) | Run the commands one after the other. `&&` works in PowerShell 7+, cmd.exe, Git Bash and other POSIX shells, but not in Windows PowerShell 5.1. |
 | `npm : File …\npm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | The execution policy blocks npm's PowerShell wrapper. Run `npm.cmd` instead of `npm` (for example `npm.cmd ci`), or allow signed scripts for your user only: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
