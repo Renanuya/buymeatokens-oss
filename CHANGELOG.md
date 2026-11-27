@@ -14,7 +14,7 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
   time, so a late-confirmed payment counts in the month it was confirmed and a reversed one drops out. Months are UTC.
   The setup's goal step and the settings form got a "Resets" choice, and the public bar says "this month". One
   function, `goalReached` in `src/lib/donations.ts`, feeds the page, the dashboard and the link-preview image. New
-  column `users.goal_period` and index `donations_goal_window`.
+  column `users.goal_period`, index `donations_paid_window` and statistics `donations_paid_at_stats`.
 - **Thank-you note**: creators can pin a short note (up to 280 characters, plain text) to their page. It shows above the
   supporter list, only when set, and is editable in the settings form (with the live preview) and in the guided
   setup's token-use step. Control, zero-width and bidi characters are removed and whitespace is collapsed. One
