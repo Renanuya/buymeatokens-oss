@@ -21,6 +21,8 @@ export async function GET(req: Request) {
   }
   await pruneVisitorMarks().catch((error) => reportError("[cron] visitor marks", error));
   await pruneOpsEvents().catch((error) => reportError("[cron] prune alerts", error));
+  const stripe = await syncAll();
+  // After Stripe, with its own time budget, so slow RPCs can't starve the Stripe reconciliation.
   const usdc = await recheckUsdcPayments().catch((error) => reportError("[cron] usdc recheck", error));
-  return Response.json({ ...(await syncAll()), usdc });
+  return Response.json({ ...stripe, usdc });
 }

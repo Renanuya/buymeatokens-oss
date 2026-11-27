@@ -37,6 +37,10 @@ Provider and network fees still apply.
   to `sent`; the supporter can submit the same hash again, and the daily `/api/cron/reconcile` job re-checks open
   records too. A `verifying` record that nobody finished (the process died) is taken over after two minutes.
   The counted payment is still the `donations` row, whose unique `tx_hash` is the last guard against double counting.
+  Records are per creator and hash, so submitting someone else's public hash on another creator's page can't block
+  the payment on the right page. The background pass checks the least recently checked records first and stops after
+  about 20 seconds. Failed and expired records, which hold a supporter's name and message, are deleted after 30 days;
+  confirmed records are kept.
 
 For PayPal and USDC the amount that counts is what actually arrived, not what the supporter picked on the page:
 payments under $1 aren't counted, and the token count is the amount divided by the creator's bundle price, rounded,

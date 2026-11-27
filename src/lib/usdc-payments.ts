@@ -65,10 +65,10 @@ export async function openUsdcPayment(
   await query(
     `INSERT INTO usdc_payments (id, creator_id, address, network, tx_hash, supporter_name, message, visit_source, created_at, expires_at)
      VALUES (?, ?, ?, 'base', ?, ?, ?, ?, ?, ?)
-     ON CONFLICT (tx_hash) DO NOTHING`,
+     ON CONFLICT (creator_id, tx_hash) DO NOTHING`,
     [newId(), input.creatorId, input.address, input.txHash, input.supporterName, input.message, input.visitSource ?? null, now, now + USDC_MAX_AGE_MS],
   );
-  const rs = await query("SELECT * FROM usdc_payments WHERE tx_hash = ?", [input.txHash]);
+  const rs = await query("SELECT * FROM usdc_payments WHERE creator_id = ? AND tx_hash = ?", [input.creatorId, input.txHash]);
   return mapPayment(rs.rows[0]);
 }
 
@@ -77,8 +77,18 @@ async function getPayment(id: string): Promise<UsdcPayment> {
 }
 
 /** Records that never got a verdict before their expiry are closed; the transfer would be too old to count anyway. */
-async function expireUsdcPayments(now: number) {
-  await query("UPDATE usdc_payments SET status = 'expired' WHERE status IN ('sent', 'verifying') AND expires_at <= ?", [now]);
+async function expireUsdcPayments(now: number, id?: string) {
+  await query(
+    `UPDATE usdc_payments SET status = 'expired' WHERE status IN ('sent', 'verifying') AND expires_at <= ?${id ? " AND id = ?" : ""}`,
+    id ? [now, id] : [now],
+  );
+}
+
+/** Unconfirmed records hold a supporter's name and message, so they're deleted soon after they close. */
+export const UNCONFIRMED_RETENTION_MS = 30 * 86_400_000;
+
+export async function pruneUsdcPayments(now = Date.now()) {
+  await query("DELETE FROM usdc_payments WHERE status IN ('failed', 'expired') AND created_at < ?", [now - UNCONFIRMED_RETENTION_MS]);
 }
 
 export type UsdcAttempt =
@@ -116,7 +126,7 @@ export async function attemptUsdcPayment(
   creator: Pick<User, "unitPriceCents">,
   now = Date.now(),
 ): Promise<UsdcAttempt> {
-  await expireUsdcPayments(now);
+  await expireUsdcPayments(now, payment.id);
   const claimed = await query(
     `UPDATE usdc_payments SET status = 'verifying', attempts = attempts + 1, last_checked_at = ?
      WHERE id = ? AND (status = 'sent' OR (status = 'verifying' AND last_checked_at < ?)) RETURNING id`,
@@ -170,20 +180,28 @@ export async function attemptUsdcPayment(
 
 /**
  * Background pass (run from the reconcile cron): checks records that were left open, e.g. after an RPC error.
- * Stops at the first outage instead of waiting on the same dead endpoints for every record.
+ * Least recently checked first, so records that stay unresolved can't crowd out the others. Stops at the first outage
+ * instead of waiting on the same dead endpoints for every record, and when the time budget is used up.
  */
-export async function recheckUsdcPayments(now = Date.now(), limit = 20): Promise<{ checked: number; confirmed: number }> {
+export async function recheckUsdcPayments(
+  now = Date.now(),
+  limit = 20,
+  budgetMs = 20_000,
+): Promise<{ checked: number; confirmed: number }> {
+  const deadline = Date.now() + budgetMs;
   await expireUsdcPayments(now);
+  await pruneUsdcPayments(now);
   const rs = await query(
     `SELECT * FROM usdc_payments
      WHERE expires_at > ?
        AND ((status = 'sent' AND GREATEST(created_at, COALESCE(last_checked_at, 0)) < ?) OR (status = 'verifying' AND last_checked_at < ?))
-     ORDER BY created_at ASC LIMIT ?`,
+     ORDER BY COALESCE(last_checked_at, created_at) ASC LIMIT ?`,
     [now, now - RECHECK_AFTER_MS, now - VERIFY_LEASE_MS, limit],
   );
   let checked = 0;
   let confirmed = 0;
   for (const row of rs.rows) {
+    if (Date.now() >= deadline) break;
     const payment = mapPayment(row);
     const creator = await getUserById(payment.creatorId);
     if (!creator) continue;

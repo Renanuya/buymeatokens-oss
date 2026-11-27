@@ -86,13 +86,13 @@ export async function confirmUsdcPayment(input: {
     message: String(input.message ?? "").trim().slice(0, 280),
     visitSource: visitSource(input.visit?.ref, input.visit?.referrer),
   });
-  if (payment.creatorId !== creator.id) return { ok: false, message: "This transaction was already submitted for another page." };
 
   // Right after sending, the transaction can take a few seconds to show up.
   let result: UsdcAttempt = { state: "unreachable" };
   for (let attempt = 0; attempt < 8; attempt++) {
     result = await attemptUsdcPayment(payment, creator);
-    if (result.state !== "pending" && result.state !== "unreachable") break;
+    // "busy": another request is checking this very transaction; wait for its verdict.
+    if (result.state !== "pending" && result.state !== "unreachable" && result.state !== "busy") break;
     await new Promise((r) => setTimeout(r, 2000));
   }
 

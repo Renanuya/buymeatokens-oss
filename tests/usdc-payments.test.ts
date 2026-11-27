@@ -21,6 +21,8 @@ import {
   VERIFY_LEASE_MS,
   attemptUsdcPayment,
   openUsdcPayment,
+  UNCONFIRMED_RETENTION_MS,
+  pruneUsdcPayments,
   recheckUsdcPayments,
 } from "../src/lib/usdc-payments";
 
@@ -186,5 +188,53 @@ describe("USDC payment records", () => {
     expect(await recheckUsdcPayments(NOW + 120_000)).toEqual({ checked: 1, confirmed: 0 });
     expect(await payment()).toMatchObject({ status: "sent", attempts: 1 });
     expect(await payment(`0x${"cd".repeat(32)}`)).toMatchObject({ attempts: 0 });
+  });
+
+  it("someone else's hash submitted first on another page can't block the real payment", async () => {
+    const OTHER_WALLET = "0x5555555555555555555555555555555555555555";
+    await query(
+      "INSERT INTO users (id, auth_id, login, username, display_name, usdc_address, unit_price_cents, created_at) VALUES (?, ?, ?, ?, ?, ?, 500, ?)",
+      ["other", "github:other", "other", "other", "Other", OTHER_WALLET, NOW],
+    );
+    chainOk(); // the transfer went to WALLET (maker), not OTHER_WALLET
+    const wrong = await openUsdcPayment({ ...input(), creatorId: "other", address: OTHER_WALLET }, NOW);
+    expect(await attemptUsdcPayment(wrong, CREATOR, NOW)).toEqual({ state: "rejected", reason: "no_transfer" });
+
+    const right = await openUsdcPayment(input(), NOW + 1);
+    expect(right.id).not.toBe(wrong.id);
+    expect(await attemptUsdcPayment(right, CREATOR, NOW + 2)).toMatchObject({ state: "confirmed", counted: true });
+    expect(await donations()).toHaveLength(1);
+    expect(await donations()).toMatchObject([{ creator_id: "maker" }]);
+  });
+
+  it("the background pass checks the least recently checked record first", async () => {
+    await openUsdcPayment(input(), NOW);
+    await openUsdcPayment(input(`0x${"cd".repeat(32)}`), NOW + 1);
+    // The older record was looked at recently and is still unresolved; the newer one never was.
+    await query("UPDATE usdc_payments SET last_checked_at = ? WHERE tx_hash = ?", [NOW + 100_000, TX]);
+    chainOk();
+    expect(await recheckUsdcPayments(NOW + 300_000, 1)).toEqual({ checked: 1, confirmed: 1 });
+    expect((await payment(`0x${"cd".repeat(32)}`)).status).toBe("confirmed");
+    expect((await payment()).status).toBe("sent");
+  });
+
+  it("the background pass stops when its time budget is used up", async () => {
+    await openUsdcPayment(input(), NOW);
+    chainOk();
+    expect(await recheckUsdcPayments(NOW + 120_000, 20, 0)).toEqual({ checked: 0, confirmed: 0 });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("deletes failed and expired records after the retention period, keeps the rest", async () => {
+    const hash = (n: string) => `0x${n.repeat(32)}`;
+    for (const [n, status] of [["a1", "failed"], ["a2", "expired"], ["a3", "confirmed"], ["a4", "sent"]] as const) {
+      await openUsdcPayment(input(hash(n)), NOW);
+      await query("UPDATE usdc_payments SET status = ? WHERE tx_hash = ?", [status, hash(n)]);
+    }
+    await pruneUsdcPayments(NOW + UNCONFIRMED_RETENTION_MS - 1);
+    expect((await query("SELECT count(*)::int AS n FROM usdc_payments")).rows[0]).toMatchObject({ n: 4 });
+    await pruneUsdcPayments(NOW + UNCONFIRMED_RETENTION_MS + 1);
+    const left = (await query("SELECT status FROM usdc_payments ORDER BY status")).rows.map((r) => (r as { status: string }).status);
+    expect(left).toEqual(["confirmed", "sent"]);
   });
 });

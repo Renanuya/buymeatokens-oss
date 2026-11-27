@@ -302,7 +302,7 @@ CREATE TABLE IF NOT EXISTS usdc_payments (
   creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   address TEXT NOT NULL,
   network TEXT NOT NULL DEFAULT 'base',
-  tx_hash TEXT NOT NULL UNIQUE,
+  tx_hash TEXT NOT NULL,
   status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'verifying', 'confirmed', 'failed', 'expired')),
   amount_cents INTEGER,
   reason TEXT,
@@ -313,7 +313,9 @@ CREATE TABLE IF NOT EXISTS usdc_payments (
   created_at BIGINT NOT NULL,
   expires_at BIGINT NOT NULL,
   last_checked_at BIGINT,
-  confirmed_at BIGINT
+  confirmed_at BIGINT,
+  -- Hashes are public: a record is per creator, so submitting someone's hash on another page can't block the right one.
+  UNIQUE (creator_id, tx_hash)
 );
 CREATE INDEX IF NOT EXISTS usdc_payments_open ON usdc_payments(status, last_checked_at);
 CREATE INDEX IF NOT EXISTS usdc_payments_creator ON usdc_payments(creator_id);
