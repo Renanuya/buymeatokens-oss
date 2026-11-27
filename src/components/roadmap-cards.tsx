@@ -114,7 +114,7 @@ export function Shipped({ items, wide }: { items: RoadmapItem[]; wide: boolean }
         <span className="rounded-full bg-lilac-soft px-2.5 py-0.5 text-xs font-semibold tabular-nums text-iris">{items.length}</span>
       </div>
       {shown.length === 0 ? (
-        <p className="py-4 text-sm text-muted">Nothing yet. The first milestone is under way.</p>
+        <p className="py-4 text-sm text-muted">Nothing shipped yet.</p>
       ) : (
         <ul className="divide-y divide-line border-t border-line">
           {shown.map((item) => <ShippedRow key={item.number} item={item} />)}
@@ -231,6 +231,20 @@ function CardLinks({ links, className = "" }: { links: RoadmapLink[]; className?
   );
 }
 
+/** Small chips such as "Daily · Weekly · Monthly", from `periods:` in the issue. */
+function Periods({ periods }: { periods: string[] }) {
+  if (periods.length === 0) return null;
+  return (
+    <ul aria-label="Planned periods" className="flex flex-wrap gap-2">
+      {periods.map((period) => (
+        <li key={period} className="rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-muted">
+          {period}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function Upcoming({ item, number }: { item: RoadmapItem; number: number }) {
   if (item.wide && item.tasks.length > 0) {
     return (
@@ -238,7 +252,12 @@ export function Upcoming({ item, number }: { item: RoadmapItem; number: number }
         <div className="lg:col-span-5">
           <CardHead item={item} number={number} />
           <CardText item={item} />
-          <CardLinks links={item.links} className="mt-5" />
+          {(item.periods.length > 0 || item.links.length > 0) && (
+            <div className="mt-5 space-y-4">
+              <Periods periods={item.periods} />
+              <CardLinks links={item.links} />
+            </div>
+          )}
         </div>
         <ul aria-label={`Planned parts of ${item.title}`} className="grid gap-3 sm:grid-cols-2 lg:col-span-7">
           {item.tasks.map((task) => (
@@ -246,7 +265,10 @@ export function Upcoming({ item, number }: { item: RoadmapItem; number: number }
               <span aria-hidden className="grid size-9 place-items-center rounded-lg bg-white text-iris">
                 <Glyph name={task.done ? "check" : task.icon ?? item.icon} className="size-[18px]" />
               </span>
-              <h4 className="mt-4 text-sm font-semibold">{task.title}</h4>
+              <h4 className="mt-4 text-sm font-semibold">
+                {task.title}
+                {task.done && <span className="sr-only"> (done)</span>}
+              </h4>
               {task.detail && <p className="mt-1.5 text-[13px] leading-relaxed text-ink/65">{task.detail}</p>}
             </li>
           ))}
@@ -261,15 +283,7 @@ export function Upcoming({ item, number }: { item: RoadmapItem; number: number }
       <CardText item={item} />
       {(item.periods.length > 0 || item.links.length > 0) && (
         <div className="mt-auto space-y-4 pt-5">
-          {item.periods.length > 0 && (
-            <ul aria-label="Planned periods" className="flex flex-wrap gap-2">
-              {item.periods.map((period) => (
-                <li key={period} className="rounded-full border border-line bg-paper px-3 py-1 text-xs font-semibold text-muted">
-                  {period}
-                </li>
-              ))}
-            </ul>
-          )}
+          <Periods periods={item.periods} />
           <CardLinks links={item.links} />
         </div>
       )}

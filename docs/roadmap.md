@@ -10,7 +10,7 @@ code. The page refreshes every five minutes (`src/lib/roadmap.ts`, `src/app/road
 | A milestone | An issue labelled **`roadmap`** |
 | *Shipped* (latest three, newest first) | Roadmap issues **closed as completed**, by when they closed. Closed as *not planned*, they disappear. |
 | *Now* (the big lilac card) | The open roadmap issue also labelled **`roadmap: now`**. Without one, the first open issue in order. |
-| The tiles on the *Now* card | The issue's **task list**. A ticked box shows as done. |
+| The tiles on the *Now* card | The first four items of the issue's **task list**. A ticked box shows as done. |
 | *Up next* | The other open roadmap issues, by `order` |
 | *Progress* | The counts of the above |
 
@@ -44,16 +44,16 @@ layout: wide
 |---|---|---|
 | `title` | The card's headline | The issue title |
 | `summary` | One or two sentences under it | The issue's first paragraph |
-| `category` | The small label above the title | The issue's `area:` label, e.g. "Creator pages" |
+| `category` | The small label above the title | The issue's `area:` label, e.g. "Creator pages", else "Roadmap" |
 | `icon` | An icon name from `src/components/glyph.tsx` | A light bulb |
 | `order` | Lower comes first in *Up next* | After everything that has an order, by issue number |
-| `icons` | Icons for the task list items, in order | Numbers |
+| `icons` | Icons for the task list items, in order | Numbers on the *Now* card; the milestone's own icon on wide cards |
 | `link` | `Label \| URL`, repeatable, shown on the card wherever it is (Now, Up next, Shipped). Site paths (`/terms`) or `https://` only | No links. The *Now* card always links to its issue and the Discord. |
-| `periods` | Small chips on the card | None |
+| `periods` | Small chips on the card (normal and wide) | None |
 | `layout: wide` | A full-width card with the task list as tiles, like the developer platform | A normal card |
 
 Task list items are read as `- [ ] **Title** — detail`, `- [ ] Title: detail` or just `- [ ] Title`. They only show
-on the *Now* card and on `layout: wide` cards.
+on the *Now* card (the first four) and on `layout: wide` cards (all of them).
 
 ## When GitHub doesn't answer
 

@@ -101,3 +101,13 @@ describe("fetching the issues", () => {
     expect(await labelledIssues("o/r", "roadmap")).toBeNull();
   });
 });
+
+describe("wide cards", () => {
+  it("show their periods and tell screen readers which parts are done", () => {
+    const body = "- [x] **Read data** — scoped keys\n- [ ] **Webhooks**\n\n<!-- roadmap\nlayout: wide\nperiods: Daily, Weekly\n-->";
+    const html = renderToStaticMarkup(<Upcoming item={toItem(issue(8, { body }))} number={5} />);
+    expect(html).toContain("Daily");
+    expect(html).toContain("Weekly");
+    expect(html.match(/\(done\)/g)).toHaveLength(1);
+  });
+});
