@@ -1,7 +1,11 @@
 // Limits and parsing for what creators put on their page. Pure functions, used by forms and server actions.
 
+import { oneLine } from "./format";
+import { hasOffensiveLanguage } from "./name-moderation";
+
 export const BIO_MAX_LENGTH = 1_000;
 export const TOKEN_USE_MAX_LENGTH = 500;
+export const THANK_YOU_MAX_LENGTH = 280;
 export const PROJECT_NAME_MAX_LENGTH = 80;
 export const PRICE_MIN_USD = 1;
 export const PRICE_MAX_USD = 100;
@@ -22,6 +26,26 @@ export function validateTokenUse(text: string): string | null {
     : null;
 }
 
+// Zero-width, bidi and other invisible format characters: they can hide or reorder text on the page.
+// The two joiners stay, because emoji like \ud83d\udc69\u200d\ud83d\udcbb and scripts such as Persian need them; every other format character
+// (zero-width, bidi, tags) and the blank-looking fillers go.
+const INVISIBLE_RE = /[\p{Cf}\u034f\u115f\u1160\u17b4\u17b5\u2800\u3164\uffa0]/gu;
+const keepJoiners = (c: string) => (c === "\u200c" || c === "\u200d" ? c : "");
+// More than three marks on one letter is not a language, it's a tower drawn over the page.
+const MARK_FLOOD_RE = /(\p{M}{3})\p{M}+/gu;
+
+/** The thank-you note as plain text on one line: invisible and control characters removed, whitespace collapsed, trimmed. */
+export function parseThankYou(input: unknown): { text: string } | { error: string } {
+  const text = oneLine(String(input ?? "").replace(INVISIBLE_RE, keepJoiners).replace(MARK_FLOOD_RE, "$1"), Infinity);
+  return Array.from(text).length > THANK_YOU_MAX_LENGTH
+    ? { error: `Please keep your thank-you note to ${THANK_YOU_MAX_LENGTH} characters or fewer.` }
+    : { text };
+}
+
+export function validateProjectName(name: string): string | null {
+  return hasOffensiveLanguage(name) ? "Please choose a project name without explicit or offensive language." : null;
+}
+
 /** Whole dollars between the limits, or null. */
 export function parsePriceUsd(input: unknown): number | null {
   const text = String(input ?? "").trim();
@@ -31,6 +55,16 @@ export function parsePriceUsd(input: unknown): number | null {
 }
 
 export const PRICE_ERROR = `Price per 1M tokens must be a whole number between $${PRICE_MIN_USD} and $${PRICE_MAX_USD}.`;
+
+export const GOAL_PERIODS = ["one-time", "monthly"] as const;
+export type GoalPeriod = (typeof GOAL_PERIODS)[number];
+
+/** A missing field is `undefined` (keep the saved period); anything but the two known values is an error. */
+export function parseGoalPeriod(input: unknown): { period: GoalPeriod | undefined } | { error: string } {
+  if (input === null || input === undefined) return { period: undefined };
+  const period = GOAL_PERIODS.find((p) => p === input);
+  return period ? { period } : { error: "Pick one-time or monthly for the goal." };
+}
 
 /** Empty means "no goal" (null). Otherwise a whole number of millions within the limit. */
 export function parseGoalUnits(input: unknown): { units: number | null } | { error: string } {
@@ -86,6 +120,19 @@ export function projectNameFromUrl(url: string): string {
   } catch {
     return "";
   }
+}
+
+/**
+ * The name to save for a project link: the typed name once it passes the content check, or one taken from the
+ * link when nothing was typed. A name taken from the link that fails the check is dropped (null); the page then
+ * shows the link itself.
+ */
+export function resolveProjectName(input: string, url: string): { name: string | null } | { error: string } {
+  const typed = input.trim().slice(0, PROJECT_NAME_MAX_LENGTH);
+  const invalid = validateProjectName(typed);
+  if (typed) return invalid ? { error: invalid } : { name: typed };
+  const derived = projectNameFromUrl(url);
+  return { name: validateProjectName(derived) ? null : derived };
 }
 
 /** "github.com/owner/repo" style text for showing a link. */

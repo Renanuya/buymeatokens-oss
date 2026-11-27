@@ -1,5 +1,5 @@
 import { accessCopy } from "./access-copy";
-import { appUrl, DISCORD_URL, SOURCE_URL } from "./config";
+import { appUrl, devLoginEnabled, DISCORD_URL, SOURCE_URL } from "./config";
 import { query, str } from "./db";
 
 // Search and AI-assistant facing facts about buymeatokens. Structured data, llms.txt and the homepage
@@ -127,12 +127,22 @@ export function jsonLdScript(data: JsonLd | JsonLd[]): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-/** Public creator pages worth indexing: a claimed name, a real account and a way to get paid. */
+/**
+ * The rule for "this creator page is public and listable": a claimed name, a real account and a way to get paid.
+ * Accounts from the password-less dev login only exist on a local database. They count where that login is on, so the
+ * directory and the leaderboard can be tried locally, and are left out everywhere else.
+ */
+export function indexableSql(): string {
+  const realAccount = devLoginEnabled() ? "" : " AND auth_id NOT LIKE 'dev:%'";
+  return `username IS NOT NULL${realAccount}
+  AND (stripe_key_enc IS NOT NULL OR paypal_email IS NOT NULL OR usdc_address IS NOT NULL)`;
+}
+
+/** Public creator pages worth indexing. */
 export async function listIndexableCreators(): Promise<{ username: string; createdAt: number }[]> {
   const rs = await query(
     `SELECT username, created_at FROM users
-     WHERE username IS NOT NULL AND auth_id NOT LIKE 'dev:%'
-       AND (stripe_key_enc IS NOT NULL OR paypal_email IS NOT NULL OR usdc_address IS NOT NULL)
+     WHERE ${indexableSql()}
      ORDER BY created_at ASC
      LIMIT 5000`,
   );

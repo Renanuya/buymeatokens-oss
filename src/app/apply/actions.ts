@@ -14,6 +14,7 @@ import {
 import { githubAccount, normalizeLogin, repoFromUrl, repoStars } from "@/lib/github";
 import { guestApplicationCookie, guestApplicationId } from "@/lib/guest-application";
 import { isEmail } from "@/lib/paypal";
+import { validateProjectName } from "@/lib/profile";
 import { currentReferrer } from "@/lib/referral";
 import { getCurrentUser } from "@/lib/session";
 
@@ -56,6 +57,8 @@ export async function submitApplicationAction(_prev: ApplyState, formData: FormD
   if (projectUrl && !/^https?:\/\//i.test(projectUrl)) projectUrl = `https://${projectUrl}`;
   if (!isEmail(email)) return fail("Please enter an email we can reach you at.");
   if (!projectName) return fail("What's the project called?");
+  const invalidName = validateProjectName(projectName);
+  if (invalidName) return fail(invalidName);
   try {
     new URL(projectUrl);
   } catch {

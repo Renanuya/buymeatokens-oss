@@ -1,9 +1,12 @@
 import Link from "next/link";
 import { PageTitle } from "@/components/page-title";
 import { aiDraftEnabled } from "@/lib/ai-draft";
+import { CATEGORIES, LANGUAGES, languageFromGitHub } from "@/lib/directory";
 import { loadCreatorPage } from "@/lib/creator-page-data";
 import { topRepos } from "@/lib/github";
 import { requireCreator } from "@/lib/session";
+import { hasPaymentMethod } from "@/lib/users";
+import { DirectoryCard } from "./directory-card";
 import { ProfileForm } from "./profile-form";
 
 export default async function SettingsPage() {
@@ -26,9 +29,22 @@ export default async function SettingsPage() {
           projectUrl: user.projectUrl ?? "",
           projectName: user.projectName ?? "",
           tokenUse: user.tokenUse,
+          thankYou: user.thankYou,
           goalUnits: user.goalUnits,
+          goalPeriod: user.goalPeriod,
           socials: user.socials,
         }}
+      />
+      <DirectoryCard
+        categories={CATEGORIES}
+        languages={LANGUAGES}
+        initial={{
+          listed: user.listedAt !== null,
+          category: user.projectCategory ?? "",
+          // Until the creator saves a pick, the language suggested is the one GitHub reports for the linked repo.
+          language: user.projectLanguage ?? languageFromGitHub(page.repo?.language),
+        }}
+        ready={hasPaymentMethod(user) && Boolean(user.projectName?.trim() || user.bio.trim())}
       />
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm">
         <p className="text-muted">Download your payment history, or delete your account and your page.</p>
