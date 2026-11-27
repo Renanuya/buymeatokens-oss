@@ -147,7 +147,6 @@ $env:POSTGRES_URL = "postgres://x:y@127.0.0.1:9/none"; npm run build; Remove-Ite
 | Start over with an empty database | `docker compose down -v`, then `docker compose up -d db`. |
 | `The token '&&' is not a valid statement separator in this version` (PowerShell 5.1) | Run the commands one after the other, or use `;`. `&&` only works in PowerShell 7+, Git Bash and other POSIX shells. |
 | `POSTGRES_URL=… is not recognized as the name of a cmdlet` (PowerShell) | `VAR=x command` is bash syntax. Use `$env:POSTGRES_URL = "…"; npm run build`, as shown under "Checks". |
-| `npm test` fails with `Test timed out in 5000ms` while the dev server or Docker is busy | The in-memory database setup is slow on a busy machine (seen here with the dev server and Docker running). Stop `npm run dev`, then run `npm test` again. |
 | "Continue without GitHub" is missing | `DEV_LOGIN=true` must be in `.env.local`. If you just added it, restart `npm run dev`: changes to `.env.local` only take effect after a restart. |
 | The Stripe key has nowhere to go in `.env.local` | That is expected: paste the `rk_test_…` key in **Dashboard → Payments** (`/dashboard/stripe`), not in `.env.local`. See step 3 in "Try the whole flow". |
 | Checkout does not open | Make sure a test-mode restricted key is saved on **Dashboard → Payments** and that it starts with `rk_test_`. |
