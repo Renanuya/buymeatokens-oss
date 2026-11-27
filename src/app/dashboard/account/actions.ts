@@ -7,7 +7,8 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
 import { deleteAccount } from "@/lib/account-deletion";
 import { SESSION_COOKIE, requireCreator } from "@/lib/session";
-import { setLeaderboardOptIn, setSupportEmails } from "@/lib/users";
+import { connectDiscordWebhook } from "@/lib/discord-notifications";
+import { setDiscordWebhook, setLeaderboardOptIn, setSupportEmails } from "@/lib/users";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { deletionConfirmationName, matchesConfirmation } from "./confirm";
 
@@ -44,6 +45,24 @@ export async function setSupportEmailsAction(on: boolean): Promise<{ ok: boolean
   await setSupportEmails(user.id, on);
   revalidatePath("/dashboard/account");
   return { ok: true };
+}
+
+/**
+ * Connects or replaces the Discord webhook. The URL is a credential: it is checked, encrypted and never sent back.
+ * Allowed without accepting the current Terms, like the rest of this page.
+ */
+export async function connectDiscordAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireCreator();
+  const result = await connectDiscordWebhook(user.id, String(formData.get("webhook") ?? ""));
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/dashboard/account");
+  return { message: "Connected. New support will show up in your channel." };
+}
+
+export async function disconnectDiscordAction(): Promise<void> {
+  const user = await requireCreator();
+  await setDiscordWebhook(user.id, null);
+  revalidatePath("/dashboard/account");
 }
 
 /** Lists or unlists the creator's project on the public leaderboard. It only ever changes the signed-in creator. */

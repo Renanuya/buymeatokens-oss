@@ -287,6 +287,31 @@ INSERT INTO schema_migrations (id, applied_at)
 VALUES ('support-notifications-v1', (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000)::bigint)
 ON CONFLICT (id) DO NOTHING;
 
+-- Discord notifications (src/lib/discord-notifications.ts): an optional message in the creator's own Discord channel,
+-- through a webhook URL they paste under Account. The URL is a credential, so it is stored encrypted and never shown.
+-- discord_connected_at: only support paid after it is announced. discord_failed_at: Discord said the webhook is gone.
+-- Its own claim table, so this channel can never block or duplicate the email one. One row per payment.
+-- failed with retry_at set is retried at that time; failed without it is final.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_webhook_enc TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_connected_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_failed_at BIGINT;
+CREATE TABLE IF NOT EXISTS discord_notifications (
+  donation_id TEXT PRIMARY KEY REFERENCES donations(id) ON DELETE CASCADE,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'sent', 'failed', 'unknown', 'skipped')),
+  attempt_count INTEGER NOT NULL DEFAULT 1,
+  attempted_at BIGINT NOT NULL,
+  retry_at BIGINT,
+  sent_at BIGINT
+);
+CREATE INDEX IF NOT EXISTS discord_notifications_creator ON discord_notifications(creator_id, attempted_at);
+-- The minute worker only looks at creators who connected a webhook.
+CREATE INDEX IF NOT EXISTS users_discord_hooked ON users(id) INCLUDE (discord_connected_at) WHERE discord_webhook_enc IS NOT NULL;
+-- Checking a pasted webhook is a request to Discord from the operator's address: a few per creator per 10 minutes.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks_since BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE discord_notifications ENABLE ROW LEVEL SECURITY;
+
 -- Operator alerts (src/lib/ops.ts): server errors and payment problems, grouped by what went wrong. The minute email
 -- worker mails new groups to the operator. Details are redacted one-line messages; rows go after 30 days.
 CREATE TABLE IF NOT EXISTS ops_events (

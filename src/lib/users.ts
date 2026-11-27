@@ -43,6 +43,12 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** The creator's Discord webhook URL, encrypted (src/lib/discord-notifications.ts). Never send it to the browser. */
+  discordWebhookEnc: string | null;
+  /** When it was connected (Unix ms); only support paid after this is announced. */
+  discordConnectedAt: number | null;
+  /** When Discord said the webhook no longer exists and we disconnected it. */
+  discordFailedAt: number | null;
   /** Whether a stream alerts URL is active (src/lib/stream-alerts.ts). Only its hash is stored. */
   alertsEnabled: boolean;
   /** When the creator listed their project in the directory (Unix ms), or null (src/lib/directory.ts). */
@@ -88,6 +94,9 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    discordWebhookEnc: str(r.discord_webhook_enc),
+    discordConnectedAt: num(r.discord_connected_at),
+    discordFailedAt: num(r.discord_failed_at),
     alertsEnabled: Boolean(str(r.alerts_token_hash)),
     listedAt: num(r.listed_at),
     projectCategory: str(r.project_category),
@@ -296,6 +305,20 @@ export async function setUsdcAddress(id: string, address: string | null) {
 
 export async function setSupportEmails(id: string, on: boolean) {
   await run("UPDATE users SET support_emails = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
+}
+
+/**
+ * Connects (or replaces) the Discord webhook, or disconnects it with null. Clears the "stopped working" notice.
+ * Replacing a connected webhook keeps the connect time, so support still waiting goes to the new channel; a fresh
+ * connect (or one after a disconnect) only announces what comes after it.
+ */
+export async function setDiscordWebhook(id: string, encrypted: string | null, now = Date.now()) {
+  await run(
+    `UPDATE users SET discord_webhook_enc = ?::text,
+       discord_connected_at = CASE WHEN ?::text IS NULL THEN NULL ELSE COALESCE(discord_connected_at, ?::bigint) END,
+       discord_failed_at = NULL WHERE id = ?`,
+    [encrypted, encrypted, now, id],
+  );
 }
 
 export async function setLeaderboardOptIn(id: string, on: boolean) {

@@ -8,6 +8,13 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Discord notifications**: a creator can paste a Discord webhook URL under Account and get a message in their channel
+  when someone supports them, batched like the email (up to five supporters, then "and N more"), with the supporter's
+  name, tokens and message as the public page shows them, and no dollar amounts. The URL is stored encrypted, never shown
+  again and redacted from logs; it is validated against an exact list of Discord hostnames when saved and before every
+  request, and requests never follow a redirect. Names and messages are made inert (no mentions, links or markdown) and
+  nothing can ping anyone. A 429 is retried, a deleted webhook is disconnected, and an ambiguous failure is never resent.
+  See [docs/emails.md](docs/emails.md#discord-notifications).
 - **Signed webhooks**: creators can add up to 3 HTTPS endpoints under Account > Webhooks and get a signed
   `support.confirmed` event when a payment is confirmed (Stripe, PayPal or USDC) and `support.reversed` when a PayPal
   payment is reversed. The event is written by the same SQL statement that confirms the payment, so it is never lost
