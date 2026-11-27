@@ -78,7 +78,7 @@ function shape(width: number, height: number, radius: number, t: (typeof THEMES)
 /**
  * Large pill button: [ </>  Buy me AI tokens  (12M tokens) ]  or  [ </>  Buy me AI tokens ↗ ] with no support yet.
  */
-function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
+function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme], outline = false): string {
   const h = 36;
   const tile = 24;
   const pad = 6;
@@ -106,7 +106,7 @@ function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): stri
     width,
     h,
     title,
-    shape(width, h, h / 2, t) +
+    (outline ? outlineShape(width, h, h / 2, t) : shape(width, h, h / 2, t)) +
       `<circle cx="${pad + tile / 2}" cy="${h / 2}" r="${tile / 2}" fill="${t.tile}"/>` +
       icon(LOGO_PATH, pad + tile / 2 - 7, h / 2 - 7, 14, t.tileInk, 1.8) +
       label.svg(labelX, baselineFor(INTER_TIGHT_600, 14, h / 2), t.fg) +
@@ -169,8 +169,57 @@ function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string
   );
 }
 
-/** `count` is e.g. "12M tokens", or null when the creator hasn't received support yet. */
+/** `count` is e.g. "12M tokens", or null when the creator hasn't received support yet. "goal" and "supporters" need live data, so the badge route renders them with goalBadge/supportersBadge; here they fall back to the button. */
 export function renderBadge(count: string | null, style: BadgeStyle = "button", theme: BadgeTheme = "dark"): string {
   const t = THEMES[theme];
-  return style === "flat" ? flatBadge(count, t) : style === "pill" ? pillBadge(count, t) : buttonBadge(count, t);
+  return style === "flat" ? flatBadge(count, t) : style === "pill" ? pillBadge(count, t) : style === "outline" ? buttonBadge(count, t, true) : buttonBadge(count, t);
+}
+
+/**
+ * Goal progress: [ </>  12M / 50M ] with a bar under the amounts. `reached` and `goal` are millions of
+ * tokens; `goal` is 0 when the creator has no goal, and the badge then reads "Set a goal" with an empty bar.
+ * The percentage lives in the title, where it is always exact.
+ */
+export function goalBadge(reached: number, goal: number, theme: BadgeTheme = "dark"): string {
+  const t = THEMES[theme];
+  const h = 36;
+  const tile = 24;
+  const pad = 6;
+  const hasGoal = goal > 0;
+  const percent = hasGoal ? Math.min(100, Math.floor((reached / goal) * 100)) : 0;
+  const text = hasGoal ? `${formatTokens(reached)} / ${formatTokens(goal)}` : "Set a goal";
+  const value = run(INTER_TIGHT_600, text, 12.5, -0.005);
+  const labelX = pad + tile + 10;
+  const barY = 27;
+  const width = labelX + value.width + pad;
+
+  const title = esc(
+    hasGoal
+      ? `Buy me AI tokens: ${percent}% of goal (${formatTokens(reached)} / ${formatTokens(goal)} tokens)`
+      : "Buy me AI tokens: set a funding goal",
+  );
+  return wrap(
+    width,
+    h,
+    title,
+    shape(width, h, h / 2, t) +
+      `<circle cx="${pad + tile / 2}" cy="${h / 2}" r="${tile / 2}" fill="${t.tile}"/>` +
+      icon(LOGO_PATH, pad + tile / 2 - 7, h / 2 - 7, 14, t.tileInk, 1.8) +
+      value.svg(labelX, baselineFor(INTER_TIGHT_600, 12.5, 13), t.fg) +
+      `<rect x="${n(labelX)}" y="${barY}" width="${n(value.width)}" height="4" rx="2" fill="${t.fg}" fill-opacity="0.18"/>` +
+      (percent > 0
+        ? `<rect x="${n(labelX)}" y="${barY}" width="${n((value.width * percent) / 100)}" height="4" rx="2" fill="${t.chip}"/>`
+        : ""),
+  );
+}
+
+/** Button layout with a supporter count in the chip: [ </>  Buy me AI tokens  (12 supporters) ]. */
+export function supportersBadge(supporters: number, theme: BadgeTheme = "dark"): string {
+  const t = THEMES[theme];
+  return buttonBadge(`${supporters} supporter${supporters === 1 ? "" : "s"}`, t);
+}
+
+/** A transparent badge: the button layout with a hairline border instead of a filled background. */
+function outlineShape(width: number, height: number, radius: number, t: (typeof THEMES)[BadgeTheme]) {
+  return `<rect x=".5" y=".5" width="${n(width - 1)}" height="${height - 1}" rx="${radius - 0.5}" fill="none" stroke="${t.fg}" stroke-opacity="0.5"/>`;
 }
