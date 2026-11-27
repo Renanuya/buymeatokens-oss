@@ -5,18 +5,36 @@ ten minutes.
 
 ## Prerequisites
 
-- **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up.
+- **Git**, to clone the repository.
+- **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up. Run it
+  before `npm ci`, so the install uses Node 26.
 - **Docker**, for the local Postgres in [`compose.yaml`](../compose.yaml). Any Postgres 15+ that you own works too,
-  such as a free Supabase project used only for development.
+  such as a free Supabase project used only for development. Docker must be running (for example, start
+  Docker Desktop) before step 1.
 - Optional: a Stripe account in **test mode** and a GitHub OAuth app, depending on
   what you work on.
+
+## 0. Clone the repository
+
+```bash
+git clone https://github.com/Renanuya/buymeatokens-oss.git
+cd buymeatokens-oss
+nvm use # or `fnm use`
+```
+
+The steps below all run inside that directory.
 
 ## 1. Install and start the database
 
 ```bash
 npm ci
 docker compose up -d db
+docker compose ps # wait until db shows (healthy)
 ```
+
+Wait until `docker compose ps` shows the `db` service as `(healthy)` before you start the app: the first
+request creates the tables, and it fails if Postgres is not ready yet. `compose.yaml` already defines a
+healthcheck (`pg_isready`), so `(healthy)` is the signal to continue.
 
 ## 2. Create `.env.local`
 
@@ -39,6 +57,12 @@ Then fill in the minimum:
 | `SESSION_SECRET`, `ENCRYPTION_KEY`, `CRON_SECRET` | the generated values |
 | `DEV_LOGIN` | `true`, which lets you log in without GitHub |
 | `EMAIL_LIVE_ENABLED` | `false`; leave the email keys empty unless you work on emails |
+
+There is no Stripe variable to fill in here: the Stripe key is not an environment variable, it is pasted in
+the app in step 4 of "Try the whole flow" below.
+
+If you change `.env.local` later, restart `npm run dev`: Next.js reads `.env.local` when the dev server
+starts, so edits do not take effect in a running server.
 
 Everything else is optional:
 
@@ -69,11 +93,17 @@ Open http://localhost:3000. The first request creates the tables.
 
 1. **Log in → "Continue without GitHub".**
 2. Pick a username and go through the setup steps.
-3. **Payments:** in the Stripe dashboard (test mode), open *Developers → API keys → Create restricted key*.
-   Give it **Checkout Sessions: Write** and leave everything else at **None**. Paste the `rk_test_…` key.
+3. **Payments:** in the Stripe dashboard, first switch to **sandbox (test mode)** — the in-app guide says the
+   same — then open *Developers → API keys → Create restricted key*. Name the key `buymeatokens`. When Stripe
+   asks "How will you be using this key?", pick **Providing this key to a third-party application**. Give it
+   **Checkout Sessions: Write** and leave everything else at **None**. Click **Create key**, copy the
+   `rk_test_…` key — Stripe shows it only once — and paste it in the app, not in `.env.local`: go to
+   **Dashboard → Payments** (`http://localhost:3000/dashboard/stripe`) and paste it in the Stripe key field
+   there. The key is stored encrypted in the database (see [payments.md](payments.md)); there is no Stripe
+   variable in `.env.example`. If you already pasted the key during the guided setup, skip this step.
 4. Open `http://localhost:3000/<username>`, buy a bundle and pay with card `4242 4242 4242 4242`, any future
    date and any CVC.
-5. Back in the dashboard you should see the support, the README badge and your lifetime free access.
+5. Back in the creator dashboard (`http://localhost:3000/dashboard`) you should see the support, the README badge and your lifetime free access.
 
 To see a page without lifetime free access, set `EARLY_ACCESS_OPEN=false` before you create it.
 
@@ -94,9 +124,17 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build
 
 | Problem | Fix |
 |---|---|
+| `git: command not found`, or there is no repository on disk | Install Git, then clone the repository as in step 0. |
+| `Cannot connect to the Docker daemon` | Start Docker (for example, Docker Desktop) and try again. |
+| `npm ci` fails, or Node reports the wrong version | Run `nvm use` (or `fnm use`) to switch to Node 26 from `.nvmrc`, then run `npm ci` again. |
 | `ECONNREFUSED 127.0.0.1:5432` | The database isn't running: `docker compose up -d db`, then check `docker compose ps`. |
+| The first request fails with a database connection error | The database was not ready yet: run `docker compose up -d db`, wait until `docker compose ps` shows `db` as `(healthy)`, then reload. |
 | Port 5432 is already in use | Change the left side of `ports:` in `compose.yaml` to `"127.0.0.1:5433:5432"` and use `:5433` in `POSTGRES_URL`. |
+| Port 3000 is already in use | Stop the other process using port 3000, or start the dev server on another port and set `APP_URL` to match. |
 | Start over with an empty database | `docker compose down -v && docker compose up -d db` |
+| "Continue without GitHub" is missing | `DEV_LOGIN=true` must be in `.env.local`. If you just added it, restart `npm run dev`: changes to `.env.local` only take effect after a restart. |
+| The Stripe key has nowhere to go in `.env.local` | That is expected: paste the `rk_test_…` key in **Dashboard → Payments** (`/dashboard/stripe`), not in `.env.local`. See step 3 in "Try the whole flow". |
+| Checkout does not open | Make sure a test-mode restricted key is saved on **Dashboard → Payments** and that it starts with `rk_test_`. |
 | "That's a publishable key" | Stripe needs a **restricted** key (`rk_…`), not `pk_…` or `sk_…`. |
 | GitHub login loops back | Make sure the OAuth app's callback URL matches `APP_URL` exactly. |
 | "Refusing to apply the schema to …" | `POSTGRES_URL` points at a remote host. Use the local database; see [database.md](database.md). |
