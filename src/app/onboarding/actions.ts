@@ -149,7 +149,8 @@ export async function saveTokenUseAction(_prev: ActionState, formData: FormData)
   if ("error" in note) return { error: note.error };
   if (!input.trim() && !note.text) return { error: "Add a line about what the tokens pay for, or skip this step for now." };
   await setTokenUse(user.id, input.trim());
-  await setThankYou(user.id, note.text);
+  // Only when the form carries the field: a stale or crafted submission without it must not wipe the note.
+  if (formData.has("thankYou")) await setThankYou(user.id, note.text);
   return finishStep(user, "tokens");
 }
 

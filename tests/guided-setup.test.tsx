@@ -397,6 +397,18 @@ describe("thank-you note", () => {
     expect(parseThankYou(`  ${"x".repeat(281)}`)).toEqual({ error: expect.stringContaining("280") });
   });
 
+  it("strips every format character but keeps joined emoji, and flattens towers of accents", () => {
+    // Tag characters (U+E0001, U+E0041), an interlinear annotation, an Arabic number sign and a braille blank.
+    expect(parseThankYou("a\u{E0001}\u{E0041}b￹c؀d⠀e")).toEqual({ text: "abcde" });
+    // The joiners stay: a family emoji and a coder emoji are one picture each.
+    const family = "\u{1F468}‍\u{1F469}‍\u{1F467}";
+    const coder = "\u{1F469}‍\u{1F4BB}";
+    expect(parseThankYou(`Thanks ${family} ${coder}`)).toEqual({ text: `Thanks ${family} ${coder}` });
+    // Ordinary accents survive; a flood of marks on one letter is cut to three.
+    expect(parseThankYou("Café ở đây")).toEqual({ text: "Café ở đây" });
+    expect(parseThankYou(`Z${"́".repeat(266)}!`)).toEqual({ text: `Z${"́".repeat(3)}!` });
+  });
+
   it("is saved from the guided setup step, which stays the tokens step", async () => {
     await signup();
     await query("UPDATE users SET username = 'maker', setup_progress = 5, terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
@@ -410,6 +422,18 @@ describe("thank-you note", () => {
       redirect: "/onboarding/goal",
     });
     expect(await user()).toMatchObject({ tokenUse: "Evals", thankYou: "Thanks!", setupProgress: 6 });
+
+    // A stale or crafted submission without the field leaves the note alone.
+    await query("UPDATE users SET setup_progress = 5 WHERE id = 'maker'");
+    await run(() => saveTokenUseAction({}, form({ tokenUse: "Evals" })));
+    expect((await user()).thankYou).toBe("Thanks!");
+  });
+
+  it("counts the step as filled when only the note was given", async () => {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_progress = 5, terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    await run(() => saveTokenUseAction({}, form({ tokenUse: "", thankYou: "Thanks!" })));
+    expect(filledSteps(await user()).tokens).toBe(true);
   });
 
   it("is saved from settings, left alone when absent, and survives a crafted submission", async () => {
@@ -440,6 +464,8 @@ describe("thank-you note", () => {
     expect(html).not.toContain("<script>alert");
     expect(html).not.toContain('href="javascript');
     expect(html.length).toBeGreaterThan(without.length);
+    // Signed with the creator's name, so it doesn't read like a notice from the site.
+    expect(html).toContain("A note from Maker");
     expect(without).toContain("No supporters yet");
   });
 

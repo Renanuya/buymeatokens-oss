@@ -155,11 +155,13 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
               <p className="eyebrow">Good work deserves fuel</p>
             </div>
             {page.thankYou && (
-              <div className="mt-5 flex items-center gap-4 rounded-2xl bg-paper p-5">
-                <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
-                  <Glyph name="heart" strokeWidth={2} className="size-5" />
-                </span>
-                <p className="min-w-0 text-sm leading-relaxed [overflow-wrap:anywhere]">{page.thankYou}</p>
+              // The creator's own words, with their face and name on it, so it can't pass for a message from the site.
+              <div className="mt-5 flex items-start gap-4 overflow-hidden rounded-2xl bg-paper p-5">
+                <Avatar name={page.name} url={page.avatarUrl} className="size-12 shrink-0 rounded-[14px]! text-base" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted">A note from {firstName}</p>
+                  <p className="mt-1 text-sm leading-relaxed [overflow-wrap:anywhere]">{page.thankYou}</p>
+                </div>
               </div>
             )}
             {page.supporters.length === 0 ? (

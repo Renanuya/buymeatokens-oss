@@ -620,7 +620,6 @@ export function ThankYouField({ defaultValue }: { defaultValue: string }) {
         id="thankYou"
         name="thankYou"
         rows={2}
-        maxLength={THANK_YOU_MAX_LENGTH}
         value={text}
         onChange={(e) => setText(e.target.value)}
         aria-describedby="thankYou-count"
@@ -629,7 +628,8 @@ export function ThankYouField({ defaultValue }: { defaultValue: string }) {
       />
       <div className="mt-2 flex items-start justify-between gap-4 text-xs text-muted">
         <p>Plain text, shown above your supporters.</p>
-        <Counter id="thankYou-count" length={text.length} max={THANK_YOU_MAX_LENGTH} />
+        {/* Counted the way the server counts (an emoji is one character), so the counter and the save agree. */}
+        <Counter id="thankYou-count" length={Array.from(text).length} max={THANK_YOU_MAX_LENGTH} />
       </div>
     </div>
   );
