@@ -9,13 +9,13 @@ const COLUMNS = [
       { href: "/#makers", label: "For creators" },
       { href: "/#faq", label: "FAQs" },
       { href: "/directory", label: "Project directory" },
+      { href: "/leaderboard", label: "Leaderboard" },
     ],
   },
   {
     title: "Learn",
     links: [
       { href: "/blog", label: "Blog" },
-      { href: "/leaderboard", label: "Leaderboard" },
       { href: "/roadmap", label: "Roadmap" },
       { href: "/about", label: "About & transparency" },
       { href: SOURCE_URL, label: "Source code on GitHub" },

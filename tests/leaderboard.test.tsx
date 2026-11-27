@@ -36,7 +36,8 @@ vi.mock("../src/lib/session", async () => {
 import { SCHEMA, query } from "../src/lib/db";
 import { setLeaderboardAction } from "../src/app/dashboard/account/actions";
 import { Board } from "../src/app/leaderboard/board";
-import { LEADERBOARD_SIZE, topCreators } from "../src/lib/leaderboard";
+import { MostSupported } from "../src/components/most-supported";
+import { LEADERBOARD_SIZE, discoverCreators, topCreators } from "../src/lib/leaderboard";
 import { TERMS_VERSION } from "../src/lib/legal/config";
 import { getUserById } from "../src/lib/users";
 
@@ -173,5 +174,74 @@ describe("leaderboard", () => {
     expect(html).toContain("2 supporters");
     expect(html).not.toMatch(/\$|999|USD|cents/i);
     expect(html).toContain("not verified popularity");
+  });
+});
+
+describe("with nothing to rank", () => {
+  beforeAll(async () => {
+    mocks.db = new PGlite();
+    await mocks.db.exec(SCHEMA);
+  });
+  beforeEach(async () => {
+    await mocks.db.exec("TRUNCATE users CASCADE");
+  });
+  afterAll(async () => {
+    await mocks.db.close();
+  });
+
+  const usernames = (list: { username: string }[]) => list.map((e) => e.username).sort();
+
+  it("picks creators who turned the board on first, then fills with other listed pages", async () => {
+    await creator("in1");
+    await creator("in2");
+    await creator("out1", { optIn: false });
+    await creator("out2", { optIn: false });
+    expect(usernames(await discoverCreators(2))).toEqual(["in1", "in2"]);
+    expect(usernames(await discoverCreators(3))).toHaveLength(3);
+    expect(usernames(await discoverCreators(10))).toEqual(["in1", "in2", "out1", "out2"]);
+  });
+
+  it("never picks a page that isn't listed, is in test mode, or belongs to a dev login", async () => {
+    await creator("shown", { optIn: false });
+    await creator("nopay", { payout: false });
+    await creator("testmode", { mode: "test" });
+    await creator("devacct", { auth: "dev:x" });
+    expect(usernames(await discoverCreators(10))).toEqual(["shown"]);
+  });
+
+  it("shows picks on an empty board, unranked and without tokens, and the empty card when there is nobody", async () => {
+    expect(renderToStaticMarkup(await Board({ period: "daily" }))).toContain("Nobody is on the board yet.");
+
+    await creator("maker");
+    const daily = renderToStaticMarkup(await Board({ period: "daily" }));
+    expect(daily).toContain("No support in the last 24 hours yet. Some projects to");
+    expect(daily).toContain('href="/maker"');
+    expect(daily).toContain("Picked at random, not ranked.");
+    expect(daily).not.toContain("tokens</span>");
+    expect(daily).not.toContain("Nobody is on the board yet.");
+    expect(renderToStaticMarkup(await Board({ period: "lifetime" }))).toContain("No support on the board yet.");
+  });
+
+  it("gives the home page the top of the board, or makers to discover, or nothing", async () => {
+    expect(await MostSupported()).toBeNull();
+
+    await creator("maker");
+    const discover = renderToStaticMarkup((await MostSupported())!);
+    expect(discover).toContain("Projects to discover");
+    expect(discover).toContain("@maker");
+    expect(discover).not.toMatch(/#\d|tokens/);
+    expect(discover).toContain('href="/leaderboard"');
+
+    await paid("maker", 5, NOW - HOUR);
+    await creator("other", { optIn: false });
+    const ranked = renderToStaticMarkup((await MostSupported())!);
+    expect(ranked).toContain("Most supported");
+    expect(ranked).toContain("5M tokens");
+    expect(ranked).toContain(">#1</span>");
+    expect(ranked).not.toMatch(/\$|999|USD|cents/i);
+    // The row is filled with a creator to discover, unranked and without tokens, and nobody shows twice.
+    expect(ranked).toContain("@other");
+    expect(ranked).not.toContain(">#2</span>");
+    expect(ranked.match(/href="\/maker"/g)).toHaveLength(1);
   });
 });

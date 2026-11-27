@@ -5,6 +5,7 @@ import { CommunityCard } from "@/components/community-card";
 import { DemoSupportCard } from "@/components/demo-support-card";
 import { HowItWorks } from "@/components/how-it-works";
 import { MakersCollage } from "@/components/makers-collage";
+import { MostSupported } from "@/components/most-supported";
 import { Preloader } from "@/components/preloader";
 import { Reveal, RevealLines } from "@/components/reveal";
 import { ArrowUpRight, PlusIcon, TokenTile } from "@/components/icons";
@@ -195,6 +196,8 @@ export default async function Home() {
           <HowItWorks />
           <p className="mt-6 text-sm text-muted">Payment provider and network fees may apply.</p>
         </section>
+
+        <MostSupported />
 
         <section id="makers" className="flex min-h-dvh scroll-mt-0 items-center overflow-hidden bg-lilac">
           <div className="wrap grid grid-cols-1 items-center gap-12 py-20 md:py-24 lg:grid-cols-2 lg:gap-16">
