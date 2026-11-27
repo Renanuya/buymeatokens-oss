@@ -23,7 +23,7 @@ ten minutes.
 ```bash
 git clone https://github.com/Renanuya/buymeatokens-oss.git
 cd buymeatokens-oss
-nvm use # or `fnm use`
+nvm use # or `fnm use`; skip this if you installed Node 26 directly
 ```
 
 The steps below all run inside that directory.
@@ -123,7 +123,9 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build
 In PowerShell, set the variable first and remove it afterwards:
 
 ```powershell
-$env:POSTGRES_URL = "postgres://x:y@127.0.0.1:9/none"; npm run build; Remove-Item Env:POSTGRES_URL
+$env:POSTGRES_URL = "postgres://x:y@127.0.0.1:9/none"
+npm run build
+Remove-Item Env:POSTGRES_URL
 ```
 
 - `npm test` runs Vitest against **PGlite**, an in-memory Postgres. It never reads `.env.local` or touches a real
