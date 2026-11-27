@@ -106,6 +106,8 @@ export async function confirmUsdcPayment(input: {
       no_transfer: `This transaction didn't send USDC on Base to ${name}'s wallet.`,
       too_old: "This transaction is too old to claim. Only payments from the last 3 days count.",
       too_small: "Payments under $1 aren't counted.",
+      too_large: "This amount is too large to count automatically.",
+      claimed_elsewhere: "This transaction was already counted for another page.",
     } as const;
     return { ok: false, message: reasons[result.reason] };
   }

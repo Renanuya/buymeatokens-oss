@@ -19,10 +19,12 @@ export async function GET(req: Request) {
   if (!secret || !safeEqual(auth, `Bearer ${secret}`)) {
     return new Response("Unauthorized", { status: 401 });
   }
+  const started = Date.now();
   await pruneVisitorMarks().catch((error) => reportError("[cron] visitor marks", error));
   await pruneOpsEvents().catch((error) => reportError("[cron] prune alerts", error));
   const stripe = await syncAll();
-  // After Stripe, with its own time budget, so slow RPCs can't starve the Stripe reconciliation.
-  const usdc = await recheckUsdcPayments().catch((error) => reportError("[cron] usdc recheck", error));
+  // After Stripe, so slow RPCs can't starve the Stripe reconciliation, and with what is left of the function's time.
+  const budgetMs = Math.max(0, Math.min(20_000, 50_000 - (Date.now() - started)));
+  const usdc = await recheckUsdcPayments(Date.now(), 200, budgetMs).catch((error) => reportError("[cron] usdc recheck", error));
   return Response.json({ ...stripe, usdc });
 }

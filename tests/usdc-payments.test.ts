@@ -299,4 +299,80 @@ describe("USDC payment records", () => {
     expect(await attemptUsdcPayment(reopened, CREATOR, NOW + 4)).toMatchObject({ state: "confirmed", counted: false });
     expect(await donations()).toHaveLength(1);
   });
+
+  it("checks the address the record holds now, not the caller's stale copy", async () => {
+    const OLD_WALLET = "0x5555555555555555555555555555555555555555";
+    chainOk(); // the money went to WALLET
+    const stale = await openUsdcPayment({ ...input(), address: OLD_WALLET }, NOW);
+    expect(await attemptUsdcPayment(stale, CREATOR, NOW)).toEqual({ state: "rejected", reason: "no_transfer" });
+    await openUsdcPayment(input(), NOW + 1); // another request reopens it against WALLET
+    // A request still polling with the old copy must not fail it against the old address again.
+    expect(await attemptUsdcPayment(stale, CREATOR, NOW + 2)).toMatchObject({ state: "confirmed", counted: true });
+  });
+
+  it("settles an amount the columns can't hold as failed, without throwing", async () => {
+    chainOk(30_000_000_000_000n); // $30M, more cents than an INTEGER holds
+    const p = await openUsdcPayment(input(), NOW);
+    expect(await attemptUsdcPayment(p, CREATOR, NOW)).toEqual({ state: "rejected", reason: "too_large" });
+    expect(await payment()).toMatchObject({ status: "failed", reason: "too_large" });
+    expect(await donations()).toHaveLength(0);
+  });
+
+  it("a hash another page already counted is not shown as confirmed here", async () => {
+    const OTHER_WALLET = "0x5555555555555555555555555555555555555555";
+    await query(
+      "INSERT INTO users (id, auth_id, login, username, display_name, usdc_address, unit_price_cents, created_at) VALUES (?, ?, ?, ?, ?, ?, 500, ?)",
+      ["other", "github:other", "other", "other", "Other", OTHER_WALLET, NOW],
+    );
+    // One transaction pays both wallets; a hash can be counted once.
+    fetchMock.mockImplementation(async (_u: unknown, init?: { body?: unknown }) => {
+      const { method } = JSON.parse(String(init?.body)) as { method: string };
+      if (method !== "eth_getTransactionReceipt") return rpcResult({ timestamp: `0x${Math.floor(Date.now() / 1000).toString(16)}` });
+      const log = (to: string, amount: bigint) => ({ address: USDC, topics: [TRANSFER_TOPIC, pad(SENDER), pad(to)], data: `0x${amount.toString(16)}` });
+      return rpcResult({ status: "0x1", blockNumber: "0x10", logs: [log(WALLET, 10_000_000n), log(OTHER_WALLET, 7_000_000n)] });
+    });
+    const theirs = await openUsdcPayment({ ...input(), creatorId: "other", address: OTHER_WALLET }, NOW);
+    expect(await attemptUsdcPayment(theirs, CREATOR, NOW)).toMatchObject({ state: "confirmed", counted: true });
+
+    const ours = await openUsdcPayment(input(), NOW + 1);
+    expect(await attemptUsdcPayment(ours, CREATOR, NOW + 2)).toEqual({ state: "rejected", reason: "claimed_elsewhere" });
+    const row = (await query("SELECT * FROM usdc_payments WHERE id = ?", [ours.id])).rows[0];
+    expect(row).toMatchObject({ status: "failed", reason: "claimed_elsewhere", amount_cents: null });
+    expect(await donations()).toMatchObject([{ creator_id: "other" }]);
+  });
+
+  it("one record that throws doesn't stop the background pass", async () => {
+    // A creator with a zero price makes the donation insert throw (the token count isn't a number the column takes).
+    await query(
+      "INSERT INTO users (id, auth_id, login, username, display_name, usdc_address, unit_price_cents, created_at) VALUES (?, ?, ?, ?, ?, ?, 0, ?)",
+      ["broken", "github:broken", "broken", "broken", "Broken", WALLET, NOW],
+    );
+    const other = `0x${"cd".repeat(32)}`;
+    await openUsdcPayment({ ...input(other), creatorId: "broken" }, NOW);
+    await openUsdcPayment(input(), NOW + 1);
+    chainOk();
+    expect(await recheckUsdcPayments(NOW + 120_000)).toEqual({ checked: 2, confirmed: 1 });
+    expect(await payment(other)).toMatchObject({ status: "sent", reason: "db_error" });
+    expect((await payment()).status).toBe("confirmed");
+  });
+
+  it("the background pass leaves hashes the network never saw for last", async () => {
+    const real = `0x${"cd".repeat(32)}`;
+    await openUsdcPayment(input(), NOW);
+    await openUsdcPayment(input(real), NOW + 1);
+    // The junk hash was looked at longer ago, so by age alone it would go first.
+    await query("UPDATE usdc_payments SET reason = 'pending', last_checked_at = ? WHERE tx_hash = ?", [NOW + 10, TX]);
+    await query("UPDATE usdc_payments SET reason = 'rpc_error', last_checked_at = ? WHERE tx_hash = ?", [NOW + 100_000, real]);
+    chainOk();
+    expect(await recheckUsdcPayments(NOW + 300_000, 1)).toEqual({ checked: 1, confirmed: 1 });
+    expect((await payment(real)).status).toBe("confirmed");
+    expect((await payment()).status).toBe("sent");
+  });
+
+  it("the background pass gives up on a check that outlasts its budget", async () => {
+    await openUsdcPayment(input(), NOW);
+    await openUsdcPayment(input(`0x${"cd".repeat(32)}`), NOW + 1);
+    fetchMock.mockImplementation(() => new Promise(() => {})); // the RPC never answers
+    expect(await recheckUsdcPayments(NOW + 120_000, 20, 50)).toEqual({ checked: 1, confirmed: 0 });
+  });
 });

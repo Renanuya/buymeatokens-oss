@@ -32,6 +32,8 @@ export type UsdcPayment = {
 export const USDC_MAX_AGE_MS = 3 * 86_400_000;
 /** A verifying row older than this belonged to a process that died; another one may take it over. */
 export const VERIFY_LEASE_MS = 2 * 60_000;
+/** donations.amount_cents and usdc_payments.amount_cents are INTEGER columns. */
+const MAX_AMOUNT_CENTS = 2_147_483_647;
 /** The background job leaves a record alone this long after the last look. */
 const RECHECK_AFTER_MS = 60_000;
 
@@ -96,7 +98,7 @@ export async function pruneUsdcPayments(now = Date.now()) {
 
 export type UsdcAttempt =
   | { state: "confirmed"; amountCents: number; units: number; counted: boolean }
-  | { state: "rejected"; reason: "failed" | "no_transfer" | "too_old" | "too_small" }
+  | { state: "rejected"; reason: "failed" | "no_transfer" | "too_old" | "too_small" | "too_large" | "claimed_elsewhere" }
   | { state: "pending" }
   | { state: "unreachable" }
   | { state: "busy" }
@@ -140,7 +142,7 @@ export async function attemptUsdcPayment(
   await expireUsdcPayments(now, payment.id);
   const claimed = await query(
     `UPDATE usdc_payments SET status = 'verifying', attempts = attempts + 1, last_checked_at = ?
-     WHERE id = ? AND (status = 'sent' OR (status = 'verifying' AND last_checked_at < ?)) RETURNING id`,
+     WHERE id = ? AND (status = 'sent' OR (status = 'verifying' AND last_checked_at < ?)) RETURNING address`,
     [now, payment.id, now - VERIFY_LEASE_MS],
   );
   if (claimed.rows.length === 0) {
@@ -153,9 +155,11 @@ export async function attemptUsdcPayment(
     return { state: current.status === "expired" ? "expired" : "busy" };
   }
 
+  // The address as claimed, not the caller's copy: a reopen after a wallet fix may have changed it since.
+  const address = String(claimed.rows[0].address);
   let check;
   try {
-    check = await checkUsdcTransfer(payment.txHash, payment.address, USDC_MAX_AGE_MS);
+    check = await checkUsdcTransfer(payment.txHash, address, USDC_MAX_AGE_MS);
   } catch (error) {
     await reportError("[usdc]", payment.txHash, error);
     await release(payment.id, "rpc_error", now);
@@ -170,29 +174,47 @@ export async function attemptUsdcPayment(
     await settle(payment.id, "failed", check.reason, null, now);
     return { state: "rejected", reason: check.reason };
   }
-  if (check.amountCents < 100) {
-    await settle(payment.id, "failed", "too_small", check.amountCents, now);
-    return { state: "rejected", reason: "too_small" };
+  if (check.amountCents < 100 || check.amountCents > MAX_AMOUNT_CENTS) {
+    const reason = check.amountCents < 100 ? "too_small" : "too_large";
+    await settle(payment.id, "failed", reason, reason === "too_small" ? check.amountCents : null, now);
+    return { state: "rejected", reason };
   }
 
   const units = unitsFor(check.amountCents, creator);
-  const counted = await recordUsdcDonation({
-    creatorId: payment.creatorId,
-    txHash: payment.txHash,
-    units,
-    amountCents: check.amountCents,
-    supporterName: payment.supporterName,
-    message: payment.message,
-    visitSource: payment.visitSource,
-  });
+  let counted: boolean;
+  try {
+    counted = await recordUsdcDonation({
+      creatorId: payment.creatorId,
+      txHash: payment.txHash,
+      units,
+      amountCents: check.amountCents,
+      supporterName: payment.supporterName,
+      message: payment.message,
+      visitSource: payment.visitSource,
+    });
+  } catch (error) {
+    // Don't leave the record held until the lease runs out; the caller sees the error as before.
+    await release(payment.id, "db_error", now).catch(() => {});
+    throw error;
+  }
+  if (!counted) {
+    // The hash is unique across creators: if another page already counted it, this record didn't.
+    const owner = await query("SELECT creator_id FROM donations WHERE tx_hash = ?", [payment.txHash]);
+    if (String(owner.rows[0]?.creator_id) !== payment.creatorId) {
+      await settle(payment.id, "failed", "claimed_elsewhere", null, now);
+      return { state: "rejected", reason: "claimed_elsewhere" };
+    }
+  }
   await settle(payment.id, "confirmed", null, check.amountCents, now);
   return { state: "confirmed", amountCents: check.amountCents, units, counted };
 }
 
 /**
  * Background pass (run from the reconcile cron): checks records that were left open, e.g. after an RPC error.
- * Least recently checked first, so records that stay unresolved can't crowd out the others. Stops at the first outage
- * instead of waiting on the same dead endpoints for every record, and when the time budget is used up.
+ * Hashes the network has never seen go last, then least recently checked first, so records that stay unresolved
+ * can't crowd out the others. Stops at the first outage instead of waiting on the same dead endpoints for every record,
+ * and when the time budget is used up: a check still running then is left to finish or to be taken over after its
+ * lease. One record that fails doesn't stop the rest.
  */
 export async function recheckUsdcPayments(
   now = Date.now(),
@@ -206,20 +228,33 @@ export async function recheckUsdcPayments(
     `SELECT * FROM usdc_payments
      WHERE expires_at > ?
        AND ((status = 'sent' AND GREATEST(created_at, COALESCE(last_checked_at, 0)) < ?) OR (status = 'verifying' AND last_checked_at < ?))
-     ORDER BY COALESCE(last_checked_at, created_at) ASC LIMIT ?`,
+     ORDER BY (reason IS NOT DISTINCT FROM 'pending'), COALESCE(last_checked_at, created_at) ASC LIMIT ?`,
     [now, now - RECHECK_AFTER_MS, now - VERIFY_LEASE_MS, limit],
   );
   let checked = 0;
   let confirmed = 0;
+  const creators = new Map<string, User | null>();
   for (const row of rs.rows) {
-    if (Date.now() >= deadline) break;
+    const left = deadline - Date.now();
+    if (left <= 0) break;
     const payment = mapPayment(row);
-    const creator = await getUserById(payment.creatorId);
+    if (!creators.has(payment.creatorId)) creators.set(payment.creatorId, await getUserById(payment.creatorId));
+    const creator = creators.get(payment.creatorId);
     if (!creator) continue;
     checked++;
-    const result = await attemptUsdcPayment(payment, creator, now);
-    if (result.state === "confirmed" && result.counted) confirmed++;
-    if (result.state === "unreachable") break;
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    const outOfTime = new Promise<UsdcAttempt>((resolve) => {
+      timer = setTimeout(() => resolve({ state: "unreachable" }), left);
+    });
+    try {
+      const result = await Promise.race([attemptUsdcPayment(payment, creator, now), outOfTime]);
+      if (result.state === "confirmed" && result.counted) confirmed++;
+      if (result.state === "unreachable") break;
+    } catch (error) {
+      await reportError("[usdc] recheck", payment.txHash, error);
+    } finally {
+      clearTimeout(timer);
+    }
   }
   return { checked, confirmed };
 }
