@@ -65,3 +65,28 @@ export async function topCreators(period: Period, now = Date.now()): Promise<Lea
     };
   });
 }
+
+/** A creator shown when there is no support to rank: only what their public page already shows. */
+export type DiscoverEntry = { username: string; displayName: string; avatarUrl: string | null };
+export const DISCOVER_SIZE = 8;
+
+/**
+ * Random public creators for a board with nothing to rank, so it never shows an empty card. Creators who turned the
+ * leaderboard on come first; other listed pages fill the rest, as the home page already shows recent creators. They are
+ * shown as projects to discover, never ranked and never with tokens. Pages in Stripe test mode are left out, like on
+ * the board itself.
+ */
+export async function discoverCreators(limit = DISCOVER_SIZE): Promise<DiscoverEntry[]> {
+  const rs = await query(
+    `SELECT username, display_name, avatar_url FROM users
+     WHERE ${indexableSql()} AND stripe_mode IS DISTINCT FROM 'test'
+     ORDER BY leaderboard_opt_in DESC, random()
+     LIMIT ?::int`,
+    [limit],
+  );
+  return rs.rows.map((r) => ({
+    username: String(r.username),
+    displayName: str(r.display_name) ?? "",
+    avatarUrl: str(r.avatar_url),
+  }));
+}

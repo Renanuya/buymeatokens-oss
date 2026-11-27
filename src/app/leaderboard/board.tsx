@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { Avatar } from "@/components/avatar";
+import { ArrowUpRight } from "@/components/icons";
 import { SignedInSwitch } from "@/components/signed-in-switch";
 import { formatTokens } from "@/lib/format";
-import { topCreators, type Period } from "@/lib/leaderboard";
+import { discoverCreators, topCreators, type Period } from "@/lib/leaderboard";
 import { reportError } from "@/lib/ops";
 
 const TABS: { period: Period; label: string; href: string; window: string }[] = [
@@ -20,6 +21,13 @@ export async function Board({ period }: { period: Period }) {
     await reportError("[leaderboard]", period, error).catch(() => undefined);
     return [];
   });
+  // Nothing to rank: show some creators to discover instead of an empty card.
+  const picks = entries.length
+    ? []
+    : await discoverCreators().catch(async (error) => {
+        await reportError("[leaderboard] discover", period, error).catch(() => undefined);
+        return [];
+      });
   const tab = TABS.find((t) => t.period === period)!;
   return (
     <main className="wrap py-16 md:py-24">
@@ -27,7 +35,8 @@ export async function Board({ period }: { period: Period }) {
         <p className="eyebrow">Leaderboard</p>
         <h1 className="display mt-4 text-[clamp(2.5rem,5vw,4rem)]">Most supported.</h1>
         <p className="mt-4 max-w-2xl leading-relaxed text-ink/75">
-          Projects ranked by the AI tokens their supporters bought in {tab.window}. Only creators who chose to be listed appear.
+          Projects ranked by the AI tokens their supporters bought in {tab.window}. Only creators who chose to be listed are
+          ranked.
         </p>
         <nav aria-label="Period" className="mt-8 flex flex-wrap gap-2">
           {TABS.map((t) => (
@@ -44,7 +53,48 @@ export async function Board({ period }: { period: Period }) {
           ))}
         </nav>
 
-        {entries.length === 0 ? (
+        {entries.length === 0 && picks.length > 0 ? (
+          <>
+            <p className="mt-8 font-semibold text-ink">
+              {period === "lifetime" ? "No support on the board yet." : `No support in ${tab.window} yet.`} Some projects to
+              discover:
+            </p>
+            <ul className="mt-4 divide-y divide-line rounded-2xl border border-line bg-white">
+              {picks.map((p) => (
+                <li key={p.username}>
+                  <Link href={`/${p.username}`} className="group flex items-center gap-4 p-4 transition hover:bg-lilac-soft sm:px-5">
+                    <Avatar name={p.displayName || p.username} url={p.avatarUrl} className="size-11 text-sm" />
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-semibold text-ink">{p.displayName || p.username}</span>
+                      <span className="block truncate text-[13px] text-muted">@{p.username}</span>
+                    </span>
+                    <ArrowUpRight className="size-3.5 shrink-0 text-muted transition group-hover:text-ink" />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+            <p className="mt-4 text-[13px] text-muted">
+              Picked at random, not ranked.{" "}
+              <SignedInSwitch
+                signedOut={
+                  <>
+                    Want your project here?{" "}
+                    <Link href="/apply" className="font-semibold text-ink underline underline-offset-2">Create your page</Link>.
+                  </>
+                }
+                signedIn={
+                  <>
+                    Join the ranking from{" "}
+                    <Link href="/dashboard/account#leaderboard" className="font-semibold text-ink underline underline-offset-2">
+                      Account settings
+                    </Link>
+                    .
+                  </>
+                }
+              />
+            </p>
+          </>
+        ) : entries.length === 0 ? (
           <div className="mt-8 rounded-2xl border border-line bg-white p-6">
             <p className="font-semibold text-ink">Nobody is on the board yet.</p>
             <p className="mt-1 text-sm text-muted">Creators opt in from their Account page, and appear once they receive support.</p>
