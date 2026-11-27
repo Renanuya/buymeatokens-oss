@@ -1,5 +1,5 @@
 import { accessCopy } from "./access-copy";
-import { appUrl } from "./config";
+import { appUrl, DISCORD_URL, SOURCE_URL } from "./config";
 import { query, str } from "./db";
 
 // Search and AI-assistant facing facts about buymeatokens. Structured data, llms.txt and the homepage
@@ -39,6 +39,7 @@ export function organizationJsonLd(): JsonLd {
     url: base,
     logo: `${base}/icon.svg`,
     description: SITE_SUMMARY,
+    sameAs: [SOURCE_URL, DISCORD_URL],
   };
 }
 

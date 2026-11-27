@@ -5,7 +5,8 @@ import { SiteHeader } from "@/components/site-header";
 import { ArrowUpRight } from "@/components/icons";
 import { Glyph, type GlyphName } from "@/components/glyph";
 import { Reveal } from "@/components/reveal";
-import { IDEAS_URL, SOURCE_URL } from "@/lib/config";
+import { CommunityCard } from "@/components/community-card";
+import { DISCORD_URL, IDEAS_URL, SOURCE_URL } from "@/lib/config";
 
 export const metadata: Metadata = {
   title: "Roadmap",
@@ -25,7 +26,7 @@ type Milestone = {
   links?: MilestoneLink[];
   capabilities?: { title: string; description: string; icon: GlyphName }[];
   periods?: string[];
-  /** Closes the list as an invitation, with its first link as the button. */
+  /** Closes the list as an invitation (components/community-card.tsx): its first link is the button, the rest sit beside it. */
   invite?: boolean;
 };
 
@@ -168,11 +169,14 @@ const milestones: Milestone[] = [
   },
   {
     title: "Let the community shape the roadmap.",
-    description: "Suggest features and vote on the ideas you want most. Popular, clear ideas become items on this page.",
+    description: "Talk it through on our Discord, suggest features and vote on the ideas you want most. Popular, clear ideas become items on this page.",
     category: "Community feedback",
     icon: "lightbulb",
     invite: true,
-    links: [{ href: IDEAS_URL, label: "Share an idea" }],
+    links: [
+      { href: DISCORD_URL, label: "Join the Discord" },
+      { href: IDEAS_URL, label: "Share an idea" },
+    ],
   },
 ];
 
@@ -367,25 +371,13 @@ function CardText({ milestone }: { milestone: Milestone }) {
 
 function Upcoming({ milestone, number }: { milestone: Milestone; number: number }) {
   if (milestone.invite) {
-    const link = milestone.links?.[0];
     return (
-      <article className="flex flex-col gap-6 rounded-[18px] bg-night p-6 text-white sm:p-8 md:flex-row md:items-center md:gap-8 md:p-10">
-        <IconTile name={milestone.icon} className="size-12 rounded-2xl bg-white/10 text-fuel" />
-        <div className="min-w-0 flex-1">
-          <p className="eyebrow text-white/50">{pad(number)} · {milestone.category}</p>
-          <h3 className="mt-2 font-display text-2xl font-semibold tracking-[-0.035em] sm:text-3xl">{milestone.title}</h3>
-          <p className="mt-2 max-w-2xl leading-relaxed text-white/65">{milestone.description}</p>
-        </div>
-        {link && (
-          <a
-            href={link.href}
-            {...external(link.href)}
-            className="inline-flex h-12 shrink-0 items-center justify-center gap-2 self-start rounded-full bg-white px-6 text-sm font-semibold text-ink transition hover:bg-lilac md:self-center"
-          >
-            {link.label} <ArrowUpRight className="size-3" />
-          </a>
-        )}
-      </article>
+      <CommunityCard
+        eyebrow={`${pad(number)} · ${milestone.category}`}
+        title={milestone.title}
+        text={milestone.description}
+        links={milestone.links ?? []}
+      />
     );
   }
 

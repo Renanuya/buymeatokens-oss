@@ -1,8 +1,8 @@
 # Contributing to buymeatokens
 
 Thanks for helping out. This guide explains how a change goes from an idea to production, and what we check along
-the way. If anything here is unclear, ask in [Discussions](https://github.com/Renanuya/buymeatokens-oss/discussions);
-unclear docs count as a bug too.
+the way. If anything here is unclear, ask in [Discussions](https://github.com/Renanuya/buymeatokens-oss/discussions)
+or on the [Discord](https://discord.gg/CbaChQphmW); unclear docs count as a bug too.
 
 By taking part you agree to follow our [Code of Conduct](CODE_OF_CONDUCT.md).
 

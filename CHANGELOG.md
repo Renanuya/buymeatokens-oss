@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
+  supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
+  footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a
+  *Community* section), SUPPORT.md, CONTRIBUTING.md, `llms.txt` and the organisation's structured data. The invite
+  lives in one place: `DISCORD_URL` in `src/lib/config.ts`.
+
 - **Website button** (`public/widget.js`): one script tag puts a *Buy me AI tokens* button on any website, floating in
   a corner (`data-position="left"` for the left) or in place (`data-mode="inline"`), in the badge colours
   (`data-theme`). It renders in a shadow root, so the site's CSS can't touch it, draws nothing for a missing or
