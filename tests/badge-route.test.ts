@@ -19,6 +19,7 @@ vi.mock("../src/lib/db", async (importOriginal) => {
 
 import { SCHEMA, query } from "../src/lib/db";
 import { GET } from "../src/app/api/badge/[username]/route";
+import { renderBadge } from "../src/lib/badge";
 
 const NOW = Date.now();
 
@@ -36,6 +37,14 @@ async function paidDonation(creatorId: string, units: number) {
      VALUES (?, ?, 'live', ?, ?, 'Ada', 'Thanks!', 'paid', 'stripe', ?)`,
     [`don-${units}`, creatorId, units, units * 500, NOW],
   );
+}
+
+async function setGoal(creatorId: string, goalUnits: number, startedAt: number) {
+  await query(`UPDATE users SET goal_units = ?, goal_started_at = ? WHERE id = ?`, [
+    goalUnits,
+    startedAt,
+    creatorId,
+  ]);
 }
 
 async function getBadge(username: string, search = ""): Promise<Response> {
@@ -110,5 +119,70 @@ describe("GET /api/badge/[username]", () => {
     const themed = await (await getBadge("maker", "?theme=bogus")).text();
 
     expect(themed).toBe(plain);
+  });
+
+  it("renders the outline badge as a transparent button with a hairline edge", async () => {
+    const svg = await (await getBadge("maker", "?style=outline")).text();
+
+    expect(svg).toContain('height="36"');
+    expect(svg).toContain('stroke-opacity="0.5"');
+    expect(svg).not.toContain('rx="18" fill="#1c1c1e"');
+    expect(svg).toContain("<title>Buy me AI tokens: 12M tokens</title>");
+  });
+
+  it("shows goal progress on the goal badge", async () => {
+    await setGoal("maker", 50, NOW - 60_000);
+    const svg = await (await getBadge("maker", "?style=goal")).text();
+
+    expect(svg).toContain('height="36"');
+    expect(svg).toContain("24% of goal");
+    expect(svg).toContain("12M / 50M");
+  });
+
+  it("invites the creator to set a goal when none is set", async () => {
+    const svg = await (await getBadge("maker", "?style=goal")).text();
+
+    expect(svg).toContain("set a funding goal");
+  });
+
+  it("shows the supporter count on the supporters badge", async () => {
+    const svg = await (await getBadge("maker", "?style=supporters")).text();
+
+    expect(svg).toContain("<title>Buy me AI tokens: 1 supporter</title>");
+  });
+
+  it("keeps every badge style at its declared height", async () => {
+    const cases: [string, number][] = [
+      ["", 36],
+      ["?style=flat", 20],
+      ["?style=pill", 28],
+      ["?style=outline", 36],
+      ["?style=goal", 36],
+      ["?style=supporters", 36],
+    ];
+    for (const [search, height] of cases) {
+      const svg = await (await getBadge("maker", search)).text();
+      expect(svg).toContain(`height="${height}"`);
+    }
+  });
+
+  it("escapes user-supplied text in the badge", () => {
+    const svg = renderBadge('<script>alert("x")</script> & friends', "button", "dark");
+
+    expect(svg).not.toContain("<script>");
+    expect(svg).toContain("&lt;script&gt;");
+    expect(svg).toContain("&amp; friends");
+  });
+
+  it("escapes a hostile username in the badge title", async () => {
+    const username = '"><svg onload="alert(1)';
+    const res = await GET(new Request("http://localhost/api/badge/x"), {
+      params: Promise.resolve({ username }),
+    });
+
+    expect(res.status).toBe(200);
+    const svg = await res.text();
+    expect(svg).not.toContain("<svg onload=");
+    expect(svg).toContain("Buy me AI tokens");
   });
 });
