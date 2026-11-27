@@ -1,12 +1,13 @@
-import { renderBadge } from "@/lib/badge";
+import { goalBadge, renderBadge, supportersBadge } from "@/lib/badge";
 import { parseBadgeStyle, parseBadgeTheme } from "@/lib/badge-options";
-import { getStats } from "@/lib/donations";
+import { getStats, unitsSince } from "@/lib/donations";
 import { formatTokens } from "@/lib/format";
 import { getUserByUsername } from "@/lib/users";
 
 /**
  * README badge. `?style=flat` gives a 20px shields-style badge that always shows the count ("0M tokens" before
- * the first support), and `?style=pill` a medium pill; the default is a larger button. `?theme=light|iris|lilac`
+ * the first support), and `?style=pill` a medium pill; `?style=outline` a transparent button, `?style=goal` progress
+ * toward the funding goal, and `?style=supporters` the supporter count; the default is a larger button. `?theme=light|iris|lilac`
  * picks the colours (default dark).
  */
 export async function GET(req: Request, { params }: { params: Promise<{ username: string }> }) {
@@ -18,7 +19,21 @@ export async function GET(req: Request, { params }: { params: Promise<{ username
   const stats = creator?.username ? await getStats(creator.id, creator.stripeMode ?? "live") : null;
   const count = stats && stats.units > 0 ? `${formatTokens(stats.units)} tokens` : null;
 
-  return new Response(renderBadge(count, style, theme), {
+  let svg: string;
+  if (style === "goal") {
+    const goal =
+      creator && creator.goalUnits !== null && creator.goalStartedAt !== null
+        ? { id: creator.id, mode: creator.stripeMode ?? "live", units: creator.goalUnits, startedAt: creator.goalStartedAt }
+        : null;
+    const reached = goal ? await unitsSince(goal.id, goal.mode, goal.startedAt) : 0;
+    svg = goalBadge(reached, goal?.units ?? 0, theme);
+  } else if (style === "supporters") {
+    svg = supportersBadge(stats?.supporters ?? 0, theme);
+  } else {
+    svg = renderBadge(count, style, theme);
+  }
+
+  return new Response(svg, {
     headers: {
       "Content-Type": "image/svg+xml; charset=utf-8",
       "Cache-Control": "public, max-age=300, s-maxage=600",
