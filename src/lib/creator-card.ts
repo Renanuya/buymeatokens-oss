@@ -20,10 +20,27 @@ export function plainText(markdown: string): string {
     .replace(/[*_`~|]/g, "");
 }
 
+/**
+ * One line of at most `max` characters that ends cleanly: at the end of a sentence when one is near the limit
+ * ("…designed for the AI era."), else on a whole word with "…", never mid-word ("…era. I bu…"). A single word longer
+ * than most of the line is cut where it must be.
+ */
+export function wordCut(text: string, max: number): string {
+  const line = oneLine(text, Number.MAX_SAFE_INTEGER);
+  const chars = Array.from(line);
+  if (chars.length <= max) return line;
+  const head = chars.slice(0, max).join("");
+  const sentence = [...head.matchAll(/[.!?](?=\s)/g)].at(-1);
+  if (sentence?.index !== undefined && sentence.index + 1 >= max * 0.6) return head.slice(0, sentence.index + 1);
+  const space = head.lastIndexOf(" ");
+  const cut = space >= max * 0.6 ? head.slice(0, space) : chars.slice(0, max - 1).join("");
+  return `${cut.replace(/[\s,;:.\-–—]+$/, "")}…`;
+}
+
 /** Up to two lines under the name: what they're building, and the start of their description. */
 export function cardLines(creator: { projectName: string | null; bio: string }): string[] {
-  const project = creator.projectName ? oneLine(`Building ${creator.projectName}`, 48) : "";
-  const bio = oneLine(plainText(creator.bio), project ? 96 : 110);
+  const project = creator.projectName ? wordCut(`Building ${creator.projectName}`, 48) : "";
+  const bio = wordCut(plainText(creator.bio), project ? 96 : 110);
   return [project, bio].filter(Boolean);
 }
 
