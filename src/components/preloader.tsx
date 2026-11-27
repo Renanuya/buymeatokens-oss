@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
+import { introAlreadyPlayed, markIntroPlayed } from "@/lib/intro";
 
 const MIN_MS = 1200; // long enough to see the logo draw itself
 const MAX_MS = 3000; // never hold the page longer than this
@@ -11,9 +12,19 @@ const MAX_MS = 3000; // never hold the page longer than this
  * Without JavaScript a CSS fallback hides it after a few seconds.
  */
 export function Preloader() {
+  // "in" on the server and on the first render in the browser alike, so hydration always matches the server HTML.
   const [phase, setPhase] = useState<"in" | "out" | "gone">("in");
 
+  // Played already in this tab (a reload, a full page load, or a client-side navigation back to "/"): drop it before
+  // paint. On a load the head script has hidden it in CSS already; the classes are put back in case React reset <html>.
+  useLayoutEffect(() => {
+    if (!introAlreadyPlayed()) return;
+    document.documentElement.classList.add("bmt-intro-seen", "bmt-ready");
+    setPhase("gone");
+  }, []);
+
   useEffect(() => {
+    if (introAlreadyPlayed()) return;
     const started = performance.now();
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     const loaded =
@@ -26,6 +37,7 @@ export function Preloader() {
       await sleep(Math.max(0, MIN_MS - (performance.now() - started)));
       if (cancelled) return;
       setPhase("out");
+      markIntroPlayed();
       document.documentElement.classList.add("bmt-ready");
       window.dispatchEvent(new Event("bmt:ready"));
       await sleep(800);

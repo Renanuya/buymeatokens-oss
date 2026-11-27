@@ -1,7 +1,10 @@
 # Roadmap
 
 This is the plan for buymeatokens, in priority order. The **[project board][board]** shows live status.
-Every item links to an issue, and that issue is where the discussion and the details live.
+Every item links to an issue, and that issue is where the discussion and the details live. The
+[roadmap page](https://buymeatokens.com/roadmap) on the site is built from the issues labelled
+[`roadmap`](https://github.com/Renanuya/buymeatokens-oss/issues?q=is%3Aissue+label%3Aroadmap), so it never needs
+editing by hand; see [docs/roadmap.md](docs/roadmap.md).
 
 Priorities change as we learn, and that's expected. When they do, this page changes in a pull request, so the
 history of the plan is public too.

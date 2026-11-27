@@ -15,6 +15,35 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
   request, and requests never follow a redirect. Names and messages are made inert (no mentions, links or markdown) and
   nothing can ping anyone. A 429 is retried, a deleted webhook is disconnected, and an ambiguous failure is never resent.
   See [docs/emails.md](docs/emails.md#discord-notifications).
+- **Stream alerts**: an opt-in browser source for OBS Studio and Streamlabs Desktop that shows "Alex supported you with 1M tokens!"
+  when a payment is confirmed. The dashboard's *Stream alerts* card makes a private URL (shown once; only its hash is
+  stored), regenerates or disables it, and previews a test alert that creates nothing. Duration, sound, amount, message
+  and theme come from the URL. The feed returns only name, tokens, message and amount of confirmed support, and never
+  replays old support when the source reloads. Stripe payments still count when they are confirmed, so a card payment
+  can show late; see [docs/stream-alerts.md](docs/stream-alerts.md).
+- **Project directory** (`/directory`): creators can opt in (off by default) from their page settings and pick one category and one
+  language from fixed lists. Visitors search by the start of words in a name or description (full-text, on a partial GIN index)
+  and filter by category and language. Pages in Stripe test mode aren't listed. The plain listing is cached for five minutes
+  and is in the sitemap; searches (`/directory/search`) are dynamic and `noindex`. Adds three nullable columns and two
+  indexes on `users`. There are no free-form tags yet.
+- **Leaderboard** (`/leaderboard`, plus `/leaderboard/daily`, `/weekly` and `/monthly`): the most-supported projects, ranked by
+  AI tokens received over the last 24 hours, 7 days, 30 days or all time, with the supporter count beside each. It is
+  opt-in: nobody is listed until they turn on *Show my project on the leaderboard* under Account. Only creators with a
+  listed page in live mode appear, and it never shows dollar amounts. It ranks recorded support, not verified popularity.
+  Refreshed every 5 minutes; linked from the footer and the sitemap.
+- **Monthly funding goals**: a goal is now one-time (as before, the default) or monthly. A monthly goal counts the
+  confirmed support of the current calendar month, across card, PayPal and USDC, in the creator's current mode, and
+  starts over on the 1st with no job or stored counter: progress is summed when the page loads, by confirmation
+  time, so a late-confirmed payment counts in the month it was confirmed and a reversed one drops out. Months are UTC.
+  The setup's goal step and the settings form got a "Resets" choice, and the public bar says "this month". One
+  function, `goalReached` in `src/lib/donations.ts`, feeds the page, the dashboard and the link-preview image. New
+  column `users.goal_period`, index `donations_paid_window` and statistics `donations_paid_at_stats`.
+- **Thank-you note**: creators can pin a short note (up to 280 characters, plain text) to their page. It shows above the
+  supporter list, only when set, and is editable in the settings form (with the live preview) and in the guided
+  setup's token-use step. Control, zero-width and bidi characters are removed and whitespace is collapsed. One
+  additive column, `users.thank_you`; setup progress is unchanged.
+- **Write with AI without a GitHub repo.** The guided setup's description step now shows the button whenever AI drafts are on, not only when the project link is a GitHub repo. Without a repo the draft is written from what is already saved (project name, link as text and token use: the details the public page shows), never from a fetched page, and the prompt allows no invented features or claims. It counts against the same per-creator and daily caps.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a
@@ -82,6 +111,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- **The roadmap page is built from GitHub issues** labelled `roadmap` (`src/lib/roadmap.ts`, [docs/roadmap.md](docs/roadmap.md)),
+  refreshed every five minutes. Closing an issue as completed moves it to *Shipped* (as not planned, it drops off); the open issue labelled `roadmap: now` is the
+  *Now* card, and its task list becomes the card's tiles (ticked boxes show as done); a hidden block in each issue sets
+  the title, summary, icon, order and links shown on the page. Nothing on the page is edited by hand any more. Two
+  closed issues stand in for shipped work that had none (#77, #78), and the community card closes the page without
+  counting as a milestone.
 - The roadmap's *Now* card shows what the current priority is working through (for pooled payments: custody,
   payouts, ways to pay and the law) and links to its issue and the Discord. The *Shipped* card shows the latest three,
   each with a short description, then the changelog link; the "Show more" fold is gone.
@@ -112,7 +147,16 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Fixed
 
+- **Project names are checked for explicit or offensive language** on the server: in the guided setup, the settings
+  form and the application form (`src/lib/name-moderation.ts`). Case, spacing, look-alike letters and leetspeak
+  are handled, and ordinary words that merely contain a term (Scunthorpe, cockpit) pass. A name taken from the project
+  link that fails the check is left out and the page shows the link instead. Existing names are not changed.
 - A test of account deletion failed about once in a hundred runs.
+- The 404 page no longer logs "Encountered a script tag while rendering React component" in development, and keeps the
+  signed-in header buttons: the two inline scripts in `<head>` follow Next.js's pattern for scripts that run before
+  hydration.
+- The landing intro plays once per tab: a reload, a full page load (the header and footer links) or a client-side
+  navigation back to `/` no longer shows it again, not even for a frame. A new tab still shows it once.
 
 ## [0.1.0] - 2026-11-26
 

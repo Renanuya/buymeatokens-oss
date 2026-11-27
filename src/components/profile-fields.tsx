@@ -16,11 +16,14 @@ import type { RepoSuggestion } from "@/lib/github";
 import {
   BIO_MAX_LENGTH,
   GOAL_MAX_UNITS,
+  GOAL_PERIODS,
   GOAL_PRESETS,
+  type GoalPeriod,
   PRICE_MAX_USD,
   PRICE_MIN_USD,
   PRICE_PRESETS_USD,
   PROJECT_NAME_MAX_LENGTH,
+  THANK_YOU_MAX_LENGTH,
   TOKEN_USE_MAX_LENGTH,
   normalizeProjectUrl,
   parseGoalUnits,
@@ -105,7 +108,7 @@ function CustomTile({
   );
 }
 
-/** Where "Write with AI" reads from. Leave it out to hide the button (AI drafts off, or nothing to read). */
+/** Where "Write with AI" reads from. Leave it out to hide the button (AI drafts off). `projectUrl` can be empty or not GitHub: the server then writes from the saved project details. */
 export type AiDraftSource = { projectUrl: string };
 
 type DraftStatus = "idle" | "reading" | "writing";
@@ -186,7 +189,7 @@ function AiDraftButton({ ai, onStart }: { ai: AiDraft; onStart?: () => void }) {
         onStart?.();
         void ai.run();
       }}
-      title="Drafts this from your repo's README"
+      title="Drafts this from your repo's README, or from your project details"
       className="group inline-flex h-7 shrink-0 items-center gap-1.5 rounded-lg bg-lilac-soft px-2.5 text-xs font-semibold text-iris transition duration-200 hover:bg-lilac/70 hover:text-ink disabled:cursor-default disabled:hover:bg-lilac-soft disabled:hover:text-iris"
     >
       {ai.status === "reading" ? (
@@ -198,7 +201,7 @@ function AiDraftButton({ ai, onStart }: { ai: AiDraft; onStart?: () => void }) {
           className={`size-3.5 transition-transform duration-300 group-hover:rotate-12 group-hover:scale-110 ${ai.status === "writing" ? "animate-pulse" : ""}`}
         />
       )}
-      <span aria-live="polite">{ai.status === "reading" ? "Reading README…" : ai.status === "writing" ? "Writing…" : "Write with AI"}</span>
+      <span aria-live="polite">{ai.status === "reading" ? "Reading your project…" : ai.status === "writing" ? "Writing…" : "Write with AI"}</span>
     </button>
   );
 }
@@ -608,6 +611,32 @@ const TOKEN_IDEAS = [
   "Answering issues faster",
 ];
 
+export function ThankYouField({ defaultValue }: { defaultValue: string }) {
+  const [text, setText] = useState(defaultValue);
+  return (
+    <div>
+      <label htmlFor="thankYou" className="label">
+        Thank-you note <span className="font-normal text-muted">(optional)</span>
+      </label>
+      <textarea
+        id="thankYou"
+        name="thankYou"
+        rows={2}
+        value={text}
+        onChange={(e) => setText(e.target.value)}
+        aria-describedby="thankYou-count"
+        placeholder="Thank you for fueling this. Every token goes straight into the project."
+        className="field resize-none py-3 leading-relaxed"
+      />
+      <div className="mt-2 flex items-start justify-between gap-4 text-xs text-muted">
+        <p>Plain text, shown above your supporters.</p>
+        {/* Counted the way the server counts (an emoji is one character), so the counter and the save agree. */}
+        <Counter id="thankYou-count" length={Array.from(text).length} max={THANK_YOU_MAX_LENGTH} />
+      </div>
+    </div>
+  );
+}
+
 export function TokenUseField({
   defaultValue,
   onValueChange,
@@ -677,10 +706,12 @@ export function TokenUseField({
 
 export function GoalField({
   defaultValue,
+  defaultPeriod = "one-time",
   priceUsd,
   onValueChange,
 }: {
   defaultValue: number | null;
+  defaultPeriod?: GoalPeriod;
   priceUsd: number;
   onValueChange?: (units: number | null) => void;
 }) {
@@ -690,6 +721,7 @@ export function GoalField({
     defaultValue === null ? "none" : presets.includes(defaultValue) ? "preset" : "custom",
   );
   const [text, setText] = useState(defaultValue === null ? "" : String(defaultValue));
+  const [period, setPeriod] = useState<GoalPeriod>(defaultPeriod);
   const enabled = mode !== "none" && text !== "";
   const parsed = parseGoalUnits(text);
   const units = enabled && "units" in parsed ? parsed.units : null;
@@ -705,6 +737,7 @@ export function GoalField({
   return (
     <div className="space-y-5">
       <input type="hidden" name="goal" value={enabled ? text : ""} />
+      <input type="hidden" name="goalPeriod" value={period} />
       <div>
         <p id="goal-label" className="label">
           Tokens to raise
@@ -736,15 +769,34 @@ export function GoalField({
           <p className="mt-2 text-xs text-muted">In millions of tokens. Pick one or type your own.</p>
         )}
       </div>
+      {enabled && (
+        <div>
+          <p id="goal-period-label" className="label">
+            Resets
+          </p>
+          <div role="group" aria-labelledby="goal-period-label" className="grid grid-cols-2 gap-2">
+            {GOAL_PERIODS.map((p) => (
+              <button key={p} type="button" aria-pressed={period === p} onClick={() => setPeriod(p)} className={tile(period === p)}>
+                {p === "monthly" ? "Monthly" : "Never"}
+              </button>
+            ))}
+          </div>
+          <p className="mt-2 text-xs text-muted">
+            {period === "monthly"
+              ? "Counts support confirmed this calendar month (UTC), then starts over on the 1st."
+              : "Counts all support from the day you set it."}
+          </p>
+        </div>
+      )}
       <Hint icon={<TokenTile className="size-8 shrink-0 rounded-lg" />}>
         {units ? (
           <>
             <span className="font-semibold text-ink">{formatTokens(units)} tokens</span> is about{" "}
             <span className="font-semibold text-ink">{formatUsd(units * priceUsd * 100)}</span> at your price of ${priceUsd}{" "}
-            per 1M. The bar counts from the day you set it.
+            per 1M.
           </>
         ) : (
-          "A goal adds a progress bar to your page. It counts from the day you set it."
+          "A goal adds a progress bar to your page."
         )}
       </Hint>
     </div>

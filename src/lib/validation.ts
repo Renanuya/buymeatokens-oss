@@ -1,6 +1,6 @@
 // Usernames live at the root (buymeatokens.com/<username>), so app routes must be reserved.
 const RESERVED = new Set([
-  "about", "account", "admin", "api", "app", "billing", "blog", "buymeatokens", "contact", "dashboard",
+  "about", "account", "alerts", "admin", "api", "app", "billing", "blog", "buymeatokens", "contact", "dashboard",
   "docs", "explore", "faq", "help", "home", "legal", "login", "logout", "new", "onboarding", "payments",
   "pricing", "privacy", "roadmap", "root", "security", "settings", "signin", "signup", "static", "status", "support",
   "terms", "thanks", "token", "tokens", "u", "user", "users", "www",
