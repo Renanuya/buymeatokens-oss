@@ -341,6 +341,50 @@ describe("existing creators and goals", () => {
     expect((await user()).goalStartedAt).toBe(NOW + 5000);
   });
 
+  it("refuses an offensive project name in the setup step and the settings form, saving and advancing nothing", async () => {
+    await signup();
+    await run(() => claimUsernameAction({}, form({ username: "maker", displayName: "Maker", ...AGREED })));
+    await run(() => advanceStepAction(form({ step: "payments" })));
+    await run(() => savePriceAction({}, form({ price: "7" })));
+    const before = await user();
+
+    for (const projectName of ["f.u.c.k", "Pu55y Tools", "n1gger", "fuuuuuck"]) {
+      const result = await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/tool", projectName })));
+      expect(result).toEqual({
+        state: { error: "Please choose a project name without explicit or offensive language." },
+      });
+      expect(JSON.stringify(result).toLowerCase()).not.toContain(projectName.toLowerCase());
+    }
+    const after = await user();
+    expect(after).toMatchObject({ projectUrl: null, projectName: null, setupProgress: before.setupProgress });
+    expect(resumePath(after)).toBe("/onboarding/project");
+
+    // Corrected: the same step goes through, with the link the creator had typed.
+    expect(await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/tool", projectName: "Tool" })))).toEqual({
+      redirect: "/onboarding/description",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/tool", projectName: "Tool" });
+
+    // The settings form checks the same rule and keeps the saved name.
+    await query("UPDATE users SET terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    const settings = form({ displayName: "Maker", bio: "", price: "5", projectUrl: "https://maker.dev", projectName: "sh1t f u c k" });
+    expect(await updateProfileAction({}, settings)).toEqual({
+      error: "Please choose a project name without explicit or offensive language.",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/tool", projectName: "Tool", unitPriceCents: 700 });
+  });
+
+  it("drops a link-derived project name that fails the check instead of blocking the creator", async () => {
+    await signup();
+    await run(() => claimUsernameAction({}, form({ username: "maker", displayName: "Maker", ...AGREED })));
+    await run(() => advanceStepAction(form({ step: "payments" })));
+    await run(() => savePriceAction({}, form({ price: "7" })));
+    expect(await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/fuck-tool", projectName: "" })))).toEqual({
+      redirect: "/onboarding/description",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/fuck-tool", projectName: null });
+  });
+
   it("saves every page detail from the settings form, and leaves absent ones alone", async () => {
     await signup();
     await query(

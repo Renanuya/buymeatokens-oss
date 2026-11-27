@@ -105,6 +105,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Fixed
 
+- **Project names are checked for explicit or offensive language** on the server: in the guided setup, the settings
+  form and the application form (`src/lib/name-moderation.ts`). Case, spacing, look-alike letters and leetspeak
+  are handled, and ordinary words that merely contain a term (Scunthorpe, cockpit) pass. A name taken from the project
+  link that fails the check is left out and the page shows the link instead. Existing names are not changed.
 - A test of account deletion failed about once in a hundred runs.
 
 ## [0.1.0] - 2026-11-26
