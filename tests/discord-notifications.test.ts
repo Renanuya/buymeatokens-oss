@@ -155,7 +155,7 @@ describe("message text", () => {
 
   it("keeps even the worst-case batch under Discord's 2000 characters", () => {
     const item = { supporterName: "*".repeat(100), message: "*".repeat(5000), units: 1000, test: true };
-    const payload = discordPayload(Array.from({ length: 30 }, () => item), "https://buymeatokens.com/dashboard#recent-support");
+    const payload = discordPayload(Array.from({ length: 30 }, () => item), "https://buymeatokens.com/ada");
     expect(payload.content.length).toBeLessThanOrEqual(2000);
     expect(payload.content).toContain("more");
   });
@@ -199,6 +199,9 @@ describe("Discord notifications", () => {
     expect(body.content).toContain("**Grace** bought 3M AI tokens");
     expect(body.content).toContain("> Love the CLI!");
     expect(body.content).not.toMatch(/\$|1234|cents|USD/i);
+    // The link is the creator's public page, not their dashboard: the channel is their community.
+    expect(body.content).toMatch(/<https?:\/\/[^>]+\/maker>$/);
+    expect(body.content).not.toContain("/dashboard");
     expect(await rows()).toEqual([{ donation_id: id, status: "sent", attempt_count: 1, retry_at: null }]);
 
     const { rows: u } = await query("SELECT discord_webhook_enc FROM users WHERE id = 'maker'");

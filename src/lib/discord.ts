@@ -89,7 +89,7 @@ export type DiscordItem = { supporterName: string; message: string; units: numbe
  * "Someone"), the public message and the tokens. No dollar amounts: the page shows tokens only, and a Discord server is
  * a wider audience than the creator's inbox.
  */
-export function discordPayload(items: DiscordItem[], dashboardUrl: string) {
+export function discordPayload(items: DiscordItem[], pageUrl: string) {
   const line = (i: DiscordItem) => {
     const name = discordText(i.supporterName, NAME_MAX, ESCAPED_NAME_MAX) || "Someone";
     const message = discordText(i.message, MESSAGE_MAX, ESCAPED_MESSAGE_MAX);
@@ -101,7 +101,7 @@ export function discordPayload(items: DiscordItem[], dashboardUrl: string) {
       "**New support on buymeatokens**",
       ...items.slice(0, shown).map(line),
       ...(more > 0 ? [`…and ${more} more`] : []),
-      `<${dashboardUrl}>`,
+      `<${pageUrl}>`,
     ].join("\n");
   };
   let shown = Math.min(items.length, LISTED);

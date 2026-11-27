@@ -80,7 +80,7 @@ export async function sendDiscordMessage(creatorId: string, now = Date.now()): P
   );
 
   const [creatorRs, itemsRs] = await Promise.all([
-    query("SELECT discord_webhook_enc FROM users WHERE id = ?", [creatorId]),
+    query("SELECT discord_webhook_enc, username FROM users WHERE id = ?", [creatorId]),
     query(
       `SELECT supporter_name, message, units, stripe_mode FROM donations
        WHERE id IN (${marks}) AND status = 'paid' ORDER BY paid_at ASC`,
@@ -104,7 +104,9 @@ export async function sendDiscordMessage(creatorId: string, now = Date.now()): P
     units: num(r.units) ?? 0,
     test: str(r.stripe_mode) === "test",
   }));
-  const outcome = await postToDiscord(url, discordPayload(items, `${appUrl()}/dashboard#recent-support`));
+  // The channel is the creator's community: link the public page, not the creator's own dashboard.
+  const username = str(creatorRs.rows[0]?.username);
+  const outcome = await postToDiscord(url, discordPayload(items, username ? `${appUrl()}/${username}` : appUrl()));
 
   if (outcome.status === "sent") {
     await finish("sent");

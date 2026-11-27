@@ -62,7 +62,7 @@ characters of its token. The URL is a credential: anyone who has it can post to 
 **New support on buymeatokens**
 • **Grace** bought 3M AI tokens
 > Love the CLI!
-<https://buymeatokens.com/dashboard#recent-support>
+<https://buymeatokens.com/ada>
 ```
 
 It follows what the public page shows of a supporter: the name (blank means "Someone"), the message and the tokens.
