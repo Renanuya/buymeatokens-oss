@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Leaderboard** (`/leaderboard`, plus `/leaderboard/daily`, `/weekly` and `/monthly`): the most-supported projects, ranked by
+  AI tokens received over the last 24 hours, 7 days, 30 days or all time, with the supporter count beside each. It is
+  opt-in: nobody is listed until they turn on *Show my project on the leaderboard* under Account. Only creators with a
+  listed page in live mode appear, and it never shows dollar amounts. It ranks recorded support, not verified popularity.
+  Refreshed every 5 minutes; linked from the footer and the sitemap.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

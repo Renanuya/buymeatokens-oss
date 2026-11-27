@@ -40,6 +40,8 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** Whether the creator's project is listed on the public leaderboard (src/lib/leaderboard.ts). Off by default. */
+  leaderboardOptIn: boolean;
   createdAt: number;
 };
 
@@ -75,6 +77,7 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    leaderboardOptIn: r.leaderboard_opt_in === true,
     createdAt: num(r.created_at) ?? 0,
   };
 }
@@ -257,6 +260,10 @@ export async function setUsdcAddress(id: string, address: string | null) {
 
 export async function setSupportEmails(id: string, on: boolean) {
   await run("UPDATE users SET support_emails = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
+}
+
+export async function setLeaderboardOptIn(id: string, on: boolean) {
+  await run("UPDATE users SET leaderboard_opt_in = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
 }
 
 export async function setAccessStatus(id: string, status: AccessStatus) {

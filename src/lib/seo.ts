@@ -127,12 +127,15 @@ export function jsonLdScript(data: JsonLd | JsonLd[]): string {
   return JSON.stringify(data).replace(/</g, "\\u003c");
 }
 
-/** Public creator pages worth indexing: a claimed name, a real account and a way to get paid. */
+/** The rule for "this creator page is listed": a claimed name, a real account and a way to get paid. Sitemap and leaderboard share it. */
+export const LISTABLE_SQL = `username IS NOT NULL AND auth_id NOT LIKE 'dev:%'
+       AND (stripe_key_enc IS NOT NULL OR paypal_email IS NOT NULL OR usdc_address IS NOT NULL)`;
+
+/** Public creator pages worth indexing. */
 export async function listIndexableCreators(): Promise<{ username: string; createdAt: number }[]> {
   const rs = await query(
     `SELECT username, created_at FROM users
-     WHERE username IS NOT NULL AND auth_id NOT LIKE 'dev:%'
-       AND (stripe_key_enc IS NOT NULL OR paypal_email IS NOT NULL OR usdc_address IS NOT NULL)
+     WHERE ${LISTABLE_SQL}
      ORDER BY created_at ASC
      LIMIT 5000`,
   );

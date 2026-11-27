@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
 import { deleteAccount } from "@/lib/account-deletion";
 import { SESSION_COOKIE, requireCreator } from "@/lib/session";
-import { setSupportEmails } from "@/lib/users";
+import { setLeaderboardOptIn, setSupportEmails } from "@/lib/users";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { deletionConfirmationName, matchesConfirmation } from "./confirm";
 
@@ -40,5 +40,15 @@ export async function setSupportEmailsAction(on: boolean): Promise<{ ok: boolean
   if (typeof on !== "boolean") return { ok: false };
   await setSupportEmails(user.id, on);
   revalidatePath("/dashboard/account");
+  return { ok: true };
+}
+
+/** Lists or unlists the creator's project on the public leaderboard. It only ever changes the signed-in creator. */
+export async function setLeaderboardAction(on: boolean): Promise<{ ok: boolean }> {
+  const user = await requireCreator();
+  if (typeof on !== "boolean") return { ok: false };
+  await setLeaderboardOptIn(user.id, on);
+  revalidatePath("/dashboard/account");
+  revalidatePath("/leaderboard", "layout");
   return { ok: true };
 }
