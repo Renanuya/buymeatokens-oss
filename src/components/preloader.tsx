@@ -11,9 +11,14 @@ const MAX_MS = 3000; // never hold the page longer than this
  * Without JavaScript a CSS fallback hides it after a few seconds.
  */
 export function Preloader() {
-  const [phase, setPhase] = useState<"in" | "out" | "gone">("in");
+  // <html> outlives client-side navigations, so "bmt-ready" means the intro already played in this tab session.
+  // The server (and a hard load) has no such class, so hydration still starts at "in".
+  const [phase, setPhase] = useState<"in" | "out" | "gone">(() =>
+    typeof document !== "undefined" && document.documentElement.classList.contains("bmt-ready") ? "gone" : "in",
+  );
 
   useEffect(() => {
+    if (phase === "gone") return;
     const started = performance.now();
     const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
     const loaded =

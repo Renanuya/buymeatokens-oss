@@ -12,12 +12,13 @@ import { BASE, isEvmAddress } from "@/lib/usdc";
 import { isEmail } from "@/lib/paypal";
 import {
   PRICE_ERROR,
-  PROJECT_NAME_MAX_LENGTH,
   normalizeProjectUrl,
+  parseGoalPeriod,
   parseGoalUnits,
   parsePriceUsd,
-  projectNameFromUrl,
+  resolveProjectName,
   validateBio,
+  parseThankYou,
   validateTokenUse,
 } from "@/lib/profile";
 import { SOCIAL_NETWORKS, socialsFromForm } from "@/lib/socials";
@@ -49,9 +50,10 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
   if (formData.has("projectUrl")) {
     const link = normalizeProjectUrl(String(formData.get("projectUrl") ?? ""));
     if ("error" in link) return { error: link.error };
-    const name = String(formData.get("projectName") ?? "").trim().slice(0, PROJECT_NAME_MAX_LENGTH);
+    const project = link.url ? resolveProjectName(String(formData.get("projectName") ?? ""), link.url) : { name: null };
+    if ("error" in project) return { error: project.error };
     update.projectUrl = link.url;
-    update.projectName = link.url ? name || projectNameFromUrl(link.url) : null;
+    update.projectName = project.name;
   }
   if (formData.has("tokenUse")) {
     const tokenUse = String(formData.get("tokenUse") ?? "");
@@ -59,10 +61,18 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
     if (invalid) return { error: invalid };
     update.tokenUse = tokenUse.trim();
   }
+  if (formData.has("thankYou")) {
+    const note = parseThankYou(formData.get("thankYou"));
+    if ("error" in note) return { error: note.error };
+    update.thankYou = note.text;
+  }
   if (formData.has("goal")) {
     const goal = parseGoalUnits(formData.get("goal"));
     if ("error" in goal) return { error: goal.error };
     update.goalUnits = goal.units;
+    const period = parseGoalPeriod(formData.get("goalPeriod"));
+    if ("error" in period) return { error: period.error };
+    update.goalPeriod = period.period;
   }
   if (SOCIAL_NETWORKS.some((n) => formData.has(`social_${n.key}`))) {
     const parsed = socialsFromForm(formData);

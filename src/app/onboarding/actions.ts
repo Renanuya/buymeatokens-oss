@@ -7,12 +7,13 @@ import { hasAccess } from "@/lib/access";
 import { assertConsent, consentFromForm } from "@/lib/consent";
 import {
   PRICE_ERROR,
-  PROJECT_NAME_MAX_LENGTH,
   normalizeProjectUrl,
+  parseGoalPeriod,
   parseGoalUnits,
   parsePriceUsd,
-  projectNameFromUrl,
+  resolveProjectName,
   validateBio,
+  parseThankYou,
   validateTokenUse,
 } from "@/lib/profile";
 import { canOpenStep, isSetupSlug, nextPath, resumePath, stepIndex, stepPath, type SetupSlug } from "@/lib/setup";
@@ -28,6 +29,7 @@ import {
   setPrice,
   setProject,
   setSocials,
+  setThankYou,
   setTokenUse,
   type Creator,
 } from "@/lib/users";
@@ -123,8 +125,9 @@ export async function saveProjectAction(_prev: ActionState, formData: FormData):
   const link = normalizeProjectUrl(String(formData.get("projectUrl") ?? ""));
   if ("error" in link) return { error: link.error };
   if (!link.url) return { error: "Add your project link, or skip this step for now." };
-  const name = String(formData.get("projectName") ?? "").trim().slice(0, PROJECT_NAME_MAX_LENGTH);
-  await setProject(user.id, link.url, name || projectNameFromUrl(link.url));
+  const project = resolveProjectName(String(formData.get("projectName") ?? ""), link.url);
+  if ("error" in project) return { error: project.error };
+  await setProject(user.id, link.url, project.name);
   return finishStep(user, "project");
 }
 
@@ -143,8 +146,12 @@ export async function saveTokenUseAction(_prev: ActionState, formData: FormData)
   const input = String(formData.get("tokenUse") ?? "");
   const invalid = validateTokenUse(input);
   if (invalid) return { error: invalid };
-  if (!input.trim()) return { error: "Add a line about what the tokens pay for, or skip this step for now." };
+  const note = parseThankYou(formData.get("thankYou"));
+  if ("error" in note) return { error: note.error };
+  if (!input.trim() && !note.text) return { error: "Add a line about what the tokens pay for, or skip this step for now." };
   await setTokenUse(user.id, input.trim());
+  // Only when the form carries the field: a stale or crafted submission without it must not wipe the note.
+  if (formData.has("thankYou")) await setThankYou(user.id, note.text);
   return finishStep(user, "tokens");
 }
 
@@ -152,7 +159,9 @@ export async function saveGoalAction(_prev: ActionState, formData: FormData): Pr
   const user = await creatorAt("goal");
   const goal = parseGoalUnits(formData.get("goal"));
   if ("error" in goal) return { error: goal.error };
-  await setGoal(user.id, goal.units);
+  const period = parseGoalPeriod(formData.get("goalPeriod"));
+  if ("error" in period) return { error: period.error };
+  await setGoal(user.id, goal.units, period.period);
   return finishStep(user, "goal");
 }
 

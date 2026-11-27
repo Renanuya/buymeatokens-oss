@@ -2,6 +2,7 @@ import { isUniqueViolation, num, query, str, type Arg, type Row } from "./db";
 import { newId } from "./crypto";
 import { earlyAccessOpen } from "./config";
 import { SETUP_STEPS } from "./setup";
+import { validateProjectName, type GoalPeriod } from "./profile";
 import { parseSocials, type Socials } from "./socials";
 
 export type StripeMode = "test" | "live";
@@ -26,9 +27,11 @@ export type User = {
   projectUrl: string | null;
   projectName: string | null;
   tokenUse: string;
+  thankYou: string;
   /** In millions of tokens; null when the creator has no goal. */
   goalUnits: number | null;
   goalStartedAt: number | null;
+  goalPeriod: GoalPeriod;
   socials: Socials;
   /** Guided setup steps finished (see src/lib/setup.ts). */
   setupProgress: number;
@@ -68,8 +71,10 @@ function mapUser(r: Row): User {
     projectUrl: str(r.project_url),
     projectName: str(r.project_name),
     tokenUse: str(r.token_use) ?? "",
+    thankYou: str(r.thank_you) ?? "",
     goalUnits: num(r.goal_units),
     goalStartedAt: num(r.goal_started_at),
+    goalPeriod: r.goal_period === "monthly" ? "monthly" : "one-time",
     socials: parseSocials(r.socials),
     setupProgress: num(r.setup_progress) ?? 0,
     setupDoneAt: num(r.setup_done_at),
@@ -191,7 +196,13 @@ export async function setPrice(id: string, unitPriceCents: number) {
   await run("UPDATE users SET unit_price_cents = ? WHERE id = ?", [unitPriceCents, id]);
 }
 
+// Last line of defence: the forms check names and give a message; this stops any other caller.
+function assertProjectName(name: string | null | undefined) {
+  if (name && validateProjectName(name)) throw new Error("Project name not allowed");
+}
+
 export async function setProject(id: string, projectUrl: string | null, projectName: string | null) {
+  assertProjectName(projectName);
   await run("UPDATE users SET project_url = ?, project_name = ? WHERE id = ?", [projectUrl, projectName, id]);
 }
 
@@ -203,13 +214,21 @@ export async function setTokenUse(id: string, tokenUse: string) {
   await run("UPDATE users SET token_use = ? WHERE id = ?", [tokenUse, id]);
 }
 
+export async function setThankYou(id: string, thankYou: string) {
+  await run("UPDATE users SET thank_you = ? WHERE id = ?", [thankYou, id]);
+}
+
 // Progress toward a goal counts from when it was first set. Changing the number keeps that start;
 // removing the goal clears it, so a new goal starts from zero.
-const GOAL_SET = `goal_units = ?::int,
-  goal_started_at = CASE WHEN ?::int IS NULL THEN NULL WHEN goal_units IS NULL THEN ?::bigint ELSE goal_started_at END`;
+// A new goal starts counting now, and so does a monthly goal switched back to one-time: otherwise support from
+// long before ("since the day you set it") would count again. Right-hand columns are the row before the update.
+const GOAL_SET = `goal_units = ?::int, goal_period = COALESCE(?::text, goal_period),
+  goal_started_at = CASE WHEN ?::int IS NULL THEN NULL WHEN goal_units IS NULL THEN ?::bigint
+    WHEN goal_period = 'monthly' AND ?::text = 'one-time' THEN ?::bigint ELSE goal_started_at END`;
+const goalArgs = (units: number | null, period: GoalPeriod | undefined, now = Date.now()) => [units, period ?? null, units, now, period ?? null, now];
 
-export async function setGoal(id: string, goalUnits: number | null) {
-  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [goalUnits, goalUnits, Date.now(), id]);
+export async function setGoal(id: string, goalUnits: number | null, period?: GoalPeriod) {
+  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [...goalArgs(goalUnits, period), id]);
 }
 
 export async function setSocials(id: string, socials: Socials) {
@@ -223,7 +242,9 @@ export type ProfileUpdate = {
   projectUrl?: string | null;
   projectName?: string | null;
   tokenUse?: string;
+  thankYou?: string;
   goalUnits?: number | null;
+  goalPeriod?: GoalPeriod;
   socials?: Socials;
 };
 
@@ -232,6 +253,7 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
   const sets = ["display_name = ?", "bio = ?", "unit_price_cents = ?"];
   const args: Arg[] = [profile.displayName, profile.bio, profile.unitPriceCents];
   if (profile.projectUrl !== undefined) {
+    assertProjectName(profile.projectName);
     sets.push("project_url = ?", "project_name = ?");
     args.push(profile.projectUrl, profile.projectName ?? null);
   }
@@ -239,9 +261,13 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
     sets.push("token_use = ?");
     args.push(profile.tokenUse);
   }
+  if (profile.thankYou !== undefined) {
+    sets.push("thank_you = ?");
+    args.push(profile.thankYou);
+  }
   if (profile.goalUnits !== undefined) {
     sets.push(GOAL_SET);
-    args.push(profile.goalUnits, profile.goalUnits, Date.now());
+    args.push(...goalArgs(profile.goalUnits, profile.goalPeriod));
   }
   if (profile.socials !== undefined) {
     sets.push("socials = ?");
