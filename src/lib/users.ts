@@ -205,11 +205,15 @@ export async function setTokenUse(id: string, tokenUse: string) {
 
 // Progress toward a goal counts from when it was first set. Changing the number keeps that start;
 // removing the goal clears it, so a new goal starts from zero.
+// A new goal starts counting now, and so does a monthly goal switched back to one-time: otherwise support from
+// long before ("since the day you set it") would count again. Right-hand columns are the row before the update.
 const GOAL_SET = `goal_units = ?::int, goal_period = COALESCE(?::text, goal_period),
-  goal_started_at = CASE WHEN ?::int IS NULL THEN NULL WHEN goal_units IS NULL THEN ?::bigint ELSE goal_started_at END`;
+  goal_started_at = CASE WHEN ?::int IS NULL THEN NULL WHEN goal_units IS NULL THEN ?::bigint
+    WHEN goal_period = 'monthly' AND ?::text = 'one-time' THEN ?::bigint ELSE goal_started_at END`;
+const goalArgs = (units: number | null, period: GoalPeriod | undefined, now = Date.now()) => [units, period ?? null, units, now, period ?? null, now];
 
 export async function setGoal(id: string, goalUnits: number | null, period?: GoalPeriod) {
-  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [goalUnits, period ?? null, goalUnits, Date.now(), id]);
+  await run(`UPDATE users SET ${GOAL_SET} WHERE id = ?`, [...goalArgs(goalUnits, period), id]);
 }
 
 export async function setSocials(id: string, socials: Socials) {
@@ -242,7 +246,7 @@ export async function updateProfile(id: string, profile: ProfileUpdate) {
   }
   if (profile.goalUnits !== undefined) {
     sets.push(GOAL_SET);
-    args.push(profile.goalUnits, profile.goalPeriod ?? null, profile.goalUnits, Date.now());
+    args.push(...goalArgs(profile.goalUnits, profile.goalPeriod));
   }
   if (profile.socials !== undefined) {
     sets.push("socials = ?");

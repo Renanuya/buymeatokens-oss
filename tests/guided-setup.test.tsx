@@ -444,6 +444,22 @@ describe("goal periods", () => {
     expect(await reached(MID_MAY)).toBe(3);
     await run(() => saveGoalAction({}, form({ goal: "60" })));
     expect(await user()).toMatchObject({ goalUnits: 60, goalPeriod: "monthly" });
+
+    // Back to one-time: it counts from now, so the payment from before the switch doesn't come back.
+    await run(() => saveGoalAction({}, form({ goal: "60", goalPeriod: "one-time" })));
+    expect(await user()).toMatchObject({ goalPeriod: "one-time", goalStartedAt: MID_MAY });
+    expect(await reached(MID_MAY)).toBe(0);
+    // Setting one-time again, or changing only the amount, keeps that start.
+    vi.spyOn(Date, "now").mockReturnValue(MID_MAY + 1000);
+    await run(() => saveGoalAction({}, form({ goal: "70", goalPeriod: "one-time" })));
+    expect(await user()).toMatchObject({ goalUnits: 70, goalStartedAt: MID_MAY });
+  });
+
+  it("serves the goal sum from one partial index with statistics for its expression", async () => {
+    const { rows } = await mocks.db.query<{ indexdef: string }>("SELECT indexdef FROM pg_indexes WHERE indexname = 'donations_paid_window'");
+    expect(rows[0]?.indexdef).toContain("INCLUDE (units, paid_at, created_at) WHERE (status = 'paid'");
+    expect((await mocks.db.query("SELECT 1 FROM pg_statistic_ext WHERE stxname = 'donations_paid_at_stats'")).rows).toHaveLength(1);
+    expect((await mocks.db.query("SELECT 1 FROM pg_indexes WHERE indexname = 'donations_goal_window'")).rows).toHaveLength(0);
   });
 
   it("rejects a bad period in both forms and changes nothing", async () => {
