@@ -30,6 +30,7 @@ import {
   connectDiscordWebhook,
   processDiscordNotifications,
   sendDiscordMessage,
+  sendDiscordTest,
 } from "../src/lib/discord-notifications";
 import { redactSecrets } from "../src/lib/redact";
 import { getUserById, setDiscordWebhook } from "../src/lib/users";
@@ -513,6 +514,61 @@ describe("connecting", () => {
     expect((await getUserById("maker"))!.discordFailedAt).toBeNull();
     await setDiscordWebhook("maker", null);
     expect(await getUserById("maker")).toMatchObject({ discordWebhookEnc: null, discordConnectedAt: null });
+  });
+});
+
+describe("test message", () => {
+  beforeEach(async () => {
+    await script("TRUNCATE users CASCADE");
+    fetchMock.mockReset();
+    fetchMock.mockImplementation(async () => ok());
+    vi.stubGlobal("fetch", fetchMock);
+    await creator();
+  });
+
+  it("posts one marked message in the real format, inert, and stores nothing", async () => {
+    expect(await sendDiscordTest("maker", T)).toBe("sent");
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe(URL_OK);
+    expect(fetchMock.mock.calls[0][1]).toMatchObject({ method: "POST", redirect: "manual" });
+    const body = sentBody();
+    expect(body.content).toContain("**Test message from buymeatokens.**");
+    expect(body.content).toContain("**A supporter** bought 1M AI tokens");
+    expect(body.content).toContain("/maker>");
+    expect(body.allowed_mentions).toEqual({ parse: [] });
+    expect(body.flags).toBe(4);
+    expect(await rows()).toEqual([]);
+    expect((await getUserById("maker"))!.discordWebhookEnc).not.toBeNull();
+  });
+
+  it("does nothing without a connected webhook", async () => {
+    await setDiscordWebhook("maker", null);
+    expect(await sendDiscordTest("maker", T)).toBe("not_connected");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("says what Discord answered, and leaves the webhook connected", async () => {
+    fetchMock.mockImplementationOnce(async () => status(404));
+    expect(await sendDiscordTest("maker", T)).toBe("gone");
+    fetchMock.mockImplementationOnce(async () => status(429, { retry_after: 2 }));
+    expect(await sendDiscordTest("maker", T)).toBe("rate_limited");
+    fetchMock.mockImplementationOnce(async () => status(500));
+    expect(await sendDiscordTest("maker", T)).toBe("unreachable");
+    fetchMock.mockImplementationOnce(async () => {
+      throw new TypeError("fetch failed");
+    });
+    expect(await sendDiscordTest("maker", T)).toBe("unreachable");
+    expect((await getUserById("maker"))!.discordWebhookEnc).not.toBeNull();
+  });
+
+  it("shares the 5 requests per 10 minutes with checking a pasted webhook", async () => {
+    // Connecting took one of this window's five.
+    await query("UPDATE users SET discord_checks = 1, discord_checks_since = ? WHERE id = 'maker'", [T]);
+    const tries = await Promise.all(Array.from({ length: 6 }, () => sendDiscordTest("maker", T)));
+    expect(tries.filter((r) => r === "sent")).toHaveLength(4);
+    expect(tries.filter((r) => r === "limited")).toHaveLength(2);
+    expect(fetchMock).toHaveBeenCalledTimes(4);
+    expect(await sendDiscordTest("maker", T + 10 * MIN)).toBe("sent");
   });
 });
 

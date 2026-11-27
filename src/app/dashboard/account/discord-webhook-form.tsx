@@ -3,11 +3,17 @@
 import { useActionState } from "react";
 import { FormMessage, type ActionState } from "@/components/form-message";
 import { SubmitButton } from "@/components/submit-button";
-import { connectDiscordAction, disconnectDiscordAction } from "./actions";
+import { connectDiscordAction, disconnectDiscordAction, testDiscordAction } from "./actions";
 
-/** Paste, replace or disconnect the Discord webhook. The saved URL never comes back here; only its last four characters. */
+const LINK_BUTTON = "text-[13px] font-semibold text-ink underline underline-offset-2";
+
+/**
+ * Paste, replace, test or disconnect the Discord webhook. The saved URL never comes back here; only its last four
+ * characters.
+ */
 export function DiscordWebhookForm({ hint, stopped }: { hint: string | null; stopped: boolean }) {
   const [state, action] = useActionState<ActionState, FormData>(connectDiscordAction, {});
+  const [testState, testAction] = useActionState<ActionState>(testDiscordAction, {});
   return (
     <div className="space-y-3">
       {stopped && !hint && (
@@ -30,12 +36,22 @@ export function DiscordWebhookForm({ hint, stopped }: { hint: string | null; sto
       </form>
       <FormMessage state={state} />
       {hint && (
-        <form action={disconnectDiscordAction} className="flex items-center gap-3">
-          <span className="text-[13px]">Connected, webhook ending in <span className="font-mono text-ink">{hint}</span>.</span>
-          <SubmitButton pendingText="Removing…" className="text-[13px] font-semibold text-ink underline underline-offset-2">
-            Disconnect
-          </SubmitButton>
-        </form>
+        <div className="space-y-2">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span className="text-[13px]">Connected, webhook ending in <span className="font-mono text-ink">{hint}</span>.</span>
+            <form action={testAction}>
+              <SubmitButton pendingText="Sending…" className={LINK_BUTTON}>
+                Send test message
+              </SubmitButton>
+            </form>
+            <form action={disconnectDiscordAction}>
+              <SubmitButton pendingText="Removing…" className={LINK_BUTTON}>
+                Disconnect
+              </SubmitButton>
+            </form>
+          </div>
+          <FormMessage state={testState} />
+        </div>
       )}
     </div>
   );

@@ -8,6 +8,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Discord: "Send test message"** next to a connected webhook. It posts one message in the real format, headed as a test,
+  so a creator can see what support will look like and that the channel receives it. It shares the limit of 5 requests
+  per 10 minutes with checking a pasted webhook, and nothing is stored ([#103](https://github.com/Renanuya/buymeatokens-oss/issues/103)).
 - **Discord notifications**: a creator can paste a Discord webhook URL under Account and get a message in their channel
   when someone supports them, batched like the email (up to five supporters, then "and N more"), with the supporter's
   name, tokens and message as the public page shows them, and no dollar amounts. The URL is stored encrypted, never shown

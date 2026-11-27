@@ -93,7 +93,7 @@ export type DiscordItem = { supporterName: string; message: string; units: numbe
  * "Someone"), the public message and the tokens. No dollar amounts: the page shows tokens only, and a Discord server is
  * a wider audience than the creator's inbox.
  */
-export function discordPayload(items: DiscordItem[], pageUrl: string) {
+export function discordPayload(items: DiscordItem[], pageUrl: string, heading = "**New support on buymeatokens**") {
   const line = (i: DiscordItem) => {
     const name = discordText(i.supporterName, NAME_MAX, ESCAPED_NAME_MAX) || "Someone";
     const message = discordText(i.message, MESSAGE_MAX, ESCAPED_MESSAGE_MAX);
@@ -102,7 +102,7 @@ export function discordPayload(items: DiscordItem[], pageUrl: string) {
   const build = (shown: number) => {
     const more = items.length - shown;
     return [
-      "**New support on buymeatokens**",
+      heading,
       ...items.slice(0, shown).map(line),
       ...(more > 0 ? [`…and ${more} more`] : []),
       `<${pageUrl}>`,
@@ -117,6 +117,15 @@ export function discordPayload(items: DiscordItem[], pageUrl: string) {
     // 4 = suppress embeds, so no link preview is fetched for anything in the text.
     flags: 4,
   };
+}
+
+/** "Send test message": the real format with one made-up supporter, headed so nobody takes it for real support. */
+export function discordTestPayload(pageUrl: string) {
+  return discordPayload(
+    [{ supporterName: "A supporter", message: "Thanks for building this!", units: 1, test: false }],
+    pageUrl,
+    "**Test message from buymeatokens.** New support will look like this:",
+  );
 }
 
 // ---- requests ----

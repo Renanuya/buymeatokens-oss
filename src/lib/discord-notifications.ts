@@ -14,7 +14,14 @@
 import { decrypt, encrypt } from "./crypto";
 import { appUrl } from "./config";
 import { num, query, str } from "./db";
-import { discordPayload, parseDiscordWebhook, postToDiscord, verifyDiscordWebhook, type DiscordItem } from "./discord";
+import {
+  discordPayload,
+  discordTestPayload,
+  parseDiscordWebhook,
+  postToDiscord,
+  verifyDiscordWebhook,
+  type DiscordItem,
+} from "./discord";
 import { liveEmailEnabled } from "./email";
 import { recordOpsEvent } from "./ops";
 import { setDiscordWebhook } from "./users";
@@ -190,4 +197,22 @@ export async function connectDiscordWebhook(userId: string, input: string, now =
   if (check === "unreachable") return { ok: false, error: "Couldn't reach Discord to check it. Try again in a minute." };
   await setDiscordWebhook(userId, encrypt(webhook.url), now);
   return { ok: true };
+}
+
+export type DiscordTestResult = "sent" | "not_connected" | "limited" | "gone" | "rate_limited" | "unreachable";
+
+/**
+ * "Send test message": posts one marked message to the connected webhook, so the creator sees the format and knows the
+ * channel receives it. It is one more request to Discord, so it shares the limit with checking a pasted webhook.
+ * Nothing is stored and the webhook is left as it is; a real send that gets the same answer disconnects it.
+ */
+export async function sendDiscordTest(userId: string, now = Date.now()): Promise<DiscordTestResult> {
+  const rs = await query("SELECT discord_webhook_enc, username FROM users WHERE id = ?", [userId]);
+  const encrypted = str(rs.rows[0]?.discord_webhook_enc);
+  if (!encrypted) return "not_connected";
+  if (!(await takeWebhookCheck(userId, now))) return "limited";
+  const username = str(rs.rows[0]?.username);
+  const outcome = await postToDiscord(decrypt(encrypted), discordTestPayload(username ? `${appUrl()}/${username}` : appUrl()));
+  if (outcome.status === "sent" || outcome.status === "gone" || outcome.status === "rate_limited") return outcome.status;
+  return "unreachable";
 }
