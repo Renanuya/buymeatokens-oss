@@ -24,6 +24,9 @@ import { alertsAfter, creatorForAlertsToken, disableAlerts, parseAlertOptions, r
 import { getUserById } from "../src/lib/users";
 
 const T0 = 1_800_000_000_000;
+// The feed ignores anything older than an hour, so the clock sits just after the fixtures.
+vi.useFakeTimers({ now: T0 + 60_000, toFake: ["Date"] });
+afterAll(() => void vi.useRealTimers());
 
 async function creator(id = "maker", mode: string | null = "live") {
   await query(
@@ -136,6 +139,13 @@ describe("stream alerts", () => {
       cursor = page.cursor;
     }
     expect(seen).toEqual(["a", "b", "c", "d"]);
+  });
+
+  it("does not reach further back than an hour, whatever cursor is sent", async () => {
+    await paid("old", T0 - 2 * 3_600_000);
+    await paid("recent", T0 + 5);
+    const who = (await creatorForAlertsToken(token))!;
+    expect(ids((await alertsAfter(who, "0_0")).alerts)).toEqual(["recent"]);
   });
 
   it("calls an unnamed supporter Someone", async () => {

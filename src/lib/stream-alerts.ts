@@ -38,6 +38,7 @@ export async function creatorForAlertsToken(token: string): Promise<{ id: string
 // A cursor is "<confirmed at, Unix ms>_<donation id>". The id breaks ties between payments confirmed in the same ms.
 const CURSOR_RE = /^(\d{1,15})_([\w-]{1,64})$/;
 const START_CURSOR = "0_0";
+const MAX_CURSOR_AGE_MS = 60 * 60_000;
 const AT = "COALESCE(paid_at, created_at)"; // paid_at is always set on a paid row; the fallback matches the public page
 
 /**
@@ -48,12 +49,16 @@ export async function alertsAfter(
   creator: { id: string; mode: StripeMode },
   cursor: string | null,
   limit = ALERTS_PAGE_SIZE,
+  now = Date.now(),
 ): Promise<{ alerts: StreamAlert[]; cursor: string }> {
   const match = cursor ? CURSOR_RE.exec(cursor) : null;
+  // A cursor can't reach further back than this: the URL is for live alerts, not for paging through a creator's history.
+  const floor = now - MAX_CURSOR_AGE_MS;
+  const [afterAt, afterId] = match && Number(match[1]) >= floor ? [match[1], match[2]] : [String(floor), ""];
   const base = `SELECT id, ${AT} AS at, supporter_name, units, message, amount_cents FROM donations
      WHERE creator_id = ? AND status = 'paid' AND stripe_mode = ?`;
   const rs = match
-    ? await query(`${base} AND (${AT}, id) > (?::bigint, ?) ORDER BY ${AT}, id LIMIT ?`, [creator.id, creator.mode, match[1], match[2], limit])
+    ? await query(`${base} AND (${AT}, id) > (?::bigint, ?) ORDER BY ${AT}, id LIMIT ?`, [creator.id, creator.mode, afterAt, afterId, limit])
     : await query(`${base} ORDER BY ${AT} DESC, id DESC LIMIT 1`, [creator.id, creator.mode]);
   const last = rs.rows[rs.rows.length - 1];
   const next = last ? `${num(last.at)}_${String(last.id)}` : match ? cursor! : START_CURSOR;

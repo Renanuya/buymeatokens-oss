@@ -43,6 +43,8 @@ Alerts queue and show one at a time. With `prefers-reduced-motion` set, the aler
 - Opening or reloading the source does not replay old support: without a cursor the feed returns no alerts, only the
   current position. The cursor is the confirmation time plus the payment id, so two payments confirmed in the same
   millisecond are both delivered, once.
+- The feed never reaches further back than one hour, whatever cursor it is given, so the URL can't be used to page
+  through a creator's history. A source that was offline for longer simply skips what it missed.
 - Anyone with the URL can read incoming support, so keep it private. *Regenerate* makes the old URL stop working;
   *Disable* removes it. Both answer 404 afterwards. The token is a random 256-bit value and starts with `bmta_`, so it is
   redacted from logs.
