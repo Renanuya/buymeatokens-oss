@@ -75,6 +75,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- **The roadmap page is built from GitHub issues** labelled `roadmap` (`src/lib/roadmap.ts`, [docs/roadmap.md](docs/roadmap.md)),
+  refreshed every five minutes. Closing an issue as completed moves it to *Shipped* (as not planned, it drops off); the open issue labelled `roadmap: now` is the
+  *Now* card, and its task list becomes the card's tiles (ticked boxes show as done); a hidden block in each issue sets
+  the title, summary, icon, order and links shown on the page. Nothing on the page is edited by hand any more. Two
+  closed issues stand in for shipped work that had none (#77, #78), and the community card closes the page without
+  counting as a milestone.
 - The roadmap's *Now* card shows what the current priority is working through (for pooled payments: custody,
   payouts, ways to pay and the law) and links to its issue and the Discord. The *Shipped* card shows the latest three,
   each with a short description, then the changelog link; the "Show more" fold is gone.
