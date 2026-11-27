@@ -271,7 +271,7 @@ export default async function DashboardPage() {
           </Reveal>
           <Reveal delay={270}>
             <div className="card flex h-full flex-col p-6 sm:p-7">
-              <CardHead title="Get found on GitHub" id="readme-badge" />
+              <CardHead title="Get found" id="readme-badge" />
               <ReadmeTools username={username} pageUrl={pageUrl} base={base} />
             </div>
           </Reveal>
