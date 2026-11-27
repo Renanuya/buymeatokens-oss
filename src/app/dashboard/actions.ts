@@ -23,6 +23,7 @@ import {
   validateTokenUse,
 } from "@/lib/profile";
 import { SOCIAL_NETWORKS, socialsFromForm } from "@/lib/socials";
+import { disableAlerts, rotateAlertsToken } from "@/lib/stream-alerts";
 import { setPaypalEmail, setStripeKey, setUsdcAddress, updateProfile, type ProfileUpdate } from "@/lib/users";
 
 function refresh(username: string) {
@@ -193,5 +194,20 @@ export async function removeUsdcAddressAction() {
 export async function disconnectStripeAction() {
   const user = await requireCreator();
   await setStripeKey(user.id, null, null);
+  refresh(user.username);
+}
+
+/** Turns stream alerts on, or replaces the URL (the old one stops working). The URL is returned once; only its hash is kept. */
+export async function enableAlertsAction(): Promise<{ url: string }> {
+  const user = await requireCreator();
+  assertConsent(user);
+  const token = await rotateAlertsToken(user.id);
+  refresh(user.username);
+  return { url: `${appUrl()}/alerts/${token}` };
+}
+
+export async function disableAlertsAction() {
+  const user = await requireCreator();
+  await disableAlerts(user.id);
   refresh(user.username);
 }

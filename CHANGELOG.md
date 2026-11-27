@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Stream alerts**: an opt-in browser source for OBS Studio and Streamlabs Desktop that shows "Alex supported you with 1M tokens!"
+  when a payment is confirmed. The dashboard's *Stream alerts* card makes a private URL (shown once; only its hash is
+  stored), regenerates or disables it, and previews a test alert that creates nothing. Duration, sound, amount, message
+  and theme come from the URL. The feed returns only name, tokens, message and amount of confirmed support, and never
+  replays old support when the source reloads. Stripe payments still count when they are confirmed, so a card payment
+  can show late; see [docs/stream-alerts.md](docs/stream-alerts.md).
 - **Project directory** (`/directory`): creators can opt in (off by default) from their page settings and pick one category and one
   language from fixed lists. Visitors search by the start of words in a name or description (full-text, on a partial GIN index)
   and filter by category and language. Pages in Stripe test mode aren't listed. The plain listing is cached for five minutes

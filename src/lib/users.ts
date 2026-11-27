@@ -43,6 +43,8 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** Whether a stream alerts URL is active (src/lib/stream-alerts.ts). Only its hash is stored. */
+  alertsEnabled: boolean;
   /** When the creator listed their project in the directory (Unix ms), or null (src/lib/directory.ts). */
   listedAt: number | null;
   projectCategory: string | null;
@@ -86,6 +88,7 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    alertsEnabled: Boolean(str(r.alerts_token_hash)),
     listedAt: num(r.listed_at),
     projectCategory: str(r.project_category),
     projectLanguage: str(r.project_language),

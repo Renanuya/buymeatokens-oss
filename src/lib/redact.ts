@@ -5,6 +5,7 @@ const SECRET_PATTERNS: RegExp[] = [
   /\b(?:sk|rk|pk)_(?:live|test)_[A-Za-z0-9]+/g, // Stripe API keys (secret, restricted, publishable)
   /\bwhsec_[A-Za-z0-9]+/g, // webhook signing secrets
   /\bgh[pousr]_[A-Za-z0-9]{20,}/g, // GitHub tokens
+  /bmta_[A-Za-z0-9_-]{20,}/g, // stream alert URLs; no \b, the token may follow "%2F" in an encoded URL
   /\bBearer\s+[A-Za-z0-9._~+/-]{12,}=*/g, // Authorization headers
 ];
 
