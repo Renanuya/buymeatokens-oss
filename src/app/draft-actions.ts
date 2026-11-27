@@ -1,10 +1,21 @@
 "use server";
 
-import { DRAFTS_PER_CREATOR_PER_DAY, aiProviders, hasSubstance, isDraftField, writeDraft } from "@/lib/ai-draft";
+import {
+  DRAFTS_PER_CREATOR_PER_DAY,
+  aiProviders,
+  hasFacts,
+  hasSubstance,
+  isDraftField,
+  writeDraft,
+  type AiProvider,
+  type DraftField,
+} from "@/lib/ai-draft";
+import { getApplicationForUser } from "@/lib/applications";
 import { query } from "@/lib/db";
 import { repoBrief } from "@/lib/github";
 import { githubRepo, normalizeProjectUrl } from "@/lib/profile";
 import { requireCreator } from "@/lib/session";
+import type { User } from "@/lib/users";
 
 export type DraftResult = { text: string; repo: string } | { error: string };
 
@@ -41,9 +52,34 @@ async function refund(id: number) {
 }
 
 /**
- * "Write with AI" on the project description: reads the public GitHub repo at `projectUrl` (the
- * saved link in the guided setup, the link as typed on the settings page) and drafts the field from its README.
- * Nothing is saved; the draft goes into the field for the creator to edit.
+ * Without a GitHub repo: drafts from what the signed-in creator has saved (project name and link, their application,
+ * token use). Nothing comes from the client and no link is fetched, so this can't be used as a general text generator.
+ */
+async function draftFromSavedDetails(user: User, field: DraftField, providers: AiProvider[]): Promise<DraftResult> {
+  const application = await getApplicationForUser(user.id).catch(() => null);
+  const facts = {
+    name: user.projectName ?? application?.projectName ?? "",
+    url: user.projectUrl ?? application?.projectUrl ?? "",
+    description: application?.description ?? "",
+    tokenUse: user.tokenUse || application?.tokenUse || "",
+  };
+  if (!hasFacts(facts)) return { error: "Add your project's name or link in the Project step first, so the AI has something to write from." };
+
+  const reserved = await reserveDraft(user.id, field, "");
+  if ("error" in reserved) return reserved;
+  const draft = await writeDraft(field, facts, { providers });
+  if (!draft) {
+    await refund(reserved.id);
+    return { error: "The AI is busy right now. Try again in a minute, or write it yourself." };
+  }
+  await query("UPDATE ai_drafts SET provider = ? WHERE id = ?", [draft.provider, reserved.id]).catch(() => undefined);
+  return { text: draft.text, repo: "your project details" };
+}
+
+/**
+ * "Write with AI" on the project description. With a public GitHub repo at `projectUrl` (the saved link in the guided
+ * setup, the link as typed on the settings page) it drafts from the repo's README; without one, from the creator's
+ * saved project details. Nothing is saved; the draft goes into the field for the creator to edit.
  */
 export async function draftWithAiAction(field: unknown, projectUrl: unknown): Promise<DraftResult> {
   const user = await requireCreator();
@@ -52,15 +88,8 @@ export async function draftWithAiAction(field: unknown, projectUrl: unknown): Pr
   if (providers.length === 0) return { error: "AI drafts aren't available right now." };
 
   const link = normalizeProjectUrl(String(projectUrl ?? "").slice(0, 300));
-  const url = "url" in link ? link.url : null;
-  const repo = githubRepo(url);
-  if (!repo) {
-    return {
-      error: url
-        ? "AI drafts read a public GitHub repo. Link one in the project field to use them."
-        : "Add your project's GitHub link first. The AI writes this from its README.",
-    };
-  }
+  const repo = githubRepo("url" in link ? link.url : null);
+  if (!repo) return draftFromSavedDetails(user, field, providers);
 
   const reserved = await reserveDraft(user.id, field, repo);
   if ("error" in reserved) return reserved;

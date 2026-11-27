@@ -8,6 +8,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Write with AI without a GitHub repo.** The guided setup's description step now shows the button whenever AI drafts are on, not only when the project link is a GitHub repo. Without a repo the draft is written from what is already saved (project name and link as text, the application's description, token use), never from a fetched page, and the prompt allows no invented features or claims. It counts against the same per-creator and daily caps.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a
