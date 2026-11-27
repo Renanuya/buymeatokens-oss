@@ -25,6 +25,8 @@ type Milestone = {
   done?: boolean;
   links?: MilestoneLink[];
   capabilities?: { title: string; description: string; icon: GlyphName }[];
+  /** The questions the current priority is working through, shown at the top of the Now card. */
+  focus?: { title: string; description: string; icon: GlyphName }[];
   periods?: string[];
   /** Closes the list as an invitation (components/community-card.tsx): its first link is the button, the rest sit beside it. */
   invite?: boolean;
@@ -57,6 +59,16 @@ const milestones: Milestone[] = [
     description: "Work on a system that pools support payments for creators who prefer not to set up their own Stripe or PayPal account or USDC wallet. Research fund custody, payment flows and payout requirements before implementation.",
     category: "Payments",
     icon: "wallet",
+    focus: [
+      { title: "Who holds the money", description: "Custody from supporter to creator", icon: "lock" },
+      { title: "How it reaches creators", description: "Payouts, thresholds, countries", icon: "coins" },
+      { title: "Ways to pay", description: "Cards, PayPal and USDC, one balance", icon: "card" },
+      { title: "What the law asks", description: "Licences before we hold any funds", icon: "scale" },
+    ],
+    links: [
+      { href: `${SOURCE_URL}/issues/32`, label: "Follow the research on GitHub" },
+      { href: DISCORD_URL, label: "Share your view on Discord" },
+    ],
   },
   {
     title: "Make creator pages more customizable.",
@@ -184,8 +196,8 @@ const shipped = milestones.filter((milestone) => milestone.done);
 const open = milestones.filter((milestone) => !milestone.done);
 // The first milestone that isn't done is the current priority; the rest follow in order.
 const [current, ...upcoming] = open;
-// Newest first. Older ones fold away so the card stays short as the list grows.
-const SHIPPED_SHOWN = 4;
+// Newest first, and only the latest few: the changelog link under them has the rest.
+const SHIPPED_SHOWN = 3;
 const recentShipped = shipped.slice().reverse();
 
 const CHANGELOG_URL = `${SOURCE_URL}/blob/main/CHANGELOG.md`;
@@ -251,14 +263,15 @@ function Progress() {
 
 function ShippedRow({ milestone }: { milestone: Milestone }) {
   return (
-    <li className="flex items-center gap-4 py-4">
+    <li className="flex items-center gap-4 py-5">
       <span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-iris text-white">
         <Glyph name="check" className="size-4" strokeWidth={2.5} />
       </span>
       <div className="min-w-0">
         <h3 className="text-[15px] font-semibold leading-snug">{milestone.title}</h3>
+        <p className="mt-1 line-clamp-2 text-[13px] leading-relaxed text-muted">{milestone.description}</p>
         {milestone.links && (
-          <div className="mt-1.5 flex flex-wrap gap-x-4 gap-y-1">
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
             {milestone.links.map((link) => (
               <a
                 key={link.href}
@@ -278,7 +291,6 @@ function ShippedRow({ milestone }: { milestone: Milestone }) {
 
 function Shipped({ wide }: { wide: boolean }) {
   const shown = recentShipped.slice(0, SHIPPED_SHOWN);
-  const folded = recentShipped.slice(SHIPPED_SHOWN);
   return (
     <section aria-labelledby="shipped-heading" className={`card flex flex-col px-6 pb-2 pt-6 sm:px-8 sm:pt-7 ${wide ? "lg:col-span-12" : "lg:col-span-5"}`}>
       <div className="flex items-center justify-between gap-4 pb-2">
@@ -291,18 +303,6 @@ function Shipped({ wide }: { wide: boolean }) {
         <ul className="divide-y divide-line border-t border-line">
           {shown.map((milestone) => <ShippedRow key={milestone.category} milestone={milestone} />)}
         </ul>
-      )}
-      {folded.length > 0 && (
-        <details className="group border-t border-line">
-          <summary className="flex cursor-pointer list-none items-center gap-1.5 py-4 text-sm font-semibold text-muted transition hover:text-ink [&::-webkit-details-marker]:hidden">
-            <span className="group-open:hidden">Show {folded.length} more</span>
-            <span className="hidden group-open:inline">Show fewer</span>
-            <Glyph name="chevron-down" className="size-4 transition group-open:rotate-180" />
-          </summary>
-          <ul className="divide-y divide-line border-t border-line">
-            {folded.map((milestone) => <ShippedRow key={milestone.category} milestone={milestone} />)}
-          </ul>
-        </details>
       )}
       <a
         href={CHANGELOG_URL}
@@ -317,7 +317,7 @@ function Shipped({ wide }: { wide: boolean }) {
 
 function Now({ milestone }: { milestone: Milestone }) {
   return (
-    <section aria-labelledby="now-heading" className="flex flex-col gap-10 rounded-[18px] bg-lilac p-6 sm:p-8 md:p-10 lg:col-span-7">
+    <section aria-labelledby="now-heading" className="flex flex-col gap-8 rounded-[18px] bg-lilac p-6 sm:p-8 md:p-10 lg:col-span-7">
       <div className="flex items-center justify-between gap-4">
         <IconTile name={milestone.icon} className="size-12 rounded-2xl bg-white text-iris" />
         <span className="inline-flex items-center gap-2 rounded-full bg-ink px-3 py-1.5 text-xs font-semibold text-white">
@@ -328,6 +328,21 @@ function Now({ milestone }: { milestone: Milestone }) {
           First priority
         </span>
       </div>
+      {milestone.focus && (
+        <ul aria-label="What we're working through" className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
+          {milestone.focus.map((item) => (
+            <li key={item.title} className="flex items-center gap-3.5 rounded-2xl bg-white/55 p-4">
+              <span aria-hidden className="grid size-10 shrink-0 place-items-center rounded-xl bg-white text-iris">
+                <Glyph name={item.icon} className="size-[18px]" />
+              </span>
+              <span className="min-w-0">
+                <span className="block text-sm font-semibold leading-5">{item.title}</span>
+                <span className="block text-[13px] leading-snug text-ink/60">{item.description}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
       <div className="mt-auto">
         <h2 id="now-heading" className="eyebrow text-ink/60">Now · {milestone.category}</h2>
         <h3 className="mt-3 max-w-2xl font-display text-3xl font-semibold leading-[1.08] tracking-[-0.04em] sm:text-4xl">

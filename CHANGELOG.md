@@ -75,6 +75,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- The roadmap's *Now* card shows what the current priority is working through (for pooled payments: custody,
+  payouts, ways to pay and the law) and links to its issue and the Discord. The *Shipped* card shows the latest three,
+  each with a short description, then the changelog link; the "Show more" fold is gone.
 - The dashboard Overview shows the creator's Early supporter and Contributor badges under their name instead of
   at the far right of the header.
 - The compact README badge (`?style=flat`) always shows a count. Before the first support it reads `0M tokens`
