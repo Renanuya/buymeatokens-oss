@@ -166,6 +166,16 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Fixed
 
+- **Handles that would hide a page or impersonate someone can't be claimed** (`src/lib/username-rules.ts`):
+  - The newer routes (`apply`, `directory`, `leaderboard`, the preview images, `widget`…) are reserved, so no
+    creator page can end up hidden behind them.
+  - Handles made only of official-sounding words ("support", "official-team", "destek") or containing
+    "buymeatokens" are reserved.
+  - Atatürk and state institutions are never available.
+  - Company and product names (OpenAI, Anthropic, PayPal, Stripe, GitHub, Google…) are kept for their owners, with a
+    message to email hello@buymeatokens.com if that's you.
+  - Variants count: dashes, trailing numbers, look-alike digits and words like "official", "support" or "resmi"
+    around the name. Existing handles are not affected, and setup never suggests a blocked name.
 - **Signed webhooks refuse Discord and Slack URLs** with a message that points to the Discord section, instead of saving
   an endpoint whose tests and deliveries could only fail with a 400. A test that gets a 4xx now says the endpoint
   rejected the event. Unexpected errors when adding, rotating, deleting or testing are reported to the operator
