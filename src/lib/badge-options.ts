@@ -1,7 +1,7 @@
 // README badge choices, kept apart from the renderer (src/lib/badge.ts) so the page that picks a badge doesn't
 // load the embedded font.
 
-export const BADGE_STYLES = ["button", "flat", "pill"] as const;
+export const BADGE_STYLES = ["button", "flat", "pill", "outline", "goal", "supporters"] as const;
 export type BadgeStyle = (typeof BADGE_STYLES)[number];
 
 export const BADGE_THEMES = ["dark", "light", "iris", "lilac"] as const;
