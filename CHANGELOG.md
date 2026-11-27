@@ -120,6 +120,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- **Merging to `main` deploys production.** `.github/workflows/deploy.yml` deploys a commit to Vercel once CI passes for
+  its push to `main`, then checks the home page and a badge. It skips a commit that `main` has already moved past, never
+  runs for pull requests, and keeps the token in the `production` environment, which only `main` can use. See
+  [docs/maintainers/releasing.md](docs/maintainers/releasing.md).
 - **The roadmap page is built from GitHub issues** labelled `roadmap` (`src/lib/roadmap.ts`, [docs/roadmap.md](docs/roadmap.md)),
   refreshed every five minutes. Closing an issue as completed moves it to *Shipped* (as not planned, it drops off); the open issue labelled `roadmap: now` is the
   *Now* card, and its task list becomes the card's tiles (ticked boxes show as done); a hidden block in each issue sets

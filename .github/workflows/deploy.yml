@@ -1,0 +1,97 @@
+name: Deploy
+
+# Production follows main: when CI passes for a push to main, that exact commit is deployed to Vercel. Vercel builds
+# it, as `npx vercel deploy --prod` from a clean checkout of main would. See docs/maintainers/releasing.md.
+#
+# This is the only workflow with a credential. It never runs for a pull request, so code from a fork never runs next to
+# the deploy token, and the token lives in the `production` environment, which only main can use.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+  # Redeploy the current main by hand (Actions -> Deploy -> Run workflow).
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# One deploy at a time, in order. A newer push replaces a deploy that is still waiting.
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy to production
+    # A manual run, or a successful CI run for a push to this repository's main. Never a pull request's CI run.
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.event == 'push' &&
+       github.event.workflow_run.head_branch == 'main' &&
+       github.event.workflow_run.head_repository.full_name == github.repository)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://buymeatokens.com
+    env:
+      SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+    steps:
+      - name: Check the deploy settings
+        id: settings
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice::VERCEL_TOKEN, VERCEL_ORG_ID or VERCEL_PROJECT_ID isn't set in the production environment, so nothing was deployed."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        if: steps.settings.outputs.ready == 'true'
+        with:
+          ref: ${{ env.SHA }}
+          persist-credentials: false
+
+      # Deploying an older commit after a newer one would roll production back. The newer push has its own run.
+      - name: Make sure this is still the newest main
+        id: latest
+        if: steps.settings.outputs.ready == 'true'
+        run: |
+          latest="$(git ls-remote "https://github.com/${GITHUB_REPOSITORY}.git" refs/heads/main | cut -f1)"
+          if [ "$latest" = "$SHA" ]; then
+            echo "current=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "::notice::main has moved on to ${latest}; skipping ${SHA}."
+            echo "current=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        if: steps.latest.outputs.current == 'true'
+        with:
+          node-version-file: .nvmrc
+
+      - name: Deploy
+        id: deploy
+        if: steps.latest.outputs.current == 'true'
+        run: |
+          url="$(npx --yes vercel@67.0.0 deploy --prod --yes --token "$VERCEL_TOKEN")"
+          echo "url=${url}" >> "$GITHUB_OUTPUT"
+          echo "Deployed ${SHA} to production: ${url}" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Smoke test
+        if: steps.latest.outputs.current == 'true'
+        run: |
+          for path in / /api/badge/renanuya; do
+            code="$(curl -s -o /dev/null -w '%{http_code}' --retry 3 --retry-delay 5 "https://buymeatokens.com${path}")"
+            echo "${path} -> ${code}"
+            if [ "$code" != "200" ]; then
+              echo "::error::https://buymeatokens.com${path} answered ${code} after the deploy. Roll back from Vercel -> Deployments if needed."
+              exit 1
+            fi
+          done
