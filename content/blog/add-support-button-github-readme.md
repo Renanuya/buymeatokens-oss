@@ -55,7 +55,7 @@ github: yourname
 custom: ["https://buymeatokens.com/yourname"]
 ```
 
-The file supports GitHub Sponsors and a list of other platforms by name (such as Patreon, Open Collective, Ko-fi and Liberapay), plus up to four **custom** URLs for anything else. Put the file in the repository's `.github` folder, or in a `.github` repository on your account or organization to apply it to every repo that doesn't have its own. Then turn on **Sponsorships** under the repository's Settings → General → Features: until that box is ticked, GitHub hides the button even when the file is there. Custom links appear as plain links under "Sponsor this project" in the sidebar; only GitHub Sponsors profiles get a button there. If your page is on buymeatokens, the dashboard's **Sponsor button** tab opens GitHub with the file already filled in, for one repository or all of them.
+The file supports GitHub Sponsors and a list of other platforms by name (such as Patreon, Open Collective, Ko-fi and Liberapay), plus up to four **custom** URLs for anything else. Put the file in the repository's `.github` folder, or in a `.github` repository on your account or organization to apply it to every repo that doesn't have its own. Then turn on **Sponsorships** under the repository's Settings → General → Features: until that box is ticked, GitHub hides the button even when the file is there. Custom links appear as plain links under "Sponsor this project" in the sidebar; only GitHub Sponsors profiles get a button there.
 
 A good combination is one recurring option and one one-off option. If you're choosing between platforms, see [Buy Me a Coffee alternatives for developers](/blog/buy-me-a-coffee-alternatives-developers).
 
@@ -106,7 +106,7 @@ Paste a Markdown image link, `[![alt text](badge image URL)](your support page U
 
 ### How do I get the Sponsor button on my GitHub repository?
 
-Add a `.github/FUNDING.yml` file listing your GitHub Sponsors username, other supported platforms or up to four custom URLs. GitHub then shows a Sponsor button at the top of the repository.
+Add a `.github/FUNDING.yml` file listing your GitHub Sponsors username, other supported platforms or up to four custom URLs. Then turn on Sponsorships under the repository's Settings → General → Features, and GitHub shows a Sponsor button at the top of the repository.
 
 ### Can I use FUNDING.yml without GitHub Sponsors?
 

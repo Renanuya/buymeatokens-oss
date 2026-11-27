@@ -120,3 +120,14 @@ describe("supporterSummary", () => {
     expect((await supporterSummary("maker", "live", 3)).names).toEqual(["Fan 4", "Fan 3", "Fan 2"]);
   });
 });
+
+describe("Analytics source for the wall", () => {
+  it("credits visits from the supporter wall", async () => {
+    const { classifyVisit, sourceLabel } = await import("../src/lib/visit-source");
+    expect(classifyVisit({ ref: "wall", referrer: "https://github.com/maya/tiny-llm" })).toEqual({ source: "wall", detail: "" });
+    expect(classifyVisit({ ref: "supporters" })).toEqual({ source: "wall", detail: "" });
+    expect(sourceLabel({ source: "wall", detail: "" })).toBe("Supporter wall");
+    // Tags we no longer hand out are ordinary tagged links.
+    expect(classifyVisit({ ref: "sponsor" })).toEqual({ source: "tag", detail: "sponsor" });
+  });
+});
