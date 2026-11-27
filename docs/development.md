@@ -59,7 +59,7 @@ Then fill in the minimum:
 | `EMAIL_LIVE_ENABLED` | `false`; leave the email keys empty unless you work on emails |
 
 There is no Stripe variable to fill in here: the Stripe key is not an environment variable, it is pasted in
-the app in step 4 of "Try the whole flow" below.
+the app in step 3 of "Try the whole flow" below.
 
 If you change `.env.local` later, restart `npm run dev`: Next.js reads `.env.local` when the dev server
 starts, so edits do not take effect in a running server.
