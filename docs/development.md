@@ -99,8 +99,9 @@ Open http://localhost:3000. The first request creates the tables.
 1. **Log in → "Continue without GitHub".**
 2. Pick a username and go through the setup steps.
 3. **Payments:** in the Stripe dashboard, first switch to **sandbox (test mode)** — the in-app guide says the
-   same — then open *Developers → API keys → Create restricted key*. Name the key `buymeatokens` and, if Stripe asks for a website, enter `http://localhost:3000` (your `APP_URL`). When Stripe
-   asks "How will you be using this key?", pick **Providing this key to a third-party application**. Give it
+   same — then open *Developers → API keys → Create restricted key*. Name the key `buymeatokens` and, if Stripe
+   asks for a website, enter `http://localhost:3000` (your `APP_URL`). When Stripe asks "How will you be using this
+   key?", pick **Providing this key to a third-party application**. Give it
    **Checkout Sessions: Write** and leave everything else at **None**. Click **Create key**, copy the
    `rk_test_…` key — Stripe shows it only once — and paste it in the app, not in `.env.local`: go to
    **Dashboard → Payments** (`http://localhost:3000/dashboard/stripe`) and paste it in the Stripe key field
