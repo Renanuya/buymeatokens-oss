@@ -1,5 +1,5 @@
 import { num, query, str } from "./db";
-import { LISTABLE_SQL } from "./seo";
+import { INDEXABLE_SQL } from "./seo";
 
 export type Period = "daily" | "weekly" | "monthly" | "lifetime";
 export const PERIODS: Period[] = ["daily", "weekly", "monthly", "lifetime"];
@@ -35,7 +35,7 @@ export async function topCreators(period: Period, now = Date.now()): Promise<Lea
     `SELECT u.username, u.display_name, u.avatar_url, SUM(d.units) AS units, COUNT(*) AS supporters
      FROM donations d JOIN users u ON u.id = d.creator_id
      WHERE d.status = 'paid' AND d.stripe_mode = 'live' AND (?::bigint IS NULL OR d.paid_at >= ?::bigint)
-       AND u.leaderboard_opt_in AND u.stripe_mode IS DISTINCT FROM 'test' AND ${LISTABLE_SQL}
+       AND u.leaderboard_opt_in AND u.stripe_mode IS DISTINCT FROM 'test' AND ${INDEXABLE_SQL}
      GROUP BY u.id
      ORDER BY SUM(d.units) DESC, MIN(d.paid_at) ASC, u.username ASC
      LIMIT ${LEADERBOARD_SIZE}`,
