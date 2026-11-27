@@ -7,7 +7,7 @@ import { decrypt, encrypt, newId, randomToken } from "./crypto";
 import { isUniqueViolation, num, query, str } from "./db";
 import { sendWebhook, type SendDeps } from "./webhook-send";
 import { webhookHeaders } from "./webhook-sign";
-import { checkWebhookUrl, type Resolver } from "./webhook-url";
+import { chatWebhook, checkWebhookUrl, type Resolver } from "./webhook-url";
 
 export const MAX_ENDPOINTS = 3;
 export const SECRET_PREFIX = "bmtwh_";
@@ -56,6 +56,13 @@ export async function addEndpoint(
   urlInput: string,
   deps: { resolve?: Resolver; now?: number } = {},
 ): Promise<{ id: string; secret: string } | { error: string }> {
+  const chat = chatWebhook(urlInput);
+  if (chat === "Discord") {
+    return {
+      error: "That's a Discord webhook. Signed webhooks go to your own server; to post in a Discord channel, use the Discord section above.",
+    };
+  }
+  if (chat === "Slack") return { error: "That's a Slack webhook. Signed webhooks go to your own server, and Slack can't read them." };
   const checked = await checkWebhookUrl(urlInput, deps.resolve);
   if ("error" in checked) return checked;
   const id = newId();
