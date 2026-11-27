@@ -3,17 +3,19 @@
 import { useEffect, useState } from "react";
 import { BadgeBuilder } from "@/components/badge-builder";
 import { WallBuilder } from "@/components/wall-builder";
+import { WebsiteBuilder } from "@/components/website-builder";
 
-type Tab = "badge" | "wall";
+type Tab = "badge" | "wall" | "website";
 
 const TABS: { key: Tab; label: string; hash: string }[] = [
   { key: "badge", label: "Badge", hash: "#readme-badge" },
   { key: "wall", label: "Supporter wall", hash: "#supporter-wall" },
+  { key: "website", label: "Website", hash: "#website-button" },
 ];
 
 /**
- * What brings people from a README to the creator's page, as two tabs: the badge and the supporter wall.
- * `/dashboard#supporter-wall` opens the wall's tab.
+ * What brings people to the creator's page, as three tabs: the README badge, the README supporter wall and a button
+ * for their own website. `/dashboard#supporter-wall` and `#website-button` open their tab.
  */
 export function ReadmeTools({ username, pageUrl, base }: { username: string; pageUrl: string; base: string }) {
   const [tab, setTab] = useState<Tab>("badge");
@@ -30,7 +32,7 @@ export function ReadmeTools({ username, pageUrl, base }: { username: string; pag
 
   return (
     <div className="mt-3 flex flex-1 flex-col">
-      <div role="tablist" aria-label="GitHub tools" className="flex gap-5 border-b border-line">
+      <div role="tablist" aria-label="Ways to get found" className="flex gap-5 border-b border-line">
         {TABS.map((t) => (
           <button
             key={t.key}
@@ -57,6 +59,7 @@ export function ReadmeTools({ username, pageUrl, base }: { username: string; pag
       >
         {tab === "badge" && <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="flex flex-1 flex-col" />}
         {tab === "wall" && <WallBuilder username={username} pageUrl={pageUrl} base={base} />}
+        {tab === "website" && <WebsiteBuilder username={username} pageUrl={pageUrl} base={base} />}
       </div>
     </div>
   );

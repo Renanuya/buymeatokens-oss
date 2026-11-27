@@ -107,6 +107,14 @@ const milestones: Milestone[] = [
     links: [{ href: "/dashboard#supporter-wall", label: "Add your supporter wall" }],
   },
   {
+    title: "Get found beyond GitHub.",
+    description: "A support button for any website, floating in the corner or in place, with an image link for sites that don't run scripts. And every creator page has its own link preview with their photo, project and progress.",
+    category: "Website button",
+    icon: "link",
+    done: true,
+    links: [{ href: "/dashboard#website-button", label: "Add the button to your site" }],
+  },
+  {
     title: "Help people discover projects.",
     description: "Build a searchable project directory with categories, tags and programming languages. Give people ways to find new projects alongside the most-supported ones.",
     category: "Project discovery",

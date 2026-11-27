@@ -9,7 +9,8 @@ export type ReadmeMode = "light" | "dark";
 
 /**
  * A README-like frame for previewing what goes into a README: a light/dark switch (GitHub's dark background) at the
- * top left and a copy button at the top right. Used by the badge and the supporter wall builders.
+ * top left and a copy button at the top right. Used by the badge, supporter wall and website button builders; `surface`
+ * names what the frame stands for, and `bleed` lets the content fill the frame (the website button's preview page).
  */
 export function ReadmePreview({
   readme,
@@ -17,6 +18,8 @@ export function ReadmePreview({
   copyValue,
   copyLabel,
   badgeStyle,
+  surface = "README",
+  bleed = false,
   children,
 }: {
   readme: ReadmeMode;
@@ -25,6 +28,8 @@ export function ReadmePreview({
   copyLabel: string;
   /** Counts the copy in the admin's badge stats. */
   badgeStyle?: BadgeStyle;
+  surface?: string;
+  bleed?: boolean;
   children: ReactNode;
 }) {
   const dark = readme === "dark";
@@ -36,8 +41,8 @@ export function ReadmePreview({
     >
       <div
         role="radiogroup"
-        aria-label="README background"
-        className={`absolute left-2 top-2 flex rounded-lg p-0.5 ${dark ? "bg-white/10" : "bg-paper"}`}
+        aria-label={`${surface} background`}
+        className={`absolute left-2 top-2 z-10 flex rounded-lg p-0.5 ${dark ? "bg-white/10" : "bg-paper"}`}
       >
         {(["light", "dark"] as const).map((mode) => (
           <button
@@ -45,8 +50,8 @@ export function ReadmePreview({
             type="button"
             role="radio"
             aria-checked={readme === mode}
-            aria-label={`${mode === "light" ? "Light" : "Dark"} README`}
-            title={`On a ${mode} README`}
+            aria-label={`${mode === "light" ? "Light" : "Dark"} ${surface}`}
+            title={`On a ${mode} ${surface}`}
             onClick={() => onReadme(mode)}
             className={`grid size-7 place-items-center rounded-md transition ${
               readme === mode
@@ -62,7 +67,7 @@ export function ReadmePreview({
           </button>
         ))}
       </div>
-      <div className="absolute right-2 top-2">
+      <div className="absolute right-2 top-2 z-10">
         <CopyButton
           value={copyValue}
           label={copyLabel}
@@ -72,7 +77,9 @@ export function ReadmePreview({
           }`}
         />
       </div>
-      <div className="grid min-h-[124px] flex-1 place-items-center px-6 pb-7 pt-12">{children}</div>
+      <div className={bleed ? "flex min-h-[176px] flex-1" : "grid min-h-[124px] flex-1 place-items-center px-6 pb-7 pt-12"}>
+        {children}
+      </div>
     </div>
   );
 }

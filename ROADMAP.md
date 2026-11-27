@@ -62,6 +62,9 @@ New here? The [good first issues][gfi] are small, well-described and ready to pi
 under the AGPL-3.0, after a cleanup and a security review, with CI, a secret scan and contributor docs. See the
 [changelog](CHANGELOG.md#010---2026-11-26).
 
+**Website button and link previews** (2026-11-27): a support button for any website (one script tag, floating
+or in place, or an image link), and a link preview card for every creator page.
+
 **README supporter wall** ([#31], 2026-11-27): a card for the README that lists a creator's latest supporters by
 name, shows the tokens received and follows GitHub's light and dark mode. It updates by itself.
 

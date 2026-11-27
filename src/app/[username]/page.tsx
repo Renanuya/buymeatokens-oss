@@ -33,10 +33,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   return {
     title,
     description,
-    // Link previews keep the site's preview image (app/opengraph-image) with the creator's own title.
-    // Setting openGraph here replaces the inherited one, so the image is listed explicitly.
-    openGraph: { title, description, type: "profile", siteName: "buymeatokens", images: [{ url: "/opengraph-image", width: 1200, height: 630, alt: title }] },
-    twitter: { card: "summary_large_image", title, description, images: ["/twitter-image"] },
+    // The preview image is the creator's own card (./opengraph-image.tsx and ./twitter-image.tsx), added by Next.
+    openGraph: { title, description, type: "profile", siteName: "buymeatokens" },
+    twitter: { card: "summary_large_image", title, description },
   };
 }
 

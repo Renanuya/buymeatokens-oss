@@ -8,6 +8,19 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Website button** (`public/widget.js`): one script tag puts a *Buy me AI tokens* button on any website, floating in
+  a corner (`data-position="left"` for the left) or in place (`data-mode="inline"`), in the badge colours
+  (`data-theme`). It renders in a shadow root, so the site's CSS can't touch it, draws nothing for a missing or
+  invalid `data-user`, adds only one floating button however many times it's included, and shrinks to the round mark
+  on touch phones. It sets no cookies and makes no requests; the link opens the creator's page in a new tab with the
+  site as referrer, so Analytics names the site. The dashboard's card is now *Get found*, with a *Website* tab
+  (`/dashboard#website-button`) that previews the real script in a sandboxed frame and also offers an image link for
+  sites that don't run scripts.
+- **Creator link previews**: every creator page has its own preview image for X, LinkedIn, Discord, Slack and
+  messaging apps (`[username]/opengraph-image.tsx`): their GitHub avatar (or initials), name, project and the start
+  of their description, the goal's progress or their totals, and the button. Names with accented letters use Inter
+  Tight's Latin Extended subset. The CDN keeps each card for an hour.
+
 - **Get found on GitHub.** The dashboard's README badge card is now *Get found on GitHub*, with two tabs: Badge and
   Supporter wall ([#31](https://github.com/Renanuya/buymeatokens-oss/issues/31)). `/dashboard#supporter-wall` opens
   the wall's tab.
