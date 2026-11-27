@@ -49,8 +49,10 @@ import { TERMS_VERSION } from "../src/lib/legal/config";
 import { homePathFor } from "../src/lib/access";
 import { GoalProgress, SocialLinks } from "../src/components/creator-profile";
 import { goalReached, unitsSince } from "../src/lib/donations";
-import { normalizeProjectUrl, parseGoalUnits, parsePriceUsd, projectNameFromUrl } from "../src/lib/profile";
-import { canOpenStep, filledSteps, resumePath, setupProgress } from "../src/lib/setup";
+import { normalizeProjectUrl, parseGoalUnits, parsePriceUsd, parseThankYou, projectNameFromUrl } from "../src/lib/profile";
+import { SETUP_STEPS, canOpenStep, filledSteps, resumePath, setupProgress } from "../src/lib/setup";
+import { CreatorPageBody } from "../src/components/creator-page";
+import { loadCreatorPage } from "../src/lib/creator-page-data";
 import { normalizeSocial, parseSocials, socialEntries, socialInputValue } from "../src/lib/socials";
 import { getUserById, setGoal } from "../src/lib/users";
 import {
@@ -341,6 +343,50 @@ describe("existing creators and goals", () => {
     expect((await user()).goalStartedAt).toBe(NOW + 5000);
   });
 
+  it("refuses an offensive project name in the setup step and the settings form, saving and advancing nothing", async () => {
+    await signup();
+    await run(() => claimUsernameAction({}, form({ username: "maker", displayName: "Maker", ...AGREED })));
+    await run(() => advanceStepAction(form({ step: "payments" })));
+    await run(() => savePriceAction({}, form({ price: "7" })));
+    const before = await user();
+
+    for (const projectName of ["f.u.c.k", "Pu55y Tools", "n1gger", "fuuuuuck"]) {
+      const result = await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/tool", projectName })));
+      expect(result).toEqual({
+        state: { error: "Please choose a project name without explicit or offensive language." },
+      });
+      expect(JSON.stringify(result).toLowerCase()).not.toContain(projectName.toLowerCase());
+    }
+    const after = await user();
+    expect(after).toMatchObject({ projectUrl: null, projectName: null, setupProgress: before.setupProgress });
+    expect(resumePath(after)).toBe("/onboarding/project");
+
+    // Corrected: the same step goes through, with the link the creator had typed.
+    expect(await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/tool", projectName: "Tool" })))).toEqual({
+      redirect: "/onboarding/description",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/tool", projectName: "Tool" });
+
+    // The settings form checks the same rule and keeps the saved name.
+    await query("UPDATE users SET terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    const settings = form({ displayName: "Maker", bio: "", price: "5", projectUrl: "https://maker.dev", projectName: "sh1t f u c k" });
+    expect(await updateProfileAction({}, settings)).toEqual({
+      error: "Please choose a project name without explicit or offensive language.",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/tool", projectName: "Tool", unitPriceCents: 700 });
+  });
+
+  it("drops a link-derived project name that fails the check instead of blocking the creator", async () => {
+    await signup();
+    await run(() => claimUsernameAction({}, form({ username: "maker", displayName: "Maker", ...AGREED })));
+    await run(() => advanceStepAction(form({ step: "payments" })));
+    await run(() => savePriceAction({}, form({ price: "7" })));
+    expect(await run(() => saveProjectAction({}, form({ projectUrl: "github.com/maker/fuck-tool", projectName: "" })))).toEqual({
+      redirect: "/onboarding/description",
+    });
+    expect(await user()).toMatchObject({ projectUrl: "https://github.com/maker/fuck-tool", projectName: null });
+  });
+
   it("saves every page detail from the settings form, and leaves absent ones alone", async () => {
     await signup();
     await query(
@@ -481,5 +527,108 @@ describe("goal periods", () => {
     expect(once).not.toContain("this month");
     expect(monthly).toContain("Token goal · this month");
     expect(monthly).toContain("AI tokens to go this month");
+  });
+});
+
+describe("thank-you note", () => {
+  async function creatorPage() {
+    await query("UPDATE users SET login = NULL WHERE id = 'maker'");
+    return renderToStaticMarkup(<CreatorPageBody page={await loadCreatorPage(await user())} />);
+  }
+
+  it("cleans the text and enforces the limit", () => {
+    expect(parseThankYou("  Thanks \n\n  a lot\t! ")).toEqual({ text: "Thanks a lot !" });
+    expect(parseThankYou("a‮b​c\u0000d⁦e﻿")).toEqual({ text: "abc de" });
+    expect(parseThankYou(null)).toEqual({ text: "" });
+    expect(parseThankYou("x".repeat(280))).toEqual({ text: "x".repeat(280) });
+    expect(parseThankYou(`  ${"x".repeat(281)}`)).toEqual({ error: expect.stringContaining("280") });
+  });
+
+  it("strips every format character but keeps joined emoji, and flattens towers of accents", () => {
+    // Tag characters (U+E0001, U+E0041), an interlinear annotation, an Arabic number sign and a braille blank.
+    expect(parseThankYou("a\u{E0001}\u{E0041}b￹c؀d⠀e")).toEqual({ text: "abcde" });
+    // The joiners stay: a family emoji and a coder emoji are one picture each.
+    const family = "\u{1F468}‍\u{1F469}‍\u{1F467}";
+    const coder = "\u{1F469}‍\u{1F4BB}";
+    expect(parseThankYou(`Thanks ${family} ${coder}`)).toEqual({ text: `Thanks ${family} ${coder}` });
+    // Ordinary accents survive; a flood of marks on one letter is cut to three.
+    expect(parseThankYou("Café ở đây")).toEqual({ text: "Café ở đây" });
+    expect(parseThankYou(`Z${"́".repeat(266)}!`)).toEqual({ text: `Z${"́".repeat(3)}!` });
+  });
+
+  it("is saved from the guided setup step, which stays the tokens step", async () => {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_progress = 5, terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    expect(await run(() => saveTokenUseAction({}, form({ tokenUse: "Evals", thankYou: "x".repeat(281) })))).toEqual({
+      state: { error: expect.stringContaining("280") },
+    });
+    expect(await run(() => saveTokenUseAction({}, form({ tokenUse: "", thankYou: "" })))).toEqual({
+      state: { error: expect.stringContaining("skip") },
+    });
+    expect(await run(() => saveTokenUseAction({}, form({ tokenUse: "Evals", thankYou: " Thanks!\n" })))).toEqual({
+      redirect: "/onboarding/goal",
+    });
+    expect(await user()).toMatchObject({ tokenUse: "Evals", thankYou: "Thanks!", setupProgress: 6 });
+
+    // A stale or crafted submission without the field leaves the note alone.
+    await query("UPDATE users SET setup_progress = 5 WHERE id = 'maker'");
+    await run(() => saveTokenUseAction({}, form({ tokenUse: "Evals" })));
+    expect((await user()).thankYou).toBe("Thanks!");
+  });
+
+  it("counts the step as filled when only the note was given", async () => {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_progress = 5, terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    await run(() => saveTokenUseAction({}, form({ tokenUse: "", thankYou: "Thanks!" })));
+    expect(filledSteps(await user()).tokens).toBe(true);
+  });
+
+  it("is saved from settings, left alone when absent, and survives a crafted submission", async () => {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_done_at = 1, thank_you = 'keep', terms_version = ?, terms_accepted_at = 1, age_confirmed_at = 1 WHERE id = 'maker'", [TERMS_VERSION]);
+    await updateProfileAction({}, form({ displayName: "Maker", bio: "", price: "5" }));
+    expect((await user()).thankYou).toBe("keep");
+    expect(await updateProfileAction({}, form({ displayName: "Maker", price: "5", thankYou: "a‮<b>x</b>\r\n\r\nb" }))).toEqual({
+      message: expect.stringContaining("Saved"),
+    });
+    expect((await user()).thankYou).toBe("a<b>x</b> b");
+    expect(await updateProfileAction({}, form({ displayName: "Maker", price: "5", thankYou: "x".repeat(5000) }))).toEqual({
+      error: expect.stringContaining("280"),
+    });
+    expect((await user()).thankYou).toBe("a<b>x</b> b");
+    await updateProfileAction({}, form({ displayName: "Maker", price: "5", thankYou: "  " }));
+    expect((await user()).thankYou).toBe("");
+  });
+
+  it("shows on the public page as text, and nothing when empty", async () => {
+    await signup();
+    await query("UPDATE users SET username = 'maker', setup_done_at = 1 WHERE id = 'maker'");
+    const without = await creatorPage();
+    expect(without).not.toContain("Thanks for the fuel");
+    await query("UPDATE users SET thank_you = ? WHERE id = 'maker'", ["Thanks for the fuel <script>alert(1)</script> [x](javascript:alert(1))"]);
+    const html = await creatorPage();
+    expect(html).toContain("Thanks for the fuel &lt;script&gt;alert(1)&lt;/script&gt; [x](javascript:alert(1))");
+    expect(html).not.toContain("<script>alert");
+    expect(html).not.toContain('href="javascript');
+    expect(html.length).toBeGreaterThan(without.length);
+    // Signed with the creator's name, so it doesn't read like a notice from the site.
+    expect(html).toContain("A note from Maker");
+    expect(without).toContain("No supporters yet");
+  });
+
+  it("leaves every creator's setup progress as it was", async () => {
+    expect(SETUP_STEPS.map((s) => s.slug)).toEqual(["name", "payments", "price", "project", "description", "tokens", "goal", "socials"]);
+    const base = { username: "maker", setupDoneAt: null };
+    expect(resumePath({ ...base, setupProgress: 5 })).toBe("/onboarding/tokens");
+    expect(resumePath({ ...base, setupProgress: 8 })).toBe("/onboarding/done");
+    expect(resumePath({ ...base, setupProgress: 8, setupDoneAt: 1 })).toBe("/dashboard");
+    expect(setupProgress({ ...base, setupProgress: 6 })).toBe(6);
+  });
+
+  it("applies the schema twice and adds one column", async () => {
+    await mocks.db.exec(SCHEMA);
+    await mocks.db.exec(SCHEMA);
+    const { rows } = await mocks.db.query("SELECT column_name FROM information_schema.columns WHERE table_name = 'users' AND column_name = 'thank_you'");
+    expect(rows).toHaveLength(1);
   });
 });

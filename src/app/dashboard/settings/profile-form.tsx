@@ -10,6 +10,7 @@ import {
   PriceField,
   ProjectFields,
   SocialFields,
+  ThankYouField,
   TokenUseField,
 } from "@/components/profile-fields";
 import { SubmitButton } from "@/components/submit-button";
@@ -26,6 +27,7 @@ export type ProfileDefaults = {
   projectUrl: string;
   projectName: string;
   tokenUse: string;
+  thankYou: string;
   goalUnits: number | null;
   goalPeriod: GoalPeriod;
   socials: Socials;
@@ -95,6 +97,7 @@ export function ProfileForm({
         />
         <DescriptionField defaultValue={defaults.bio} ai={ai} />
         <TokenUseField defaultValue={defaults.tokenUse} />
+        <ThankYouField defaultValue={defaults.thankYou} />
       </Section>
 
       <Section title="Goal" hint="A progress bar on your page.">

@@ -178,6 +178,7 @@ ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_use TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS thank_you TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_units INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_started_at BIGINT;
 -- goal_period is 'one-time' (counts since goal_started_at) or 'monthly' (counts the current UTC month, computed on read).
