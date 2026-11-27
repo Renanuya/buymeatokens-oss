@@ -255,3 +255,23 @@ export async function repoFileText(repo: string, path: string): Promise<string |
     return null;
   }
 }
+
+/**
+ * Whether github.com shows the Sponsor button on a public repository's page, read from the data the page embeds
+ * (`"showSponsorButton":true`). That needs FUNDING.yml and Sponsorships turned on in the repo's settings, which no API
+ * reports. Not an API itself: if GitHub changes its page, this returns null rather than a wrong answer.
+ */
+export async function repoSponsorButtonShown(repo: string): Promise<boolean | null> {
+  try {
+    const res = await fetch(`https://github.com/${repo}`, {
+      headers: { "User-Agent": HEADERS["User-Agent"], Accept: "text/html" },
+      signal: AbortSignal.timeout(5000),
+      cache: "no-store",
+    });
+    if (!res.ok) return null;
+    const match = /"showSponsorButton":(true|false)/.exec(await res.text());
+    return match ? match[1] === "true" : null;
+  } catch {
+    return null;
+  }
+}

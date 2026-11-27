@@ -13,6 +13,7 @@ import {
   newFileUrl,
   npmFundingField,
   npmLink,
+  repoSettingsUrl,
   sponsorLink,
   type SponsorStatus,
   type SponsorTarget,
@@ -46,11 +47,23 @@ function GitHubLink({ href, children }: { href: string; children: ReactNode }) {
   );
 }
 
-/** What to show for one repository: a line about its state, and the action that gets the button there. */
+/**
+ * What to show for one repository: a line about its state, and the action that gets the button there. `dir` is
+ * ".github" for a project repository and "" for the account's `.github` repository.
+ */
 function targetParts(t: SponsorTarget, link: string, dir: string): { detail: string; action: ReactNode } {
   const branch = t.branch ?? "main";
   const path = dir ? `${dir}/FUNDING.yml` : "FUNDING.yml";
-  if (t.state === "on") return { detail: "Sponsor button is on", action: <CheckDot on className="size-[18px]" /> };
+  const done = <CheckDot on className="size-[18px]" />;
+  if (!dir && t.state === "on") return { detail: "Covers repos without their own file", action: done };
+  if (dir && (t.state === "on" || t.covered)) {
+    // The file is there, but GitHub hides the button until Sponsorships is on in the repo's settings.
+    if (t.shown) return { detail: "Sponsor button is on", action: done };
+    return {
+      detail: t.shown === false ? "Now turn on Sponsorships in Settings" : "Make sure Sponsorships is on in Settings",
+      action: <GitHubLink href={repoSettingsUrl(t.repo)}>Settings</GitHubLink>,
+    };
+  }
   if (t.exists === false) {
     return dir
       ? { detail: "Not on GitHub, or not public", action: <CopyButton value={fundingYml(link)} label="Copy FUNDING.yml" className={COPY} /> }
@@ -75,8 +88,9 @@ function targetParts(t: SponsorTarget, link: string, dir: string): { detail: str
 
 /**
  * GitHub's Sponsor button for the creator's repository and, through their `.github` repository, all of them; plus
- * the npm funding field. "Add on GitHub" opens GitHub with FUNDING.yml filled in. The states are checked again when
- * the creator comes back to the tab, so a committed file shows as on.
+ * the npm funding field. "Add on GitHub" opens GitHub with FUNDING.yml filled in; then Sponsorships has to be turned on
+ * in the repo's settings, and the tab links there until GitHub shows the button. The states are checked again when the
+ * creator comes back to the tab.
  */
 export function SponsorSetup({ username, base }: { username: string; base: string }) {
   const link = sponsorLink(base, username);
@@ -165,7 +179,8 @@ export function SponsorSetup({ username, base }: { username: string; base: strin
         </Row>
       </ul>
       <p className="mt-2.5 text-xs text-muted">
-        GitHub opens with the file filled in. Commit it and a Sponsor button appears at the top of the repo.
+        GitHub opens with FUNDING.yml filled in. Commit it, then turn on Sponsorships in the repo’s Settings (General →
+        Features) and the Sponsor button appears at the top of the repo.
       </p>
     </div>
   );
