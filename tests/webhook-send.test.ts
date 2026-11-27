@@ -61,6 +61,8 @@ describe("signature", () => {
 
   it("redacts the secret prefix from logs", () => {
     expect(redactSecrets("failed with bmtwh_AbC-123_xyz in it")).toBe("failed with [redacted] in it");
+    // Also when it follows a word character, where  finds no boundary.
+    expect(redactSecrets("secret=x_bmtwh_AbC-123_xyz")).toBe("secret=x_[redacted]");
   });
 });
 

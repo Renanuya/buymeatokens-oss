@@ -45,6 +45,9 @@ export function enqueueWebhooksCte(type: WebhookEventType): string {
       FROM moved m, (SELECT ?::bigint AS t) c
     ) e
     JOIN webhook_endpoints ep ON ep.creator_id = e.creator_id AND ep.enabled
+    -- An endpoint deleted while this statement runs is skipped instead of failing the foreign key, which would roll
+    -- back the payment's confirmation with it.
+    FOR KEY SHARE OF ep
     ON CONFLICT (endpoint_id, event_id) DO NOTHING
   )`;
 }

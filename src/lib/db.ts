@@ -328,6 +328,8 @@ CREATE TABLE IF NOT EXISTS webhook_deliveries (
   UNIQUE (endpoint_id, event_id)
 );
 CREATE INDEX IF NOT EXISTS webhook_deliveries_due ON webhook_deliveries(next_attempt_at) WHERE status = 'pending';
+-- Serves the claim's "left in sending by a worker that died" branch, so an idle tick doesn't scan the table.
+CREATE INDEX IF NOT EXISTS webhook_deliveries_sending ON webhook_deliveries(attempted_at) WHERE status = 'sending';
 CREATE INDEX IF NOT EXISTS webhook_deliveries_created ON webhook_deliveries(created_at);
 ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
 -- "Send a test event" rate limit: one fixed window per creator.

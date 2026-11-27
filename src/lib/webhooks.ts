@@ -79,15 +79,20 @@ export async function addEndpoint(
   }
 }
 
-/** A new secret; the old one keeps signing for 24 hours. Returns the new secret once, or null if it isn't theirs. */
-export async function rotateSecret(creatorId: string, id: string, now = Date.now()): Promise<string | null> {
+/**
+ * A new secret; the old one keeps signing for 24 hours. Returns the new secret once, null if it isn't theirs, or
+ * "too_soon" during the 24 hours after a rotation: a second one would drop the secret receivers may still be using.
+ */
+export async function rotateSecret(creatorId: string, id: string, now = Date.now()): Promise<string | "too_soon" | null> {
   const secret = newSecret();
   const rs = await query(
     `UPDATE webhook_endpoints SET prev_secret_enc = secret_enc, prev_expires_at = ?, secret_enc = ?
-     WHERE id = ? AND creator_id = ? RETURNING id`,
-    [now + ROTATION_GRACE_MS, encrypt(secret), id, creatorId],
+     WHERE id = ? AND creator_id = ? AND (prev_expires_at IS NULL OR prev_expires_at <= ?) RETURNING id`,
+    [now + ROTATION_GRACE_MS, encrypt(secret), id, creatorId, now],
   );
-  return rs.rows.length ? secret : null;
+  if (rs.rows.length) return secret;
+  const mine = await query("SELECT 1 FROM webhook_endpoints WHERE id = ? AND creator_id = ?", [id, creatorId]);
+  return mine.rows.length ? "too_soon" : null;
 }
 
 export async function deleteEndpoint(creatorId: string, id: string): Promise<boolean> {

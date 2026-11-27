@@ -108,12 +108,14 @@ export async function checkWebhookUrl(input: string, resolve: Resolver = resolve
 > {
   const parsed = parseWebhookUrl(input);
   if ("error" in parsed) return parsed;
+  // One answer for "doesn't resolve" and "resolves somewhere private", so saving can't be used to map names.
+  const refused = { error: "That address can't receive webhooks. It has to be a public HTTPS server." };
   let addresses: string[];
   try {
     addresses = await resolve(parsed.url.hostname.replace(/\.$/, ""));
   } catch {
-    return { error: "That host name doesn't resolve." };
+    return refused;
   }
-  if (!addresses.length || addresses.some(isBlockedAddress)) return { error: "That address isn't allowed." };
+  if (!addresses.length || addresses.some(isBlockedAddress)) return refused;
   return { url: parsed.url, address: addresses[0] };
 }

@@ -41,7 +41,8 @@ a test key. Ignore events where `livemode` is false in production. The event id 
 }
 ```
 
-`created` is Unix seconds. `method` is `stripe`, `paypal` or `usdc` (currency `usdc`). `supporter_name` is `null` when the
+`created` is Unix seconds. `method` is `stripe`, `paypal` or `usdc` (currency `usdc`; `amount_cents` is still US cents,
+since USDC is a dollar stablecoin). `supporter_name` is `null` when the
 supporter left no name. The payload is copied when the event is queued, so later edits don't change it. Name and message
 are typed by the supporter: escape them before you show them anywhere, and strip mentions before you post them to chat.
 
@@ -61,7 +62,9 @@ PayPal ids, your account details, anything about other creators.
 
 `v1` is the hex HMAC-SHA256 of `"<t>.<raw body>"` with your signing secret (`bmtwh_...`, shown once when you add the
 endpoint or rotate it). The signature is made again on every attempt, so `t` is fresh each time. During the 24 hours after
-a rotation the header holds two `v1=` entries, one per secret: accept the request if any of them matches.
+a rotation the header holds two `v1=` entries, one per secret: accept the request if any of them matches. A secret
+can't be rotated again inside those 24 hours (that would drop the one your receiver may still use); to start over at
+once, delete the endpoint and add it again.
 
 ## Verifying a request
 
@@ -92,8 +95,11 @@ export function verify(rawBody, header, secret) {
 - 20 failed attempts in a row at one endpoint disable it (status "disabled"; events waiting for it are dropped and the
   operator is alerted). A delivered event resets the count. A delivered test event turns a disabled endpoint back on.
 - Redirects are not followed. Response bodies are not read or stored.
-- The worker is the minute job `/api/cron/emails`; it sends at most 20 events a tick within a 20 second budget. Finished
+- The worker is the minute job `/api/cron/emails`; it sends at most 20 events a tick within a 20 second budget, and
+  each endpoint gets one slot per batch of five, so one busy endpoint can't hold up everyone else's. Finished
   deliveries are deleted after 30 days.
+- If the event can't be stored, the payment isn't confirmed either: both happen in one statement. A PayPal notification
+  in that case is answered with `503`, so PayPal sends it again.
 
 ## URL restrictions
 

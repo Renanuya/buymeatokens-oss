@@ -287,6 +287,36 @@ describe("signed webhooks", () => {
       expect((await deliveries())[0]).toMatchObject({ status: "pending", attempt_count: 1 });
     });
 
+    it("gives each endpoint one slot per batch, so one creator's backlog can't hold up everyone else", async () => {
+      await endpoint("maker");
+      for (let i = 0; i < 12; i++) await markPaid(await donation());
+      await endpoint("other", "https://hooks.example.org/other");
+      await markPaid(await donation({ creatorId: "other" }));
+      const post = sent(200);
+      await processWebhooks(NOW, deps(post, { budgetMs: 100_000 }));
+      // The first batch already carried the other creator's event, although it was queued after all twelve.
+      const firstTwo = post.mock.calls.slice(0, 2).map(([req]) => req.url.hostname);
+      expect(firstTwo).toContain("hooks.example.org");
+    });
+
+    it("drops what a slower worker put back after the endpoint was disabled", async () => {
+      const ep = await endpoint();
+      await markPaid(await donation());
+      await query("UPDATE webhook_endpoints SET enabled = false, disabled_at = ? WHERE id = ?", [NOW - MIN, ep.id]);
+      // A worker from an earlier tick still holds this row and finishes it now, with a failure.
+      await query("UPDATE webhook_deliveries SET status = 'sending', attempted_at = ?, attempt_count = 1", [NOW]);
+      await markPaid(await donation()); // nothing is queued for a disabled endpoint
+      await query(
+        `INSERT INTO webhook_deliveries (id, endpoint_id, event_id, event_type, payload, next_attempt_at, created_at)
+         VALUES ('late', ?, 'evt_late', 'support.confirmed', '{}', ?, ?)`,
+        [ep.id, NOW, NOW],
+      );
+      const { finishDelivery } = await import("../src/lib/webhook-delivery");
+      const [held] = (await query("SELECT * FROM webhook_deliveries WHERE status = 'sending'")).rows as unknown as Delivery[];
+      await finishDelivery({ ...held, attempt_count: 1 }, 500, NOW + MIN);
+      expect((await deliveries()).map((r) => r.status)).toEqual(["dead", "dead"]);
+    });
+
     it(`disables the endpoint after ${FAIL_LIMIT} failures in a row, drops what is waiting and records an ops event`, async () => {
       const { ep } = await queued();
       await markPaid(await donation());
@@ -346,8 +376,9 @@ describe("signed webhooks", () => {
       for (let i = 0; i < 12; i++) await markPaid(await donation());
       const slow = vi.fn<HttpsPost>(() => new Promise((resolve) => setTimeout(() => resolve({ status: 200 }), 700)));
       const result = await processWebhooks(NOW, deps(slow, { budgetMs: 2500, timeoutMs: 1000 }));
-      expect(result.claimed).toBe(5); // one batch fit (needs 2 s of the 2.5 s); after 0.7 s the next one did not
-      expect((await deliveries()).filter((r) => r.status === "pending")).toHaveLength(7);
+      // One batch fit (it needs 2 s of the 2.5 s); after 0.7 s the next did not. One endpoint gets one slot per batch.
+      expect(result.claimed).toBe(1);
+      expect((await deliveries()).filter((r) => r.status === "pending")).toHaveLength(11);
       expect(await processWebhooks(NOW, deps(slow, { budgetMs: 10, timeoutMs: 1000 }))).toEqual({ claimed: 0, delivered: 0 });
     });
 
@@ -409,6 +440,17 @@ describe("signed webhooks", () => {
       expect(JSON.stringify(list)).not.toContain(ep.secret);
       expect(JSON.stringify(list)).not.toContain("token");
       expect(list[0]).toMatchObject({ maskedUrl: "https://hooks.example.com/…", status: "active" });
+    });
+
+    it("refuses a second rotation inside the 24 hours, which would drop the secret receivers may still use", async () => {
+      const ep = await endpoint();
+      const fresh = await rotateSecret("maker", ep.id, NOW);
+      expect(typeof fresh).toBe("string");
+      expect(await rotateSecret("maker", ep.id, NOW + 60 * MIN)).toBe("too_soon");
+      const row = (await query("SELECT * FROM webhook_endpoints WHERE id = ?", [ep.id])).rows[0];
+      expect(decrypt(String(row.prev_secret_enc))).toBe(ep.secret);
+      expect(await rotateSecret("maker", ep.id, NOW + ROTATION_GRACE_MS)).not.toBe("too_soon");
+      expect(await rotateSecret("other", ep.id, NOW + ROTATION_GRACE_MS * 3)).toBeNull();
     });
 
     it("keeps the previous secret for 24 hours after a rotation", async () => {

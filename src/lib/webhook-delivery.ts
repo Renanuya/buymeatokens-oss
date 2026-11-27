@@ -26,18 +26,29 @@ export const KEEP_MS = 30 * 86_400_000;
 
 type Claimed = { id: string; endpoint_id: string; event_id: string; event_type: string; payload: string; attempt_count: number };
 
+const DUE = `((w.status = 'pending' AND w.next_attempt_at <= ?) OR (w.status = 'sending' AND w.attempted_at <= ?))`;
+
+/**
+ * At most one event per endpoint in a batch, oldest first, so one creator's backlog (or a slow receiver fed with free
+ * test payments) can't take every slot from everyone else. FOR UPDATE can't be combined with DISTINCT, so the
+ * candidates are picked first and then locked, rechecking that they are still due.
+ */
 async function claim(now: number, limit: number): Promise<Claimed[]> {
   const rs = await query(
-    `WITH due AS (
-       SELECT w.id FROM webhook_deliveries w
-       WHERE ((w.status = 'pending' AND w.next_attempt_at <= ?) OR (w.status = 'sending' AND w.attempted_at <= ?))
-         AND EXISTS (SELECT 1 FROM webhook_endpoints e WHERE e.id = w.endpoint_id AND e.enabled)
-       ORDER BY w.next_attempt_at ASC LIMIT ? FOR UPDATE OF w SKIP LOCKED
+    `WITH candidates AS (
+       SELECT id, next_attempt_at FROM (
+         SELECT DISTINCT ON (w.endpoint_id) w.id, w.next_attempt_at FROM webhook_deliveries w
+         WHERE ${DUE} AND EXISTS (SELECT 1 FROM webhook_endpoints e WHERE e.id = w.endpoint_id AND e.enabled)
+         ORDER BY w.endpoint_id, w.next_attempt_at ASC
+       ) one_each ORDER BY next_attempt_at ASC LIMIT ?
+     ), due AS (
+       SELECT w.id FROM webhook_deliveries w JOIN candidates c ON c.id = w.id
+       WHERE ${DUE} FOR UPDATE OF w SKIP LOCKED
      )
      UPDATE webhook_deliveries w SET status = 'sending', attempted_at = ?, attempt_count = w.attempt_count + 1
      FROM due WHERE w.id = due.id
      RETURNING w.id, w.endpoint_id, w.event_id, w.event_type, w.payload, w.attempt_count`,
-    [now, now - LEASE_MS, limit, now],
+    [now, now - LEASE_MS, limit, now, now - LEASE_MS, now],
   );
   return rs.rows as unknown as Claimed[];
 }
@@ -67,14 +78,20 @@ async function finish(d: Claimed, status: number | null, now: number) {
     `UPDATE webhook_endpoints SET fail_streak = fail_streak + 1,
        enabled = enabled AND fail_streak + 1 < ?,
        disabled_at = CASE WHEN enabled AND fail_streak + 1 >= ? THEN ?::bigint ELSE disabled_at END
-     WHERE id = ? RETURNING creator_id, (NOT enabled AND disabled_at = ?::bigint) AS just_disabled`,
+     WHERE id = ? RETURNING creator_id, enabled, (NOT enabled AND disabled_at = ?::bigint) AS just_disabled`,
     [FAIL_LIMIT, FAIL_LIMIT, now, d.endpoint_id, now],
   );
-  if (ep.rows[0]?.just_disabled) {
+  // Whenever the endpoint is disabled, not only on the attempt that disabled it: a slower worker from an earlier tick can
+  // put its row back to pending afterwards, and that row must not wait there to be sent weeks later.
+  if (ep.rows[0] && !ep.rows[0].enabled) {
     await query("UPDATE webhook_deliveries SET status = 'dead' WHERE endpoint_id = ? AND status = 'pending'", [d.endpoint_id]);
+  }
+  if (ep.rows[0]?.just_disabled) {
     await recordOpsEvent("[webhook] endpoint disabled after repeated failures", [String(ep.rows[0].creator_id)]);
   }
 }
+
+export { finish as finishDelivery };
 
 async function attempt(d: Claimed, now: number, deps: SendDeps): Promise<boolean> {
   const rs = await query("SELECT url, secret_enc, prev_secret_enc, prev_expires_at FROM webhook_endpoints WHERE id = ?", [d.endpoint_id]);

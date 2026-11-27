@@ -23,6 +23,9 @@ export async function rotateWebhookAction(id: string): Promise<WebhookResult> {
   const user = await requireCreator();
   assertConsent(user);
   const secret = await rotateSecret(user.id, String(id)).catch(() => null);
+  if (secret === "too_soon") {
+    return { error: "This secret was replaced less than 24 hours ago. To start over now, delete the endpoint and add it again." };
+  }
   if (!secret) return { error: SAVE_FAILED };
   revalidatePath("/dashboard/account");
   return { message: "New secret. The old one keeps working for 24 hours. Copy this one now.", secret };
