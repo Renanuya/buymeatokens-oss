@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
+import { CommunityCard } from "@/components/community-card";
 import { DemoSupportCard } from "@/components/demo-support-card";
 import { HowItWorks } from "@/components/how-it-works";
 import { MakersCollage } from "@/components/makers-collage";
@@ -13,6 +14,7 @@ import { StartCta } from "@/components/start-cta";
 import { listRecentCreators } from "@/lib/applications";
 import { accessCopy } from "@/lib/access-copy";
 import { categoryOf, getPost, type Post } from "@/lib/blog";
+import { DISCORD_URL, IDEAS_URL } from "@/lib/config";
 import { faqJsonLd, jsonLdScript, organizationJsonLd, softwareJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SignedInSwitch } from "@/components/signed-in-switch";
 
@@ -274,6 +276,20 @@ export default async function Home() {
             </ul>
           </section>
         )}
+
+        <section id="community" className="wrap scroll-mt-6 pb-28 md:pb-44">
+          <Reveal>
+            <CommunityCard
+              eyebrow="Community"
+              title="Meet the builders on Discord."
+              text="Give feedback, show what you're building, and meet other open source developers and the people who support them."
+              links={[
+                { href: DISCORD_URL, label: "Join the Discord" },
+                { href: IDEAS_URL, label: "Vote on ideas" },
+              ]}
+            />
+          </Reveal>
+        </section>
       </main>
       <SiteFooter />
     </>

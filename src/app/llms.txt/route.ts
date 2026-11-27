@@ -1,5 +1,5 @@
 import { CATEGORIES, getAllPosts } from "@/lib/blog";
-import { appUrl } from "@/lib/config";
+import { appUrl, DISCORD_URL } from "@/lib/config";
 import { SITE_SUMMARY, siteFacts } from "@/lib/seo";
 
 // llms.txt (https://llmstxt.org): a plain Markdown map of the site for AI assistants and agents.
@@ -30,6 +30,7 @@ ${siteFacts().map((fact) => `- ${fact}`).join("\n")}
 - [About & transparency](${base}/about): who builds it, where payments go, pricing and the lifetime free access commitment
 - [Roadmap](${base}/roadmap): planned features in priority order
 - [Example creator page](${base}/renanuya): what supporters see
+- [Community Discord](${DISCORD_URL}): feedback, project showcases, and other open source developers and supporters
 
 ## Guides
 

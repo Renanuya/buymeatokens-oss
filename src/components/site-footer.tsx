@@ -1,4 +1,4 @@
-import { SOURCE_URL } from "@/lib/config";
+import { DISCORD_URL, SOURCE_URL } from "@/lib/config";
 import { FooterNotice, LegalLinks } from "./legal-footer";
 
 const COLUMNS = [
@@ -17,6 +17,7 @@ const COLUMNS = [
       { href: "/roadmap", label: "Roadmap" },
       { href: "/about", label: "About & transparency" },
       { href: SOURCE_URL, label: "Source code on GitHub" },
+      { href: DISCORD_URL, label: "Community on Discord" },
     ],
   },
 ];

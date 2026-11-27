@@ -5,6 +5,11 @@
 export const SOURCE_REPO = "Renanuya/buymeatokens-oss";
 export const SOURCE_URL = `https://github.com/${SOURCE_REPO}`;
 export const IDEAS_URL = `${SOURCE_URL}/discussions/categories/ideas`;
+/**
+ * The community Discord: feedback, showing projects, and meeting other open source developers and supporters.
+ * A permanent invite; if it ever changes, this is the only place to update on the site.
+ */
+export const DISCORD_URL = "https://discord.gg/CbaChQphmW";
 
 export function appUrl(): string {
   return (process.env.APP_URL || "http://localhost:3000").replace(/\/+$/, "");
