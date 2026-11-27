@@ -10,6 +10,7 @@ import { contactEmail, legalValue } from "@/lib/legal/config";
 import { requireCreator } from "@/lib/session";
 import { deletionConfirmationName } from "./confirm";
 import { DeleteAccountForm } from "./delete-account-form";
+import { LeaderboardToggle } from "./leaderboard-toggle";
 import { SupportEmailToggle } from "./support-email-toggle";
 
 export const metadata: Metadata = { title: { absolute: "Account · buymeatokens" }, robots: { index: false, follow: false } };
@@ -52,6 +53,23 @@ export default async function AccountPage() {
             </p>
           </div>
           <SupportEmailToggle on={user.supportEmails} />
+        </div>
+      </Section>
+
+      <Section id="leaderboard" title="Leaderboard">
+        <div className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+            <Glyph name="trophy" strokeWidth={2} className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink">Show my project on the leaderboard</p>
+            <p className="mt-0.5 break-words text-[13px] leading-snug text-muted">
+              Off by default. Your name, avatar, tokens received and supporter count are listed on the{" "}
+              <a href="/leaderboard" className="underline underline-offset-2">public leaderboard</a>, for the last day, week,
+              month and all time. With your public price, those tokens tell roughly what you received in each.
+            </p>
+          </div>
+          <LeaderboardToggle on={user.leaderboardOptIn} />
         </div>
       </Section>
 

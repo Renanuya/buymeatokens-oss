@@ -14,6 +14,7 @@ const COLUMNS = [
     title: "Learn",
     links: [
       { href: "/blog", label: "Blog" },
+      { href: "/leaderboard", label: "Leaderboard" },
       { href: "/roadmap", label: "Roadmap" },
       { href: "/about", label: "About & transparency" },
       { href: SOURCE_URL, label: "Source code on GitHub" },

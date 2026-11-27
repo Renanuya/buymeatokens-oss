@@ -8,6 +8,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Leaderboard** (`/leaderboard`, plus `/leaderboard/daily`, `/weekly` and `/monthly`): the most-supported projects, ranked by
+  AI tokens received over the last 24 hours, 7 days, 30 days or all time, with the supporter count beside each. It is
+  opt-in: nobody is listed until they turn on *Show my project on the leaderboard* under Account. Only creators with a
+  listed page in live mode appear, and it never shows dollar amounts. It ranks recorded support, not verified popularity.
+  Refreshed every 5 minutes; linked from the footer and the sitemap.
 - **Monthly funding goals**: a goal is now one-time (as before, the default) or monthly. A monthly goal counts the
   confirmed support of the current calendar month, across card, PayPal and USDC, in the creator's current mode, and
   starts over on the 1st with no job or stored counter: progress is summed when the page loads, by confirmation
