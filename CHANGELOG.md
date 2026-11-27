@@ -8,6 +8,25 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Support emails.** A creator gets an email when someone supports them, with each supporter's name, amount, payment
+  method and message, and a button to say thanks from the dashboard ([#19](https://github.com/Renanuya/buymeatokens-oss/issues/19)).
+  - At most one email per creator every ten minutes: payments that arrive in between are bundled into the next one,
+    which lists up to five supporters and counts the rest.
+  - Creators can turn it off under *Account → Emails*. Support that arrives while it's off is never announced later.
+  - Each payment is claimed before sending, so it's announced at most once. Only payments confirmed after this
+    release and within the last seven days are announced. Refunded support that wasn't announced yet never is.
+  - The Privacy Policy lists the new email.
+- **Site alerts** for the operator (`src/lib/ops.ts`). Uncaught server errors (through `onRequestError` in
+  `src/instrumentation.ts`) and payment problems are grouped into `ops_events` and emailed to `OPS_ALERT_TO` (or
+  `EMAIL_TEST_TO`): new problems at once, repeats at most hourly, and no more than one email every ten minutes.
+  *Admin → Alerts* lists the last seven days.
+  - PayPal notifications now raise an alert when PayPal doesn't verify them, when the money went to another receiver
+    or currency, when PayPal holds a payment (with its `pending_reason`, for example `unilateral` when the creator's
+    email has no PayPal account yet), and when a completed payment matches no support. Before, these were silently
+    ignored.
+  - Every place that logged a payment, sign-in or email error with `logError` now uses `reportError`, which logs and
+    records the alert.
+
 - **Analytics** tab in the dashboard (`/dashboard/analytics`). It shows the creator's page visitors over 7 days,
   30 days or 12 months, and a conversion funnel: visitors, then people who pressed a support button, then
   confirmed support. It also lists where visitors come from: the README badge, GitHub, X, LinkedIn, Threads,

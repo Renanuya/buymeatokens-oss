@@ -38,6 +38,8 @@ export type User = {
   termsVersion: string | null;
   /** When the creator confirmed they are at least 18 (Unix ms, UTC). */
   ageConfirmedAt: number | null;
+  /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
+  supportEmails: boolean;
   createdAt: number;
 };
 
@@ -72,6 +74,7 @@ function mapUser(r: Row): User {
     termsAcceptedAt: num(r.terms_accepted_at),
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
+    supportEmails: r.support_emails !== false,
     createdAt: num(r.created_at) ?? 0,
   };
 }
@@ -250,6 +253,10 @@ export async function setStripeKey(id: string, encryptedKey: string | null, mode
 
 export async function setUsdcAddress(id: string, address: string | null) {
   await run("UPDATE users SET usdc_address = ? WHERE id = ?", [address, id]);
+}
+
+export async function setSupportEmails(id: string, on: boolean) {
+  await run("UPDATE users SET support_emails = (?::int = 1) WHERE id = ?", [on ? 1 : 0, id]);
 }
 
 export async function setAccessStatus(id: string, status: AccessStatus) {

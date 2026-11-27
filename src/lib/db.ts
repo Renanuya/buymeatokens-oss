@@ -255,6 +255,41 @@ ALTER TABLE visit_salts ENABLE ROW LEVEL SECURITY;
 -- Where the supporter's visit came from, for support by source. NULL for payments made before this existed.
 ALTER TABLE donations ADD COLUMN IF NOT EXISTS visit_source TEXT;
 
+-- Support emails (src/lib/support-emails.ts): the creator hears about each confirmed payment by email, unless they
+-- turned it off under Account. One row per payment, claimed atomically, so a payment is announced at most once.
+-- Payments confirmed before the ledger row below was written are never announced.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS support_emails BOOLEAN NOT NULL DEFAULT true;
+CREATE TABLE IF NOT EXISTS support_notifications (
+  donation_id TEXT PRIMARY KEY REFERENCES donations(id) ON DELETE CASCADE,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'sent', 'failed', 'unknown', 'skipped')),
+  attempt_count INTEGER NOT NULL DEFAULT 1,
+  attempted_at BIGINT NOT NULL,
+  sent_at BIGINT,
+  provider_id TEXT
+);
+CREATE INDEX IF NOT EXISTS support_notifications_creator ON support_notifications(creator_id, attempted_at);
+ALTER TABLE support_notifications ENABLE ROW LEVEL SECURITY;
+CREATE INDEX IF NOT EXISTS donations_paid_at ON donations(paid_at) WHERE status = 'paid';
+INSERT INTO schema_migrations (id, applied_at)
+VALUES ('support-notifications-v1', (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000)::bigint)
+ON CONFLICT (id) DO NOTHING;
+
+-- Operator alerts (src/lib/ops.ts): server errors and payment problems, grouped by what went wrong. The minute email
+-- worker mails new groups to the operator. Details are redacted one-line messages; rows go after 30 days.
+CREATE TABLE IF NOT EXISTS ops_events (
+  key TEXT PRIMARY KEY,
+  tag TEXT NOT NULL,
+  detail TEXT NOT NULL,
+  count BIGINT NOT NULL DEFAULT 1,
+  first_at BIGINT NOT NULL,
+  last_at BIGINT NOT NULL,
+  notified_at BIGINT,
+  notified_count BIGINT NOT NULL DEFAULT 0
+);
+CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
+ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 `;

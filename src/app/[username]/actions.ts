@@ -6,7 +6,7 @@ import { appUrl } from "@/lib/config";
 import { decrypt } from "@/lib/crypto";
 import { attachSession, createPendingDonation, markStatus, recordUsdcDonation } from "@/lib/donations";
 import { formatTokens, formatUsd } from "@/lib/format";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 import { paypalCheckoutUrl } from "@/lib/paypal";
 import { createDonationCheckout } from "@/lib/stripe";
 import { checkUsdcTransfer, isTxHash } from "@/lib/usdc";
@@ -85,7 +85,7 @@ export async function confirmUsdcPayment(input: {
     try {
       check = await checkUsdcTransfer(txHash, creator.usdcAddress, USDC_MAX_AGE_MS);
     } catch (error) {
-      logError("[usdc]", txHash, error);
+      await reportError("[usdc]", txHash, error);
       check = null;
     }
     if (check && !(check.ok === false && check.reason === "pending")) break;
@@ -158,7 +158,7 @@ export async function startCheckout(formData: FormData) {
     await attachSession(donationId, session.id);
     checkoutUrl = session.url;
   } catch (error) {
-    logError("[checkout]", creator.username, error);
+    await reportError("[checkout]", creator.username, error);
   }
 
   if (!checkoutUrl) {

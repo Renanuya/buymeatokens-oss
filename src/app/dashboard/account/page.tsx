@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { LegalLinks } from "@/components/legal-footer";
 import { PageTitle } from "@/components/page-title";
+import { Glyph } from "@/components/glyph";
 import { PaymentExportLink } from "@/components/payment-export-link";
 import { hasCurrentConsent } from "@/lib/consent";
 import { formatDate } from "@/lib/format";
@@ -9,6 +10,7 @@ import { contactEmail, legalValue } from "@/lib/legal/config";
 import { requireCreator } from "@/lib/session";
 import { deletionConfirmationName } from "./confirm";
 import { DeleteAccountForm } from "./delete-account-form";
+import { SupportEmailToggle } from "./support-email-toggle";
 
 export const metadata: Metadata = { title: { absolute: "Account · buymeatokens" }, robots: { index: false, follow: false } };
 
@@ -31,8 +33,27 @@ export default async function AccountPage() {
   return (
     <div className="max-w-3xl space-y-10">
       <PageTitle eyebrow="Account" title="Your data.">
-        Download your records, check what you accepted, or delete your account.
+        Choose your emails, download your records, check what you accepted, or delete your account.
       </PageTitle>
+
+      <Section id="emails" title="Emails">
+        <div className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+            <Glyph name="bell" strokeWidth={2} className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink">Email me when someone supports me</p>
+            <p className="mt-0.5 break-words text-[13px] leading-snug text-muted">
+              {user.email ? (
+                <>One short email per payment, a few bundled together on busy days. Sent to <span className="text-ink">{user.email}</span>.</>
+              ) : (
+                <>We don&apos;t have your email yet. It comes from GitHub the next time you sign in.</>
+              )}
+            </p>
+          </div>
+          <SupportEmailToggle on={user.supportEmails} />
+        </div>
+      </Section>
 
       <Section title="Payment history">
         <PaymentExportLink username={user.username} detailed />

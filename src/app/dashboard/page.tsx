@@ -21,7 +21,7 @@ import { visitorsSince } from "@/lib/page-visits";
 import { formatTokens, formatUsd, shortName } from "@/lib/format";
 import { storedStripeKeyLast4 } from "@/lib/payment-secrets";
 import { syncCreator } from "@/lib/reconcile";
-import { logError } from "@/lib/redact";
+import { reportError } from "@/lib/ops";
 import { SETUP_STEPS, resumePath, setupProgress } from "@/lib/setup";
 import { requireCreator } from "@/lib/session";
 import { getUserById, hasPaymentMethod } from "@/lib/users";
@@ -29,7 +29,7 @@ import { getUserById, hasPaymentMethod } from "@/lib/users";
 export default async function DashboardPage() {
   const sessionUser = await requireCreator();
   // Pick up payments whose supporters closed the tab before returning to the thank-you page.
-  await syncCreator(sessionUser).catch((error) => logError("[dashboard sync]", error));
+  await syncCreator(sessionUser).catch((error) => reportError("[dashboard sync]", error));
   const user = (await getUserById(sessionUser.id)) ?? sessionUser;
   const username = sessionUser.username!;
 
@@ -197,7 +197,7 @@ export default async function DashboardPage() {
 
         <Reveal delay={120} className="lg:col-span-7">
           <div className="card h-full p-6 sm:p-7">
-            <CardHead title="Recent support">
+            <CardHead title="Recent support" id="recent-support">
               <Link href={`/${username}#supporters`} className="link-arrow text-[13px]">
                 See on your page <ArrowUpRight className="size-3" />
               </Link>

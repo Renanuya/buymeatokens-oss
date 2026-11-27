@@ -56,6 +56,12 @@ async function paypalDonation(id = DONATION_ID, creatorId = CREATOR_ID) {
   );
 }
 
+/** What the operator will be told about, by tag. */
+async function alerts(): Promise<string[]> {
+  const { rows } = await query("SELECT tag FROM ops_events ORDER BY tag");
+  return rows.map((r) => String((r as { tag: string }).tag));
+}
+
 async function donationRow(id = DONATION_ID) {
   const { rows } = await query(
     "SELECT status, tx_hash, amount_cents, units FROM donations WHERE id = ?",
@@ -94,7 +100,7 @@ describe("POST /api/paypal/ipn", () => {
   });
 
   beforeEach(async () => {
-    await mocks.db.exec("TRUNCATE users CASCADE");
+    await mocks.db.exec("TRUNCATE users CASCADE; TRUNCATE ops_events");
     await creator();
     await paypalDonation();
     fetchMock.mockReset();
@@ -198,6 +204,55 @@ describe("POST /api/paypal/ipn", () => {
 
     expect(res.status).toBe(200);
     expect(await donationRow()).toMatchObject({ status: "failed" });
+  });
+
+  describe("tells the operator", () => {
+    beforeEach(() => {
+      vi.spyOn(console, "error").mockImplementation(() => {});
+    });
+
+    it("about a message PayPal didn't verify", async () => {
+      fetchMock.mockImplementation(async () => new Response("INVALID", { status: 200 }));
+      await postIpn(ipnBody());
+      expect(await alerts()).toEqual(["[paypal ipn] not verified by PayPal"]);
+    });
+
+    it("about money that went to another receiver or currency", async () => {
+      await postIpn(ipnBody({ mc_currency: "EUR" }));
+      await postIpn(ipnBody({ business: "x@example.com", receiver_email: "x@example.com" }));
+      expect(await alerts()).toEqual(["[paypal ipn] payment does not match the support"]);
+      const { rows } = await query("SELECT count, detail FROM ops_events");
+      expect(Number(rows[0].count)).toBe(2);
+      expect(String(rows[0].detail)).toContain("other receiver");
+    });
+
+    it("about a payment PayPal holds, with the reason", async () => {
+      await postIpn(ipnBody({ payment_status: "Pending", pending_reason: "unilateral" }));
+      expect(await alerts()).toEqual(["[paypal ipn] pending at PayPal: unilateral"]);
+    });
+
+    it("about a completed payment that matches no support", async () => {
+      await postIpn(ipnBody({ custom: "no-such-donation" }));
+      expect(await alerts()).toEqual(["[paypal ipn] completed payment for no known support"]);
+    });
+
+    it("about a completed payment for a creator who removed PayPal", async () => {
+      await query("UPDATE users SET paypal_email = NULL WHERE id = ?", [CREATOR_ID]);
+      await postIpn(ipnBody());
+      expect(await alerts()).toEqual(["[paypal ipn] completed payment for a creator without PayPal"]);
+    });
+
+    it("about nothing when a payment is simply counted, even twice", async () => {
+      await postIpn(ipnBody());
+      await postIpn(ipnBody());
+      expect(await alerts()).toEqual([]);
+    });
+
+    it("when PayPal can't be reached", async () => {
+      fetchMock.mockRejectedValue(new Error("fetch failed"));
+      await postIpn(ipnBody());
+      expect(await alerts()).toEqual(["[paypal ipn] verify"]);
+    });
   });
 
   it("answers 503 when PayPal is unreachable so PayPal retries", async () => {

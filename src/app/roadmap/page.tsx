@@ -91,6 +91,14 @@ const milestones: Milestone[] = [
     links: [{ href: "/dashboard/analytics", label: "Open your analytics" }],
   },
   {
+    title: "Hear about every new supporter.",
+    description: "Creators get an email when support is confirmed, with the supporter's name, amount and message, so they can say thanks right away. Busy days are bundled into a few emails, and it can be turned off under Account.",
+    category: "Support emails",
+    icon: "bell",
+    done: true,
+    links: [{ href: "/dashboard/account#emails", label: "Email settings" }],
+  },
+  {
     title: "Help people discover projects.",
     description: "Build a searchable project directory with categories, tags and programming languages. Give people ways to find new projects alongside the most-supported ones.",
     category: "Project discovery",
@@ -109,8 +117,8 @@ const milestones: Milestone[] = [
     icon: "repeat",
   },
   {
-    title: "Keep creators informed about new support.",
-    description: "Add email notifications and optional Discord notifications when a new contribution is confirmed, so creators can stay informed and thank their supporters.",
+    title: "Get Discord notifications about new support.",
+    description: "Post a message to the creator's Discord server when a new contribution is confirmed, so the whole community can see it and say thanks.",
     category: "Notifications",
     icon: "bell",
   },

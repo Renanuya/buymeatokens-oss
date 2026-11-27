@@ -27,7 +27,7 @@ export type LegalConfig = {
 // to change: your contact address, your law and your providers.
 export const LEGAL: LegalConfig = {
   LEGAL_LAST_UPDATED: "November 25, 2026",
-  PRIVACY_LAST_UPDATED: "November 26, 2026",
+  PRIVACY_LAST_UPDATED: "November 27, 2026",
   CONTACT_EMAIL: "privacy@buymeatokens.com",
   GOVERNING_LAW_TEXT:
     "the laws of the Republic of Türkiye; the courts and enforcement offices of Istanbul have jurisdiction. If you are a consumer, this does not take away the protection that the mandatory laws of your country of residence give you",
