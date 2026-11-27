@@ -8,6 +8,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Project directory** (`/directory`): creators can opt in (off by default) from their page settings and pick one category and one
+  language from fixed lists. Visitors search by name or description and filter by category and language. The plain listing is
+  cached for five minutes and is in the sitemap; searches (`/directory/search`) are dynamic and `noindex`. Adds three nullable
+  columns and one index on `users`. There are no free-form tags yet.
+
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

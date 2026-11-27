@@ -293,6 +293,13 @@ CREATE TABLE IF NOT EXISTS ops_events (
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 
+-- Project directory (src/lib/directory.ts): a creator opts in (listed_at, Unix ms) and picks one category and one
+-- language from fixed lists. The index serves the unfiltered listing, newest first.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS listed_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_category TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_language TEXT;
+CREATE INDEX IF NOT EXISTS users_directory ON users(listed_at DESC, id) WHERE listed_at IS NOT NULL;
+
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;
 `;

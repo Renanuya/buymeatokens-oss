@@ -40,6 +40,10 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** When the creator listed their project in the directory (Unix ms), or null (src/lib/directory.ts). */
+  listedAt: number | null;
+  projectCategory: string | null;
+  projectLanguage: string | null;
   createdAt: number;
 };
 
@@ -75,6 +79,9 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    listedAt: num(r.listed_at),
+    projectCategory: str(r.project_category),
+    projectLanguage: str(r.project_language),
     createdAt: num(r.created_at) ?? 0,
   };
 }

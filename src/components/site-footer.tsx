@@ -8,6 +8,7 @@ const COLUMNS = [
       { href: "/#how", label: "How it works" },
       { href: "/#makers", label: "For creators" },
       { href: "/#faq", label: "FAQs" },
+      { href: "/directory", label: "Project directory" },
     ],
   },
   {

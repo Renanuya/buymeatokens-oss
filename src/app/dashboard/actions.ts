@@ -5,6 +5,7 @@ import type { ActionState } from "@/components/form-message";
 import { appUrl } from "@/lib/config";
 import { assertConsent } from "@/lib/consent";
 import { encrypt } from "@/lib/crypto";
+import { setListing } from "@/lib/directory";
 import { reportError } from "@/lib/ops";
 import { requireCreator } from "@/lib/session";
 import { StripeApiError, keyMode, verifyRestrictedKey } from "@/lib/stripe";
@@ -71,6 +72,15 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
   await updateProfile(user.id, update);
   refresh(user.username);
   return { message: "Saved. Your page is updated." };
+}
+
+/** The directory switch and its two picks. Values outside the fixed lists are refused, nothing is saved. */
+export async function setDirectoryAction(input: { listed: boolean; category: string; language: string }): Promise<{ ok: boolean }> {
+  const user = await requireCreator();
+  assertConsent(user);
+  const ok = await setListing(user.id, { listed: input?.listed, category: input?.category, language: input?.language });
+  if (ok) revalidatePath("/directory");
+  return { ok };
 }
 
 export async function saveStripeKeyAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
