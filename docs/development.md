@@ -148,8 +148,7 @@ Remove-Item Env:POSTGRES_URL
 | Port 3000 is already in use | Stop the other process using port 3000, or start the dev server on another port and set `APP_URL` to match. |
 | Start over with an empty database | `docker compose down -v`, then `docker compose up -d db`. |
 | `The token '&&' is not a valid statement separator in this version` (PowerShell 5.1) | Run the commands one after the other. `&&` works in PowerShell 7+, cmd.exe, Git Bash and other POSIX shells, but not in Windows PowerShell 5.1. |
-| `npm : File …
-pm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | The execution policy blocks npm's PowerShell wrapper. Run `npm.cmd` instead of `npm` (for example `npm.cmd ci`), or allow signed scripts for your user only: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
+| `npm : File …\npm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | The execution policy blocks npm's PowerShell wrapper. Run `npm.cmd` instead of `npm` (for example `npm.cmd ci`), or allow signed scripts for your user only: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
 | `The term 'POSTGRES_URL=postgres://…' is not recognized as the name of a cmdlet` (PowerShell) | `VAR=x command` is bash syntax. Use the three PowerShell lines under "Checks", including the last one: a `POSTGRES_URL` left set in the window overrides `.env.local` for every later command. |
 | "Continue without GitHub" is missing | `DEV_LOGIN=true` must be in `.env.local`. If you just added it, restart `npm run dev`: changes to `.env.local` only take effect after a restart. |
 | The Stripe key has nowhere to go in `.env.local` | That is expected: paste the `rk_test_…` key in **Dashboard → Payments** (`/dashboard/stripe`), not in `.env.local`. See step 3 in "Try the whole flow". |
