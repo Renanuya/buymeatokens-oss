@@ -12,6 +12,7 @@ import { ProfileMarkdown } from "@/components/profile-markdown";
 import { Reveal } from "@/components/reveal";
 import { shortName } from "@/lib/format";
 import type { RepoStats } from "@/lib/github";
+import type { GoalPeriod } from "@/lib/profile";
 import type { Socials } from "@/lib/socials";
 
 export type PageSupporter = {
@@ -31,11 +32,12 @@ export type CreatorPageModel = {
   avatarUrl: string | null;
   bio: string;
   tokenUse: string;
+  thankYou: string;
   projectUrl: string | null;
   projectName: string | null;
   socials: Socials;
   unitPriceCents: number;
-  goal: { units: number; reached: number } | null;
+  goal: { units: number; reached: number; period: GoalPeriod } | null;
   lifetimeFreeAt: number | null;
   contributor: boolean;
   stats: { units: number; supporters: number };
@@ -96,7 +98,7 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
         <div className="space-y-4 lg:sticky lg:top-8 lg:[@media(min-height:860px)]:top-[121px]">
           {page.goal && (
             <Reveal delay={100}>
-              <GoalProgress reached={page.goal.reached} goal={page.goal.units} />
+              <GoalProgress reached={page.goal.reached} goal={page.goal.units} period={page.goal.period} />
             </Reveal>
           )}
           <Reveal delay={180}>
@@ -153,6 +155,16 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
               </h2>
               <p className="eyebrow">Good work deserves fuel</p>
             </div>
+            {page.thankYou && (
+              // The creator's own words, with their face and name on it, so it can't pass for a message from the site.
+              <div className="mt-5 flex items-start gap-4 overflow-hidden rounded-2xl bg-paper p-5">
+                <Avatar name={page.name} url={page.avatarUrl} className="size-12 shrink-0 rounded-[14px]! text-base" />
+                <div className="min-w-0">
+                  <p className="text-xs font-semibold text-muted">A note from {firstName}</p>
+                  <p className="mt-1 text-sm leading-relaxed [overflow-wrap:anywhere]">{page.thankYou}</p>
+                </div>
+              </div>
+            )}
             {page.supporters.length === 0 ? (
               <div className="mt-5 flex items-center gap-4 rounded-2xl bg-paper p-5">
                 <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
