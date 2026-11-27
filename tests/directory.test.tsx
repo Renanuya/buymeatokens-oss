@@ -2,7 +2,11 @@ import { PGlite } from "@electric-sql/pglite";
 import { renderToStaticMarkup } from "react-dom/server";
 import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from "vitest";
 
-const mocks = vi.hoisted(() => ({ db: null as unknown as PGlite, user: null as null | { id: string; username: string } }));
+const mocks = vi.hoisted(() => ({
+  db: null as unknown as PGlite,
+  user: null as null | { id: string; username: string },
+  oldTerms: false,
+}));
 
 vi.mock("../src/lib/db", async (importOriginal) => {
   const original = await importOriginal<typeof import("../src/lib/db")>();
@@ -16,13 +20,18 @@ vi.mock("../src/lib/db", async (importOriginal) => {
   };
 });
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
-vi.mock("next/navigation", () => ({ usePathname: () => "/", redirect: vi.fn() }));
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/",
+  redirect: (to: string) => {
+    throw new Error(`REDIRECT ${to}`);
+  },
+}));
 vi.mock("../src/lib/session", async () => {
   const { TERMS_VERSION } = await import("../src/lib/legal/config");
   return {
     requireCreator: async () => {
       if (!mocks.user) throw new Error("not signed in");
-      return { ...mocks.user, termsVersion: TERMS_VERSION, termsAcceptedAt: 1, ageConfirmedAt: 1 };
+      return { ...mocks.user, termsVersion: mocks.oldTerms ? "2000-01-01" : TERMS_VERSION, termsAcceptedAt: 1, ageConfirmedAt: 1 };
     },
   };
 });
@@ -33,7 +42,7 @@ import { SiteFooter } from "../src/components/site-footer";
 import { metadata as searchMetadata } from "../src/app/directory/search/page";
 import sitemap from "../src/app/sitemap";
 import { SCHEMA, query } from "../src/lib/db";
-import { CATEGORIES, LANGUAGES, MAX_PAGE, PAGE_SIZE, languageFromGitHub, listDirectory, parseFilters } from "../src/lib/directory";
+import { CATEGORIES, LANGUAGES, MAX_PAGE, PAGE_SIZE, languageFromGitHub, listDirectory, parseFilters, searchQuery } from "../src/lib/directory";
 
 type Seed = Partial<{
   username: string; displayName: string; project: string | null; bio: string; listedAt: number | null; category: string | null;
@@ -103,21 +112,37 @@ describe("search", () => {
     expect(await names({ q: "engine" })).toEqual(["alpha", "gamma", "beta"]);
   });
 
-  it("treats wildcards, quotes and backslashes as text", async () => {
+  it("matches words by their start, and nothing the user types is query syntax", async () => {
     await creator({ username: "pct", project: "100% done", bio: "x" });
-    await creator({ username: "und", project: "a_b", bio: "x" });
+    await creator({ username: "kit", project: "Toolkit for agents", bio: "x" });
     await creator({ username: "quote", project: "it's \"fine\"", bio: "x" });
     await creator({ username: "slash", project: "c:\\tmp", bio: "x" });
-    expect(await names({ q: "0% d" })).toEqual(["pct"]);
-    expect(await names({ q: "%%" })).toEqual([]);
-    expect(await names({ q: "a_b" })).toEqual(["und"]);
-    expect(await names({ q: "a_" })).toEqual(["und"]);
-    expect(await names({ q: "__" })).toEqual([]);
-    expect(await names({ q: "it's" })).toEqual(["quote"]);
-    expect(await names({ q: "'; DROP TABLE users; --" })).toEqual([]);
+    expect(await names({ q: "100% done" })).toEqual(["pct"]);
+    expect(await names({ q: "tool agen" })).toEqual(["kit"]);
+    expect(await names({ q: "kit" })).toEqual(["kit"]); // the username
+    expect(await names({ q: "olkit" })).toEqual([]); // a word's start, not its middle
+    expect(await names({ q: "fine" })).toEqual(["quote"]);
     expect(await names({ q: "c:\\tmp" })).toEqual(["slash"]);
-    expect(await names({ q: "\\\\" })).toEqual([]);
-    expect(await names({ q: "\\t" })).toEqual(["slash"]);
+    // No word in it: nothing, not everything.
+    for (const q of ["%%", "__", "\\\\", "&|!:*()"]) expect(await names({ q })).toEqual([]);
+    // tsquery operators and SQL are just words to look for.
+    expect(await names({ q: "'; DROP TABLE users; --" })).toEqual([]);
+    expect(await names({ q: "fine & !x | (y)" })).toEqual([]);
+    expect(searchQuery("Tool  KIT!")).toBe("tool:* & kit:*");
+    expect(searchQuery("a b c d e f g h")).toBe("a:* & b:* & c:* & d:* & e:* & f:*");
+  });
+
+  it("serves a search from the partial full-text index", async () => {
+    const { rows } = await mocks.db.query<{ indexdef: string }>("SELECT indexdef FROM pg_indexes WHERE indexname = 'users_directory_search'");
+    expect(rows[0]?.indexdef).toContain("USING gin");
+    expect(rows[0]?.indexdef).toContain("WHERE (listed_at IS NOT NULL)");
+  });
+
+  it("leaves out a page in Stripe test mode", async () => {
+    await creator({ username: "tester", project: "Engine test", bio: "x" });
+    await query("UPDATE users SET stripe_mode = 'test' WHERE username = 'tester'");
+    expect(await names({ q: "engine" })).not.toContain("tester");
+    expect(await names({})).not.toContain("tester");
   });
 
   it("ignores queries under two characters and caps long ones", async () => {
@@ -177,6 +202,20 @@ describe("opting in", () => {
     expect(again.project_language).toBeNull();
     await setDirectoryAction({ listed: false, category: "", language: "" });
     expect((await query("SELECT listed_at FROM users WHERE id = ?", [id])).rows[0].listed_at).toBeNull();
+  });
+
+  it("lets a creator leave without accepting new Terms, but not join", async () => {
+    const id = await creator();
+    mocks.user = { id, username: "maker1" };
+    mocks.oldTerms = true;
+    try {
+      expect(await setDirectoryAction({ listed: false, category: "", language: "" })).toEqual({ ok: true });
+      expect((await query("SELECT listed_at FROM users WHERE id = ?", [id])).rows[0].listed_at).toBeNull();
+      await expect(setDirectoryAction({ listed: true, category: "", language: "" })).rejects.toThrow(/REDIRECT/);
+      expect((await query("SELECT listed_at FROM users WHERE id = ?", [id])).rows[0].listed_at).toBeNull();
+    } finally {
+      mocks.oldTerms = false;
+    }
   });
 
   it("refuses crafted values and anyone who is not a signed-in creator", async () => {

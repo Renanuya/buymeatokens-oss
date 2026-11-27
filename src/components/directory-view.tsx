@@ -18,8 +18,18 @@ function Card({ entry }: { entry: DirectoryEntry }) {
       <div className="flex items-center gap-3">
         <Avatar name={name} url={entry.avatarUrl} className="size-11 text-sm" />
         <div className="min-w-0">
-          <p className="truncate font-semibold">{entry.projectName || name}</p>
-          <p className="truncate text-xs text-muted">{entry.projectName ? `${name} · ` : ""}@{entry.username}</p>
+          {/* <bdi>: a right-to-left override in a creator's name can't reorder the text around it. */}
+          <p className="truncate font-semibold">
+            <bdi>{entry.projectName || name}</bdi>
+          </p>
+          <p className="truncate text-xs text-muted">
+            {entry.projectName && (
+              <>
+                <bdi>{name}</bdi> ·{" "}
+              </>
+            )}
+            @{entry.username}
+          </p>
         </div>
       </div>
       {lines[0] && <p className="text-sm leading-relaxed text-ink/75">{lines[0]}</p>}

@@ -299,6 +299,10 @@ ALTER TABLE users ADD COLUMN IF NOT EXISTS listed_at BIGINT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_category TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_language TEXT;
 CREATE INDEX IF NOT EXISTS users_directory ON users(listed_at DESC, id) WHERE listed_at IS NOT NULL;
+-- Directory search (src/lib/directory.ts, SEARCH_DOC): word-prefix full-text search over listed creators only.
+CREATE INDEX IF NOT EXISTS users_directory_search ON users USING GIN (to_tsvector('simple',
+  coalesce(project_name, '') || ' ' || coalesce(display_name, '') || ' ' || coalesce(username, '') || ' ' || coalesce(bio, '')))
+  WHERE listed_at IS NOT NULL;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;

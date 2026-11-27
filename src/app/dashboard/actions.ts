@@ -28,6 +28,8 @@ function refresh(username: string) {
   revalidatePath("/dashboard", "layout");
   revalidatePath("/onboarding", "layout");
   revalidatePath(`/${username}`);
+  // A name, a description, a payment method or test mode changes who is in the directory and how they show.
+  revalidatePath("/directory");
 }
 
 export async function updateProfileAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
@@ -77,7 +79,8 @@ export async function updateProfileAction(_prev: ActionState, formData: FormData
 /** The directory switch and its two picks. Values outside the fixed lists are refused, nothing is saved. */
 export async function setDirectoryAction(input: { listed: boolean; category: string; language: string }): Promise<{ ok: boolean }> {
   const user = await requireCreator();
-  assertConsent(user);
+  // Joining a public list needs the current Terms; leaving it never does.
+  if (input?.listed === true) assertConsent(user);
   const ok = await setListing(user.id, { listed: input?.listed, category: input?.category, language: input?.language });
   if (ok) revalidatePath("/directory");
   return { ok };

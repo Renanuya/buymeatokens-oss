@@ -43,10 +43,22 @@ export function parseFilters(input: { q?: unknown; category?: unknown; language?
   };
 }
 
-/** The user's text as a literal inside LIKE: `\`, `%` and `_` lose their special meaning (paired with ESCAPE '\'). */
-export const likeLiteral = (q: string) => `%${q.replace(/[\\%_]/g, "\\$&")}%`;
+// Search is full-text word-prefix matching on a partial GIN index (src/lib/db.ts, users_directory_search), so a search
+// is an index lookup however many creators are listed, instead of an ILIKE scan of every listed row. The expressions
+// must stay exactly as in the index for Postgres to use it.
+const NAMES_TEXT = `coalesce(project_name, '') || ' ' || coalesce(display_name, '') || ' ' || coalesce(username, '')`;
+export const SEARCH_DOC = `to_tsvector('simple', ${NAMES_TEXT} || ' ' || coalesce(bio, ''))`;
+const NAMES_DOC = `to_tsvector('simple', ${NAMES_TEXT})`;
+const MAX_WORDS = 6;
 
-const NAME_MATCH = `(project_name ILIKE ? ESCAPE '\\' OR display_name ILIKE ? ESCAPE '\\' OR username ILIKE ? ESCAPE '\\')`;
+/**
+ * The query's words as a prefix search ("tool kit" finds "toolkit kits"). Only letters and digits are kept, so nothing
+ * the user types is query syntax. Null when there is no word in it.
+ */
+export function searchQuery(q: string): string | null {
+  const words = (q.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? []).slice(0, MAX_WORDS);
+  return words.length ? words.map((w) => `${w}:*`).join(" & ") : null;
+}
 
 /**
  * One bounded query. Eligible = opted in, public by the sitemap's rule (INDEXABLE_SQL) and a project name or a bio.
@@ -57,6 +69,8 @@ export async function listDirectory(input: Parameters<typeof parseFilters>[0]): 
   const where = [
     "listed_at IS NOT NULL",
     INDEXABLE_SQL,
+    // The public page's rule: a page in Stripe test mode takes no real support, so it isn't listed.
+    "stripe_mode IS DISTINCT FROM 'test'",
     "(btrim(COALESCE(project_name, '')) <> '' OR btrim(bio) <> '')",
   ];
   const args: (string | number)[] = [];
@@ -65,11 +79,13 @@ export async function listDirectory(input: Parameters<typeof parseFilters>[0]): 
   if (filters.category) (where.push("project_category = ?"), args.push(filters.category));
   if (filters.language) (where.push("project_language = ?"), args.push(filters.language));
   if (filters.q) {
-    const like = likeLiteral(filters.q);
-    where.push(`(${NAME_MATCH} OR bio ILIKE ? ESCAPE '\\')`);
-    args.push(like, like, like, like);
-    order.push(`CASE WHEN ${NAME_MATCH} THEN 0 ELSE 1 END`);
-    orderArgs.push(like, like, like);
+    const terms = searchQuery(filters.q);
+    // A search with no word in it ("%%") finds nothing rather than everything.
+    if (!terms) return { filters, entries: [], hasNext: false };
+    where.push(`${SEARCH_DOC} @@ to_tsquery('simple', ?)`);
+    args.push(terms);
+    order.push(`CASE WHEN ${NAMES_DOC} @@ to_tsquery('simple', ?) THEN 0 ELSE 1 END`);
+    orderArgs.push(terms);
   }
   order.push("listed_at DESC", "id");
   const rs = await query(

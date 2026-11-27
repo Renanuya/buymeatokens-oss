@@ -28,6 +28,7 @@ export async function deleteAccountAction(_prev: ActionState, formData: FormData
   revalidatePath(`/${user.username}`);
   revalidatePath("/");
   revalidatePath("/sitemap.xml");
+  revalidatePath("/directory");
   redirect("/login?deleted=1");
 }
 
