@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **The leaderboard on the home page, and no more empty board.** A "Most supported" row after *How it works* shows
+  the all-time top four with their tokens and rank. While fewer than four have support, it is filled with creators to
+  discover, without ranks or tokens ("Projects to discover" when nobody has support yet). A board view with no support
+  shows random creators instead of an empty card. Those who turned the leaderboard on come first, then other listed
+  pages; pages in test mode are left out. The footer link moved next to *Project directory*
+  ([#101](https://github.com/Renanuya/buymeatokens-oss/issues/101)).
 - **Discord: "Send test message"** next to a connected webhook. It posts one message in the real format, headed as a test,
   so a creator can see what support will look like and that the channel receives it. It shares the limit of 5 requests
   per 10 minutes with checking a pasted webhook, and nothing is stored ([#103](https://github.com/Renanuya/buymeatokens-oss/issues/103)).
