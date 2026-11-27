@@ -8,8 +8,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
-- **Website button** (`public/widget.js`): one script tag puts a *Buy me AI tokens* button on any website, floating at
-  the bottom centre (`data-position="left"` or `"right"` for a corner) or in place (`data-mode="inline"`), in the badge colours
+- **Website button** (`public/widget.js`): one script tag puts a *Buy me AI tokens* button on any website, floating in
+  a corner (`data-position="left"` for the left) or in place (`data-mode="inline"`), in the badge colours
   (`data-theme`). It renders in a shadow root, so the site's CSS can't touch it, draws nothing for a missing or
   invalid `data-user`, adds only one floating button however many times it's included, and shrinks to the round mark
   on touch phones. It sets no cookies and makes no requests; the link opens the creator's page in a new tab with the

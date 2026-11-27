@@ -3,9 +3,9 @@
  *
  *   <script src="https://buymeatokens.com/widget.js" data-user="yourname" async></script>
  *
- * data-mode      "floating" (default): a button at the bottom of the page; "inline": the button where the tag is
+ * data-mode      "floating" (default): a button in the corner of the page; "inline": the button where the tag is
  * data-theme     "dark" (default), "light", "iris" or "lilac"
- * data-position  "center" (default), "left" or "right", for the floating button
+ * data-position  "right" (default) or "left", for the floating button
  *
  * It only draws a link to your page. No cookies, no tracking, no requests to anyone.
  */
@@ -26,9 +26,7 @@
     return;
   }
   var inline = script.getAttribute("data-mode") === "inline";
-  var position = script.getAttribute("data-position");
-  // Centred at the bottom unless a corner is asked for.
-  var place = position === "left" ? "left:20px" : position === "right" ? "right:20px" : "left:50%;transform:translateX(-50%)";
+  var left = script.getAttribute("data-position") === "left";
   if (!inline && document.querySelector("[data-buymeatokens-floating]")) return;
 
   // [background, text, round tile, mark on the tile, hairline]
@@ -57,7 +55,8 @@
     "svg{width:18px;height:18px}" +
     (inline
       ? ""
-      : ":host{position:fixed;z-index:2147483000;bottom:calc(20px + env(safe-area-inset-bottom,0px));" + place + "}" +
+      : ":host{position:fixed;z-index:2147483000;bottom:calc(20px + env(safe-area-inset-bottom,0px));" +
+        (left ? "left" : "right") + ":20px}" +
         "a{height:52px;padding:0 22px 0 8px;box-shadow:inset 0 0 0 1px " + t[4] + ",0 10px 30px rgba(28,28,30,.22)}" +
         "i{width:36px;height:36px}" +
         // Phones: just the round mark, so the button doesn't cover the page. Narrow desktop windows keep the label.

@@ -108,7 +108,7 @@ const milestones: Milestone[] = [
   },
   {
     title: "Get found beyond GitHub.",
-    description: "A support button for any website, floating at the bottom of the page or in place, with an image link for sites that don't run scripts. And every creator page has its own link preview with their photo, project and progress.",
+    description: "A support button for any website, floating in the corner or in place, with an image link for sites that don't run scripts. And every creator page has its own link preview with their photo, project and progress.",
     category: "Website button",
     icon: "link",
     done: true,
