@@ -10,6 +10,25 @@ const BLOCKED_SUFFIXES = [".local", ".internal", ".localhost", ".lan", ".home.ar
 // A DNS name: 2+ labels, the last one starting with a letter (so no number in any notation is ever a host).
 const DNS_NAME = /^(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z](?:[a-z0-9-]{0,61}[a-z0-9])$/;
 
+/**
+ * A chat app's incoming webhook, which only takes that app's own message format and answers our signed events with a
+ * 4xx. Recognised when an endpoint is saved, so the creator is sent to the right place instead of a failing test.
+ */
+export function chatWebhook(input: string): "Discord" | "Slack" | null {
+  let url: URL;
+  try {
+    url = new URL(input.trim());
+  } catch {
+    return null;
+  }
+  const host = url.hostname.toLowerCase().replace(/\.$/, "");
+  if (/^(?:(?:canary|ptb)\.)?discord(?:app)?\.com$/.test(host) && /^\/api\/(?:v\d+\/)?webhooks\//i.test(url.pathname)) {
+    return "Discord";
+  }
+  if (host === "hooks.slack.com") return "Slack";
+  return null;
+}
+
 /** Step 1, no network: the URL's shape. Returns the normalised URL, or why it was refused. */
 export function parseWebhookUrl(input: string): { url: URL } | { error: string } {
   const text = input.trim();

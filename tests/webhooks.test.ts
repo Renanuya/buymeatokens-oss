@@ -430,6 +430,27 @@ describe("signed webhooks", () => {
       expect(await listEndpoints("maker")).toEqual([]);
     });
 
+    it("sends Discord and Slack webhooks to the right place instead of saving them", async () => {
+      const resolve = vi.fn(PUBLIC);
+      for (const url of [
+        "https://discord.com/api/webhooks/123/abc",
+        "https://discordapp.com/api/v10/webhooks/123/abc",
+        "https://canary.discord.com/api/webhooks/123/abc",
+        "https://PTB.Discord.com./api/webhooks/123/abc",
+      ]) {
+        expect(await addEndpoint("maker", url, { resolve })).toEqual({ error: expect.stringContaining("use the Discord section") });
+      }
+      expect(await addEndpoint("maker", "https://hooks.slack.com/services/T0/B0/x", { resolve })).toEqual({
+        error: expect.stringContaining("That's a Slack webhook"),
+      });
+      expect(resolve).not.toHaveBeenCalled();
+      expect(await listEndpoints("maker")).toEqual([]);
+      // Look-alikes are ordinary URLs: they go through the usual checks.
+      for (const url of ["https://discord.com.example.com/api/webhooks/1/2", "https://discord.com/channels/1/2"]) {
+        expect(await addEndpoint("maker", url, { resolve })).toHaveProperty("secret");
+      }
+    });
+
     it("stores the secret encrypted, shows it once, and never returns it from a list", async () => {
       const ep = await endpoint("maker", "https://hooks.example.com/token/abc?key=1");
       expect(ep.secret).toMatch(/^bmtwh_[A-Za-z0-9_-]{30,}$/);

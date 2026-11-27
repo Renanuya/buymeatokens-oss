@@ -166,6 +166,10 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Fixed
 
+- **Signed webhooks refuse Discord and Slack URLs** with a message that points to the Discord section, instead of saving
+  an endpoint whose tests and deliveries could only fail with a 400. A test that gets a 4xx now says the endpoint
+  rejected the event. Unexpected errors when adding, rotating, deleting or testing are reported to the operator
+  instead of being swallowed ([#102](https://github.com/Renanuya/buymeatokens-oss/issues/102)).
 - The project directory and the leaderboard showed nobody in local development: accounts from "Continue without
   GitHub" were left out everywhere. They now count wherever dev login is on, and production is unchanged.
 - **Project names are checked for explicit or offensive language** on the server: in the guided setup, the settings
