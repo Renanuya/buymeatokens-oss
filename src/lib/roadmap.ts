@@ -42,7 +42,8 @@ export type RoadmapItem = {
   summary: string;
   category: string;
   icon: GlyphName;
-  order: number;
+  /** From the hidden block; null when it has none, and those come after every ordered item. */
+  order: number | null;
   links: RoadmapLink[];
   periods: string[];
   wide: boolean;
@@ -100,8 +101,11 @@ export function parseTasks(body: string): Omit<RoadmapTask, "icon">[] {
 export function firstParagraph(body: string): string {
   const text = body.replace(META_RE, "").replace(/<!--[\s\S]*?-->/g, " ");
   for (const block of text.split(/\r?\n\s*\r?\n/)) {
-    const trimmed = block.trim();
-    if (!trimmed || /^(#|[-*+]\s|\d+\.\s|>|\||```)/.test(trimmed)) continue;
+    // A heading line right above the text ("## Why" then "Because...") is dropped, not the paragraph under it.
+    const lines = block.trim().split(/\r?\n/);
+    while (lines.length && /^#{1,6}(\s|$)/.test(lines[0].trim())) lines.shift();
+    const trimmed = lines.join("\n").trim();
+    if (!trimmed || /^([-*+]\s|\d+\.\s|>|\||```)/.test(trimmed)) continue;
     return plainText(trimmed).replace(/[<>]/g, "").replace(/\s+/g, " ").trim();
   }
   return "";
@@ -144,7 +148,7 @@ export function toItem(issue: GithubIssue): RoadmapItem {
     summary: one("summary") || wordCut(firstParagraph(issue.body), 260),
     category: one("category") || areaCategory(issue.labels) || "Roadmap",
     icon: isGlyphName(icon) ? icon : FALLBACK_ICON,
-    order: Number.isFinite(order) && one("order") !== "" ? order : 1000 + issue.number,
+    order: one("order") !== "" && Number.isFinite(order) ? order : null,
     links,
     periods: one("periods").split(",").map((p) => p.trim()).filter(Boolean),
     wide: one("layout").toLowerCase() === "wide",
@@ -153,7 +157,13 @@ export function toItem(issue: GithubIssue): RoadmapItem {
   };
 }
 
-const byOrder = (a: RoadmapItem, b: RoadmapItem) => a.order - b.order || a.number - b.number;
+/** Items with an order first (lowest first), then the rest by issue number. */
+const byOrder = (a: RoadmapItem, b: RoadmapItem) => {
+  if (a.order !== null && b.order !== null) return a.order - b.order || a.number - b.number;
+  if (a.order !== null) return -1;
+  if (b.order !== null) return 1;
+  return a.number - b.number;
+};
 
 export function buildRoadmap(issues: GithubIssue[]): Roadmap {
   const roadmap = issues.filter((issue) => issue.labels.includes(ROADMAP_LABEL));

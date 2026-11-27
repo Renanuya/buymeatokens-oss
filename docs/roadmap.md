@@ -48,7 +48,7 @@ layout: wide
 | `icon` | An icon name from `src/components/glyph.tsx` | A light bulb |
 | `order` | Lower comes first in *Up next* | After everything that has an order, by issue number |
 | `icons` | Icons for the task list items, in order | Numbers |
-| `link` | `Label \| URL`, repeatable. Site paths (`/terms`) or `https://` only | No links. The *Now* card always links to its issue and the Discord. |
+| `link` | `Label \| URL`, repeatable, shown on the card wherever it is (Now, Up next, Shipped). Site paths (`/terms`) or `https://` only | No links. The *Now* card always links to its issue and the Discord. |
 | `periods` | Small chips on the card | None |
 | `layout: wide` | A full-width card with the task list as tiles, like the developer platform | A normal card |
 

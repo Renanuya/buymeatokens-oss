@@ -85,7 +85,7 @@ describe("reading an issue", () => {
       summary: "Let people find projects by language.",
       category: "Creator pages",
       icon: "lightbulb",
-      order: 1026,
+      order: null,
       wide: false,
       periods: [],
     });

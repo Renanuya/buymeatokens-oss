@@ -235,39 +235,50 @@ export type GithubIssue = {
   labels: string[];
 };
 
+type RawIssue = {
+  number: number;
+  title: string;
+  body: string | null;
+  state: string;
+  state_reason?: string | null;
+  closed_at: string | null;
+  html_url: string;
+  labels: ({ name?: string } | string)[];
+  pull_request?: unknown;
+};
+
+/** Pages of 100 followed, at most this many; far more than a roadmap needs, and a bound on API calls. */
+const ISSUE_PAGES_MAX = 5;
+
 /**
- * Every issue in `repo` with `label`, open and closed (pull requests left out). Null when GitHub didn't answer, so
- * callers can tell "none" from "couldn't ask". Cached for five minutes.
+ * Every issue in `repo` with `label`, open and closed (pull requests left out), following GitHub's pages. Null when
+ * GitHub didn't answer (any page), so callers can tell "none" from "couldn't ask". Cached for five minutes.
  */
 export async function labelledIssues(repo: string, label: string): Promise<GithubIssue[] | null> {
-  const res = await ghFetch(`/repos/${repo}/issues?labels=${encodeURIComponent(label)}&state=all&per_page=100`, 300);
-  if (!res?.ok) return null;
-  try {
-    const data = (await res.json()) as {
-      number: number;
-      title: string;
-      body: string | null;
-      state: string;
-      state_reason?: string | null;
-      closed_at: string | null;
-      html_url: string;
-      labels: ({ name?: string } | string)[];
-      pull_request?: unknown;
-    }[];
+  const raw: RawIssue[] = [];
+  for (let page = 1; page <= ISSUE_PAGES_MAX; page++) {
+    const res = await ghFetch(`/repos/${repo}/issues?labels=${encodeURIComponent(label)}&state=all&per_page=100&page=${page}`, 300);
+    if (!res?.ok) return null;
+    let data: unknown;
+    try {
+      data = await res.json();
+    } catch {
+      return null;
+    }
     if (!Array.isArray(data)) return null;
-    return data
-      .filter((issue) => !issue.pull_request)
-      .map((issue) => ({
-        number: issue.number,
-        title: issue.title,
-        body: issue.body ?? "",
-        state: issue.state === "closed" ? "closed" : "open",
-        stateReason: issue.state_reason ?? null,
-        closedAt: issue.closed_at ? Date.parse(issue.closed_at) : null,
-        url: issue.html_url,
-        labels: issue.labels.map((l) => (typeof l === "string" ? l : l.name ?? "")).filter(Boolean),
-      }));
-  } catch {
-    return null;
+    raw.push(...(data as RawIssue[]));
+    if (!/rel="next"/.test(res.headers.get("link") ?? "")) break;
   }
+  return raw
+    .filter((issue) => !issue.pull_request)
+    .map((issue) => ({
+      number: issue.number,
+      title: issue.title,
+      body: issue.body ?? "",
+      state: issue.state === "closed" ? "closed" : "open",
+      stateReason: issue.state_reason ?? null,
+      closedAt: issue.closed_at ? Date.parse(issue.closed_at) : null,
+      url: issue.html_url,
+      labels: issue.labels.map((l) => (typeof l === "string" ? l : l.name ?? "")).filter(Boolean),
+    }));
 }
