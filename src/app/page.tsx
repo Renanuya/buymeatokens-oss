@@ -101,7 +101,7 @@ export default async function Home() {
           </Reveal>
           <Reveal afterLoad delay={450} className="pb-20 pt-10 md:pb-32 md:pt-16">
             <div id="early-access" className="scroll-mt-6 rounded-[18px] bg-lilac p-6 max-[360px]:p-5 sm:p-8 md:p-12 lg:p-14">
-              <p className="eyebrow flex items-center gap-2 text-ink/60">
+              <p className="eyebrow flex items-baseline gap-2 text-ink/60">
                 <span className="size-1.5 rounded-full bg-iris" />
                 <SignedInSwitch signedOut={copy.label} signedIn="You're signed in" />
               </p>
@@ -173,7 +173,7 @@ export default async function Home() {
                 </Reveal>
               </div>
               <div className="relative flex items-center md:justify-center">
-                <p className="eyebrow absolute -top-12 right-0 hidden text-white/35 md:block">Live style demo / 001</p>
+                <p className="eyebrow absolute -top-12 right-0 hidden text-white/35 lg:block">Live style demo / 001</p>
                 <DemoSupportCard />
               </div>
             </div>
@@ -224,8 +224,11 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="faq" className="wrap scroll-mt-6 py-28 md:py-44">
-          <div className="max-w-2xl">
+        <section
+          id="faq"
+          className="wrap grid scroll-mt-6 grid-cols-1 py-28 md:py-44 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16"
+        >
+          <div className="max-w-2xl lg:sticky lg:top-12 lg:self-start">
             <RevealLines className="display text-[clamp(2.75rem,5vw,4.5rem)]" lines={["The little", "details."]} />
             <Reveal delay={250}>
               <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted md:text-base">
@@ -234,7 +237,7 @@ export default async function Home() {
               </p>
             </Reveal>
           </div>
-          <div className="mt-14 border-b border-line md:mt-24">
+          <div className="mt-14 border-b border-line md:mt-24 lg:mt-0">
             {faqs.map((faq) => (
               <details key={faq.q} className="group border-t border-line">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 text-lg font-semibold tracking-[-0.02em] md:py-8 md:text-xl [&::-webkit-details-marker]:hidden">
