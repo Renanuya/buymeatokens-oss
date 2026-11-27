@@ -302,6 +302,32 @@ CREATE TABLE IF NOT EXISTS ops_events (
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 
+-- USDC payment records (src/lib/usdc-payments.ts): one row per submitted transaction, written before the chain is asked,
+-- so an RPC outage leaves something to re-check. status: sent -> verifying -> confirmed | failed | expired.
+-- A verifying row older than its lease is taken over (the process holding it died). The counted payment is still the
+-- donations row; its unique tx_hash is what keeps a transfer from counting twice.
+CREATE TABLE IF NOT EXISTS usdc_payments (
+  id TEXT PRIMARY KEY,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  address TEXT NOT NULL,
+  network TEXT NOT NULL DEFAULT 'base',
+  tx_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'verifying', 'confirmed', 'failed', 'expired')),
+  amount_cents INTEGER,
+  reason TEXT,
+  supporter_name TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  visit_source TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  last_checked_at BIGINT,
+  confirmed_at BIGINT,
+  -- Hashes are public: a record is per creator, so submitting someone's hash on another page can't block the right one.
+  UNIQUE (creator_id, tx_hash)
+);
+CREATE INDEX IF NOT EXISTS usdc_payments_open ON usdc_payments(status, last_checked_at);
+ALTER TABLE usdc_payments ENABLE ROW LEVEL SECURITY;
 -- Stream alerts (src/lib/stream-alerts.ts): SHA-256 of the secret in the creator's browser source URL. NULL = off.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_token_hash TEXT;
 CREATE UNIQUE INDEX IF NOT EXISTS users_alerts_token_hash ON users(alerts_token_hash);

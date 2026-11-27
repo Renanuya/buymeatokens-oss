@@ -30,6 +30,22 @@ Provider and network fees still apply.
 - The server reads the receipt from a Base RPC (`BASE_RPC_URL` is optional) and adds up the official USDC
   contract's `Transfer` logs to the creator's address. Only transfers from the last three days are accepted, and
   each transaction hash can be recorded once.
+- Submitting a hash first writes a **payment record** (`usdc_payments`): creator, wallet address, network, expiry
+  (three days, the same window as above), and a status of `sent`, `verifying`, `confirmed`, `failed` or `expired`.
+  Only one request at a time can move a record to `verifying`, so two requests never check the same record at the
+  same moment. (The polling loop does check again after a `pending` result or an RPC error.) The unique
+  `donations.tx_hash` is what prevents counting a transfer twice; a transaction that pays two creators' wallets can
+  be counted for only one of them, whoever is confirmed first, as before; the other page's record is closed as
+  `failed` (`claimed_elsewhere`) instead of showing as confirmed. An RPC error or a not-yet-mined
+  transaction puts the record back to `sent`; the supporter can submit the same hash again, and the daily
+  `/api/cron/reconcile` job re-checks open records too. A `verifying` record that nobody finished (the process died)
+  is taken over after two minutes, and the process that lost it can no longer change it. A record that failed
+  against an older wallet address is reopened when the same hash is submitted after the creator fixed the address.
+  Records are per creator and hash, so submitting someone else's public hash on another creator's page can't block
+  the payment on the right page. The background pass takes hashes the network has never seen last, then the least
+  recently checked first, runs after the Stripe pass with about 20 seconds at most, and carries on past a record that
+  throws. An amount too large for the `amount_cents` column is closed as `failed` (`too_large`). Failed and expired records, which hold a supporter's name and message, are deleted after 30 days;
+  confirmed records are kept.
 
 For PayPal and USDC the amount that counts is what actually arrived, not what the supporter picked on the page:
 payments under $1 aren't counted, and the token count is the amount divided by the creator's bundle price, rounded,
@@ -45,17 +61,17 @@ This is an MVP. These limitations are known and documented, and are tracked on t
 - **The sender isn't verified.** We don't ask for a wallet signature, so someone who finds another person's
   unrecorded transfer could claim it under their own name. A transaction hash alone must not be used as proof of
   identity or for perks such as supporter roles.
-- **There are no durable payment records.** Verification happens within a single request, with limited retries.
-  An RPC error or timeout can show a failure even though the money arrived. In that case, re-check the same hash;
-  don't pay again.
+- **The record starts at hash submission, not before the transfer.** The expected amount isn't known up front: the
+  record stores what the chain reports. An RPC error no longer loses the submission (see above), but re-checks run
+  once a day plus whenever the supporter retries. If a payment doesn't show up, re-check the same hash; don't pay
+  again.
 - **Finality isn't tracked.** A successful receipt is treated as final. There is no later reconciliation for
   `safe` / `finalized` blocks or reorgs.
 - **Wallet support is basic.** Automatic payment relies on `window.ethereum`. Mobile wallets and wallet error
   handling need a fuller flow.
 
-The planned fix is a persistent payment record (creator, address, network, amount, expiry), separate
-sent / verifying / confirmed states with background re-checks, a one-time wallet signature tied to the payment
-record, a written finality policy, and better wallet UX.
+The planned fix continues with a payment record created before the transfer (with the expected amount), a one-time
+wallet signature tied to the payment record, a written finality policy, and better wallet UX.
 
 References: [Circle USDC contract addresses](https://developers.circle.com/stablecoins/usdc-contract-addresses),
 [Base transaction finality](https://docs.base.org/base-chain/network-information/transaction-finality).
