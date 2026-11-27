@@ -141,14 +141,16 @@ Remove-Item Env:POSTGRES_URL
 | `Cannot connect to the Docker daemon` | Start Docker (for example, Docker Desktop) and try again. |
 | `nvm : The term 'nvm' is not recognized` (or `fnm`) in PowerShell | Neither tool is installed by default on Windows. Install Node 26 from [nodejs.org](https://nodejs.org), or install nvm-windows and run `nvm install 26` then `nvm use 26`. |
 | `npm warn EBADENGINE Unsupported engine … required: { node: '26.x' }` | A warning, not an error: `npm ci` still finishes. Switch to Node 26 as above to match CI. |
-| `npm ci` fails, or Node reports the wrong version | Run `nvm use` (or `fnm use`) to switch to Node 26 from `.nvmrc`, then run `npm ci` again. |
+| `npm ci` fails, or Node reports the wrong version | Run `nvm use` (or `fnm use`; with nvm-windows, `nvm use 26`) to switch to Node 26, then run `npm ci` again. |
 | `ECONNREFUSED 127.0.0.1:5432` | The database isn't running: `docker compose up -d db`, then check `docker compose ps`. |
 | The first request fails with a database connection error | The database was not ready yet: run `docker compose up -d db`, wait until `docker compose ps` shows `db` as `(healthy)`, then reload. |
 | Port 5432 is already in use | Change the left side of `ports:` in `compose.yaml` to `"127.0.0.1:5433:5432"` and use `:5433` in `POSTGRES_URL`. |
 | Port 3000 is already in use | Stop the other process using port 3000, or start the dev server on another port and set `APP_URL` to match. |
 | Start over with an empty database | `docker compose down -v`, then `docker compose up -d db`. |
-| `The token '&&' is not a valid statement separator in this version` (PowerShell 5.1) | Run the commands one after the other, or use `;`. `&&` only works in PowerShell 7+, Git Bash and other POSIX shells. |
-| `POSTGRES_URL=… is not recognized as the name of a cmdlet` (PowerShell) | `VAR=x command` is bash syntax. Use `$env:POSTGRES_URL = "…"; npm run build`, as shown under "Checks". |
+| `The token '&&' is not a valid statement separator in this version` (PowerShell 5.1) | Run the commands one after the other. `&&` works in PowerShell 7+, cmd.exe, Git Bash and other POSIX shells, but not in Windows PowerShell 5.1. |
+| `npm : File …
+pm.ps1 cannot be loaded because running scripts is disabled on this system` (PowerShell) | The execution policy blocks npm's PowerShell wrapper. Run `npm.cmd` instead of `npm` (for example `npm.cmd ci`), or allow signed scripts for your user only: `Set-ExecutionPolicy -Scope CurrentUser RemoteSigned`. |
+| `The term 'POSTGRES_URL=postgres://…' is not recognized as the name of a cmdlet` (PowerShell) | `VAR=x command` is bash syntax. Use the three PowerShell lines under "Checks", including the last one: a `POSTGRES_URL` left set in the window overrides `.env.local` for every later command. |
 | "Continue without GitHub" is missing | `DEV_LOGIN=true` must be in `.env.local`. If you just added it, restart `npm run dev`: changes to `.env.local` only take effect after a restart. |
 | The Stripe key has nowhere to go in `.env.local` | That is expected: paste the `rk_test_…` key in **Dashboard → Payments** (`/dashboard/stripe`), not in `.env.local`. See step 3 in "Try the whole flow". |
 | Checkout does not open | Make sure a test-mode restricted key is saved on **Dashboard → Payments** and that it starts with `rk_test_`. |
