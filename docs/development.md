@@ -5,7 +5,7 @@ ten minutes.
 
 ## Prerequisites
 
-- **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up.
+- **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up. It is also declared in `package.json` (`engines`), so npm warns if you run an older version.
 - **Docker**, for the local Postgres in [`compose.yaml`](../compose.yaml). Any Postgres 15+ that you own works too,
   such as a free Supabase project used only for development.
 - Optional: a Stripe account in **test mode** and a GitHub OAuth app, depending on
