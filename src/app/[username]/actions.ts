@@ -4,19 +4,18 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { appUrl } from "@/lib/config";
 import { decrypt } from "@/lib/crypto";
-import { attachSession, createPendingDonation, markStatus, recordUsdcDonation } from "@/lib/donations";
+import { attachSession, createPendingDonation, markStatus } from "@/lib/donations";
 import { formatTokens, formatUsd } from "@/lib/format";
 import { reportError } from "@/lib/ops";
 import { paypalCheckoutUrl } from "@/lib/paypal";
 import { createDonationCheckout } from "@/lib/stripe";
-import { checkUsdcTransfer, isTxHash } from "@/lib/usdc";
+import { isTxHash } from "@/lib/usdc";
+import { attemptUsdcPayment, openUsdcPayment, type UsdcAttempt } from "@/lib/usdc-payments";
 import { getUserByUsername } from "@/lib/users";
 import { clampInt } from "@/lib/validation";
 import { classifyVisit, encodeSource } from "@/lib/visit-source";
 
 const MAX_UNITS = 100;
-// Only recent transfers can be claimed, so old payments to the same wallet can't be replayed as support.
-const USDC_MAX_AGE_MS = 3 * 86_400_000;
 
 export type UsdcResult = { ok: boolean; message: string };
 
@@ -79,48 +78,46 @@ export async function confirmUsdcPayment(input: {
   if (!creator?.username || !creator.usdcAddress) {
     return { ok: false, message: "This creator isn't accepting USDC right now." };
   }
-  // Right after sending, the transaction can take a few seconds to show up.
-  let check: Awaited<ReturnType<typeof checkUsdcTransfer>> | null = null;
-  for (let attempt = 0; attempt < 8; attempt++) {
-    try {
-      check = await checkUsdcTransfer(txHash, creator.usdcAddress, USDC_MAX_AGE_MS);
-    } catch (error) {
-      await reportError("[usdc]", txHash, error);
-      check = null;
-    }
-    if (check && !(check.ok === false && check.reason === "pending")) break;
-    await new Promise((r) => setTimeout(r, 2000));
-  }
-
-  const name = creator.displayName || creator.username;
-  if (!check) return { ok: false, message: "We couldn't reach the Base network. Please try again in a minute." };
-  if (!check.ok) {
-    const reasons = {
-      pending: "We can't find this transaction on Base yet. Wait a minute and try again.",
-      failed: "This transaction failed on-chain, so no USDC was sent.",
-      no_transfer: `This transaction didn't send USDC on Base to ${name}'s wallet.`,
-      too_old: "This transaction is too old to claim. Only payments from the last 3 days count.",
-    } as const;
-    return { ok: false, message: reasons[check.reason] };
-  }
-  if (check.amountCents < 100) return { ok: false, message: "Payments under $1 aren't counted." };
-
-  const units = Math.max(1, Math.round(check.amountCents / creator.unitPriceCents));
-  const recorded = await recordUsdcDonation({
+  const payment = await openUsdcPayment({
     creatorId: creator.id,
+    address: creator.usdcAddress,
     txHash,
-    units,
-    amountCents: check.amountCents,
     supporterName: String(input.name ?? "").trim().slice(0, 60),
     message: String(input.message ?? "").trim().slice(0, 280),
     visitSource: visitSource(input.visit?.ref, input.visit?.referrer),
   });
-  if (!recorded) return { ok: true, message: "This payment is already counted. Thank you!" };
+
+  // Right after sending, the transaction can take a few seconds to show up.
+  let result: UsdcAttempt = { state: "unreachable" };
+  for (let attempt = 0; attempt < 8; attempt++) {
+    result = await attemptUsdcPayment(payment, creator);
+    // "busy": another request is checking this very transaction; wait for its verdict.
+    if (result.state !== "pending" && result.state !== "unreachable" && result.state !== "busy") break;
+    await new Promise((r) => setTimeout(r, 2000));
+  }
+
+  const name = creator.displayName || creator.username;
+  if (result.state === "unreachable") return { ok: false, message: "We couldn't reach the Base network. Please try again in a minute." };
+  if (result.state === "busy") return { ok: false, message: "This payment is being checked right now. Try again in a moment." };
+  if (result.state === "expired") return { ok: false, message: "This transaction is too old to claim. Only payments from the last 3 days count." };
+  if (result.state === "rejected") {
+    const reasons = {
+      failed: "This transaction failed on-chain, so no USDC was sent.",
+      no_transfer: `This transaction didn't send USDC on Base to ${name}'s wallet.`,
+      too_old: "This transaction is too old to claim. Only payments from the last 3 days count.",
+      too_small: "Payments under $1 aren't counted.",
+      too_large: "This amount is too large to count automatically.",
+      claimed_elsewhere: "This transaction was already counted for another page.",
+    } as const;
+    return { ok: false, message: reasons[result.reason] };
+  }
+  if (result.state === "pending") return { ok: false, message: "We can't find this transaction on Base yet. Wait a minute and try again." };
+  if (!result.counted) return { ok: true, message: "This payment is already counted. Thank you!" };
 
   revalidatePath(`/${creator.username}`);
   return {
     ok: true,
-    message: `Thank you! ${name} received ${formatUsd(check.amountCents)} in USDC, that's ${formatTokens(units)} tokens of fuel.`,
+    message: `Thank you! ${name} received ${formatUsd(result.amountCents)} in USDC, that's ${formatTokens(result.units)} tokens of fuel.`,
   };
 }
 

@@ -6,7 +6,7 @@ import { SocialIcon } from "@/components/social-icons";
 import { SupportThread, type ThreadCreator } from "@/components/support-thread";
 import { compactNumber, formatTokens, formatUsd, initials, timeAgo } from "@/lib/format";
 import type { RepoStats } from "@/lib/github";
-import { displayUrl, githubRepo } from "@/lib/profile";
+import { displayUrl, githubRepo, type GoalPeriod } from "@/lib/profile";
 import { socialEntries, type Socials } from "@/lib/socials";
 
 /** One card per network: logo, network name, and the handle or address. */
@@ -143,7 +143,17 @@ export function goalPercent(reached: number, goal: number): number {
 }
 
 /** Dark card with a fuel-colored bar, like the landing page's night sections. */
-export function GoalProgress({ reached, goal, className = "" }: { reached: number; goal: number; className?: string }) {
+export function GoalProgress({
+  reached,
+  goal,
+  period = "one-time",
+  className = "",
+}: {
+  reached: number;
+  goal: number;
+  period?: GoalPeriod;
+  className?: string;
+}) {
   const percent = goalPercent(reached, goal);
   const done = reached >= goal;
   return (
@@ -152,7 +162,7 @@ export function GoalProgress({ reached, goal, className = "" }: { reached: numbe
       <div className="relative flex items-center justify-between gap-3">
         <p className="eyebrow flex items-center gap-2 text-white/60">
           <span className="size-1.5 rounded-full bg-fuel" />
-          Token goal
+          Token goal{period === "monthly" && " · this month"}
         </p>
         <span className="rounded-full bg-white/10 px-2.5 py-1 text-xs font-semibold tabular-nums text-fuel">{percent}%</span>
       </div>
@@ -177,7 +187,7 @@ export function GoalProgress({ reached, goal, className = "" }: { reached: numbe
         {done ? (
           <span className="font-semibold text-fuel">Goal reached. Thank you, everyone!</span>
         ) : (
-          `${formatTokens(Math.max(0, goal - reached))} AI tokens to go`
+          `${formatTokens(Math.max(0, goal - reached))} AI tokens to go${period === "monthly" ? " this month" : ""}`
         )}
       </p>
     </div>
