@@ -302,6 +302,16 @@ CREATE TABLE IF NOT EXISTS ops_events (
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 
+-- Project directory (src/lib/directory.ts): a creator opts in (listed_at, Unix ms) and picks one category and one
+-- language from fixed lists. The index serves the unfiltered listing, newest first.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS listed_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_category TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_language TEXT;
+CREATE INDEX IF NOT EXISTS users_directory ON users(listed_at DESC, id) WHERE listed_at IS NOT NULL;
+-- Directory search (src/lib/directory.ts, SEARCH_DOC): word-prefix full-text search over listed creators only.
+CREATE INDEX IF NOT EXISTS users_directory_search ON users USING GIN (to_tsvector('simple',
+  coalesce(project_name, '') || ' ' || coalesce(display_name, '') || ' ' || coalesce(username, '') || ' ' || coalesce(bio, '')))
+  WHERE listed_at IS NOT NULL;
 -- Leaderboard (src/lib/leaderboard.ts): a creator appears only after turning this on under Account. The short
 -- windows are range scans on the donations_paid_at index above.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS leaderboard_opt_in BOOLEAN NOT NULL DEFAULT false;

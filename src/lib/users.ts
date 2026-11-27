@@ -43,6 +43,10 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** When the creator listed their project in the directory (Unix ms), or null (src/lib/directory.ts). */
+  listedAt: number | null;
+  projectCategory: string | null;
+  projectLanguage: string | null;
   /** Whether the creator's project is listed on the public leaderboard (src/lib/leaderboard.ts). Off by default. */
   leaderboardOptIn: boolean;
   createdAt: number;
@@ -82,6 +86,9 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    listedAt: num(r.listed_at),
+    projectCategory: str(r.project_category),
+    projectLanguage: str(r.project_language),
     leaderboardOptIn: r.leaderboard_opt_in === true,
     createdAt: num(r.created_at) ?? 0,
   };

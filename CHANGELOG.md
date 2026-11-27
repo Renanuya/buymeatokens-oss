@@ -8,6 +8,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Project directory** (`/directory`): creators can opt in (off by default) from their page settings and pick one category and one
+  language from fixed lists. Visitors search by the start of words in a name or description (full-text, on a partial GIN index)
+  and filter by category and language. Pages in Stripe test mode aren't listed. The plain listing is cached for five minutes
+  and is in the sitemap; searches (`/directory/search`) are dynamic and `noindex`. Adds three nullable columns and two
+  indexes on `users`. There are no free-form tags yet.
 - **Leaderboard** (`/leaderboard`, plus `/leaderboard/daily`, `/weekly` and `/monthly`): the most-supported projects, ranked by
   AI tokens received over the last 24 hours, 7 days, 30 days or all time, with the supporter count beside each. It is
   opt-in: nobody is listed until they turn on *Show my project on the leaderboard* under Account. Only creators with a
