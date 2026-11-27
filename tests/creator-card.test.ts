@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { cardLines, cardName, cardStats, plainText } from "../src/lib/creator-card";
+import { cardLines, cardName, cardStats, plainText, wordCut } from "../src/lib/creator-card";
 import { websiteSnippet } from "../src/components/website-builder";
 
 describe("creator card text", () => {
@@ -28,6 +28,21 @@ describe("creator card text", () => {
     expect(cardLines({ projectName: null, bio: "" })).toEqual([]);
     const [only] = cardLines({ projectName: null, bio: "word ".repeat(60) });
     expect(Array.from(only).length).toBeLessThanOrEqual(110);
+  });
+
+  it("ends a shortened description on a whole word", () => {
+    const bio =
+      "Buy Me a Tokens is an open-source alternative to Buy Me a Coffee, designed for the AI era. I built it because tokens cost money.";
+    const [, line] = cardLines({ projectName: "Buy Me a Tokens", bio });
+    // A sentence ends close to the limit: stop there.
+    expect(line).toBe("Buy Me a Tokens is an open-source alternative to Buy Me a Coffee, designed for the AI era.");
+    // Otherwise a whole word and "…".
+    expect(wordCut("Small language models running on cheap microcontrollers with almost no memory at all", 50)).toBe(
+      "Small language models running on cheap…",
+    );
+    expect(wordCut("short enough", 40)).toBe("short enough");
+    // One huge word is cut where it has to be.
+    expect(wordCut(`a ${"x".repeat(80)}`, 20)).toBe(`a ${"x".repeat(17)}…`);
   });
 
   it("shows the goal, else the totals, else an invitation", () => {
