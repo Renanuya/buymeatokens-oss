@@ -7,7 +7,8 @@ ten minutes.
 
 - **Git**, to clone the repository.
 - **Node.js 26.** The version is in [`.nvmrc`](../.nvmrc), so `nvm use` or `fnm use` picks it up. Run it
-  before `npm ci`, so the install uses Node 26.
+  before `npm ci`, so the install uses Node 26. It is also declared in `package.json` (`engines`), so npm warns if
+  you run a different version.
 - **Docker**, for the local Postgres in [`compose.yaml`](../compose.yaml). Any Postgres 15+ that you own works too,
   such as a free Supabase project used only for development. Docker must be running (for example, start
   Docker Desktop) before step 1.
