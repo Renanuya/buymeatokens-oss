@@ -7,6 +7,7 @@ import { SupportItem, goalPercent } from "@/components/creator-profile";
 import { ReadmeTools } from "@/components/readme-tools";
 import { CreatorBadges } from "@/components/early-supporter-badge";
 import { EarningsCard } from "./earnings-card";
+import { AlertsCard } from "./alerts-card";
 import { Glyph, PaymentMark } from "@/components/glyph";
 import { ArrowUpRight, CheckDot } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
@@ -273,6 +274,13 @@ export default async function DashboardPage() {
             <div className="card flex h-full flex-col p-6 sm:p-7">
               <CardHead title="Get found" id="readme-badge" />
               <ReadmeTools username={username} pageUrl={pageUrl} base={base} />
+            </div>
+          </Reveal>
+
+          <Reveal delay={285}>
+            <div className="card h-full p-6 sm:p-7">
+              <CardHead title="Stream alerts" />
+              <AlertsCard enabled={user.alertsEnabled} />
             </div>
           </Reveal>
 

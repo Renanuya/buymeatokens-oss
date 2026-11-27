@@ -40,6 +40,8 @@ export type User = {
   ageConfirmedAt: number | null;
   /** Whether the creator gets an email for each confirmed payment (src/lib/support-emails.ts). */
   supportEmails: boolean;
+  /** Whether a stream alerts URL is active (src/lib/stream-alerts.ts). Only its hash is stored. */
+  alertsEnabled: boolean;
   createdAt: number;
 };
 
@@ -75,6 +77,7 @@ function mapUser(r: Row): User {
     termsVersion: str(r.terms_version),
     ageConfirmedAt: num(r.age_confirmed_at),
     supportEmails: r.support_emails !== false,
+    alertsEnabled: Boolean(str(r.alerts_token_hash)),
     createdAt: num(r.created_at) ?? 0,
   };
 }

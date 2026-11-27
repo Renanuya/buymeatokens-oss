@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Stream alerts**: an opt-in browser source for OBS Studio and Streamlabs Desktop that shows "Alex supported you with 1M tokens!"
+  when a payment is confirmed. The dashboard's *Stream alerts* card makes a private URL (shown once; only its hash is
+  stored), regenerates or disables it, and previews a test alert that creates nothing. Duration, sound, amount, message
+  and theme come from the URL. The feed returns only name, tokens, message and amount of confirmed support, and never
+  replays old support when the source reloads. Stripe payments still count when they are confirmed, so a card payment
+  can show late; see [docs/stream-alerts.md](docs/stream-alerts.md).
 - **Community Discord** (https://discord.gg/CbaChQphmW): a place to give feedback, show projects and meet other open source developers and
   supporters. The home page closes with an invitation card, the roadmap's community card leads with it, the site
   footer and the dashboard's account menu link to it, and so do the README (link, Discord badge and a

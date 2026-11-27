@@ -54,6 +54,7 @@ src/
     draft-actions.ts         "Write with AI" for the project description
     api/
       auth/                  GitHub OAuth and the development login
+      alerts/[token]/        stream alerts feed (JSON), read with the creator's secret token
       badge/[username]/      README badge (SVG)
       wall/[username]/       README supporter wall (SVG)
       creators/[username]/   the signed-in creator's payment history (CSV); page visit counting (visit/)
@@ -89,6 +90,7 @@ Key modules in `src/lib`:
 | `seo.ts`, `blog.ts` | Structured data, sitemap inputs and blog loading |
 | `legal/`, `consent.ts` | Legal values and copy, Terms acceptance and its version ([legal.md](legal.md)) |
 | `account-deletion.ts`, `payment-export.ts` | Self-service account deletion and the payment history CSV |
+| `stream-alerts.ts` | Stream alert token (stored as a hash), the feed query and its cursor, the widget's URL options ([stream-alerts.md](stream-alerts.md)) |
 | `ai-draft.ts` | Prompts, provider chain and daily caps for "Write with AI" |
 | `page-visits.ts`, `visit-source.ts`, `visit-client.ts` | Page analytics without cookies: counting visits and support starts with a daily salted mark, where visits come from, and the Analytics tab's numbers |
 
