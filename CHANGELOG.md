@@ -8,6 +8,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Signed webhooks**: creators can add up to 3 HTTPS endpoints under Account > Webhooks and get a signed
+  `support.confirmed` event when a payment is confirmed (Stripe, PayPal or USDC) and `support.reversed` when a PayPal
+  payment is reversed. The event is written by the same SQL statement that confirms the payment, so it is never lost
+  or doubled. Deliveries retry with backoff, endpoints that keep failing are disabled, secrets are shown once and can
+  be rotated with a 24 hour overlap, and every URL is checked against private and internal addresses before each send.
+  See [docs/webhooks.md](docs/webhooks.md). The developer API and Discord roles are still to come.
 - **Stream alerts**: an opt-in browser source for OBS Studio and Streamlabs Desktop that shows "Alex supported you with 1M tokens!"
   when a payment is confirmed. The dashboard's *Stream alerts* card makes a private URL (shown once; only its hash is
   stored), regenerates or disables it, and previews a test alert that creates nothing. Duration, sound, amount, message

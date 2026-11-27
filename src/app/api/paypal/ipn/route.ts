@@ -75,6 +75,8 @@ export async function POST(req: Request) {
     // A unique-constraint race on txn_id means another IPN already recorded it: nothing to fix.
     if (isUniqueViolation(error)) return ok();
     await reportError("[paypal ipn] record", donation.id, error);
+    // Nothing was recorded (the statement rolled back): ask PayPal to send it again rather than lose the payment.
+    return new Response("Retry", { status: 503 });
   }
   return ok();
 }

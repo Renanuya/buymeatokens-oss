@@ -302,6 +302,52 @@ CREATE TABLE IF NOT EXISTS ops_events (
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
 
+-- Signed webhooks (src/lib/webhooks.ts, docs/webhooks.md). A creator has up to 3 HTTPS endpoints; slot (1-3) makes the
+-- limit hold under concurrent adds. Secrets are encrypted (they must be recoverable to sign); the previous one stays
+-- valid until prev_expires_at after a rotation.
+CREATE TABLE IF NOT EXISTS webhook_endpoints (
+  id TEXT PRIMARY KEY,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  slot SMALLINT NOT NULL CHECK (slot BETWEEN 1 AND 3),
+  url TEXT NOT NULL,
+  secret_enc TEXT NOT NULL,
+  prev_secret_enc TEXT,
+  prev_expires_at BIGINT,
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  fail_streak INTEGER NOT NULL DEFAULT 0,
+  disabled_at BIGINT,
+  created_at BIGINT NOT NULL,
+  UNIQUE (creator_id, slot)
+);
+ALTER TABLE webhook_endpoints ENABLE ROW LEVEL SECURITY;
+-- The outbox: one row per (endpoint, event), written in the same statement that confirms or reverses a payment.
+-- payload is the exact JSON text that is signed and sent, snapshotted at enqueue time.
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
+  id TEXT PRIMARY KEY,
+  endpoint_id TEXT NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sending', 'delivered', 'dead')),
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  next_attempt_at BIGINT NOT NULL,
+  attempted_at BIGINT,
+  last_status INTEGER,
+  created_at BIGINT NOT NULL,
+  UNIQUE (endpoint_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS webhook_deliveries_due ON webhook_deliveries(next_attempt_at) WHERE status = 'pending';
+-- Serves the claim's "left in sending by a worker that died" branch, so an idle tick doesn't scan the table.
+CREATE INDEX IF NOT EXISTS webhook_deliveries_sending ON webhook_deliveries(attempted_at) WHERE status = 'sending';
+CREATE INDEX IF NOT EXISTS webhook_deliveries_created ON webhook_deliveries(created_at);
+ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
+-- "Send a test event" rate limit: one fixed window per creator.
+CREATE TABLE IF NOT EXISTS webhook_test_limits (
+  creator_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_start BIGINT NOT NULL,
+  count INTEGER NOT NULL
+);
+ALTER TABLE webhook_test_limits ENABLE ROW LEVEL SECURITY;
 -- USDC payment records (src/lib/usdc-payments.ts): one row per submitted transaction, written before the chain is asked,
 -- so an RPC outage leaves something to re-check. status: sent -> verifying -> confirmed | failed | expired.
 -- A verifying row older than its lease is taken over (the process holding it died). The counted payment is still the

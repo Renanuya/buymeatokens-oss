@@ -2,13 +2,15 @@ import { safeEqual } from "@/lib/crypto";
 import { processCreatorEmails } from "@/lib/creator-emails";
 import { processOpsAlerts, recordOpsEvent, reportError } from "@/lib/ops";
 import { processSupportEmails } from "@/lib/support-emails";
+import { processWebhooks } from "@/lib/webhook-delivery";
 
 export const maxDuration = 60;
 
 /**
  * Called every minute by Supabase pg_cron; separate secret from the payments job.
- * Three jobs, each on its own so one failing doesn't stop the others: creator setup emails, support emails to
- * creators (src/lib/support-emails.ts) and alerts to the operator (src/lib/ops.ts). Alerts go last, so a problem
+ * Four jobs, each on its own so one failing doesn't stop the others: creator setup emails, support emails to
+ * creators (src/lib/support-emails.ts), signed webhooks to creators' endpoints (src/lib/webhook-delivery.ts, with a
+ * time budget so it can't starve the emails) and alerts to the operator (src/lib/ops.ts). Alerts go last, so a problem
  * in the first two is mailed in the same minute.
  */
 export async function POST(req: Request) {
@@ -28,6 +30,7 @@ export async function POST(req: Request) {
   const failed = "failed" in creator ? Number(creator.failed ?? 0) : 0;
   if (failed > 0) await recordOpsEvent("[email] creator email not sent", [`${failed} failed this tick`]);
   const support = await run("[cron] support emails", () => processSupportEmails());
+  const webhooks = await run("[cron] webhooks", () => processWebhooks());
   const alerts = await run("[cron] alert emails", () => processOpsAlerts());
-  return Response.json({ ...creator, support, alerts }, { headers: { "Cache-Control": "no-store" } });
+  return Response.json({ ...creator, support, webhooks, alerts }, { headers: { "Cache-Control": "no-store" } });
 }
