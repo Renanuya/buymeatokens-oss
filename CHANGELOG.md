@@ -17,11 +17,13 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
     Tight, which now carries accented Latin letters (Latin-1 and Latin Extended-A); names in other scripts use the
     viewer's system font. Copies count in the admin's badge stats and as a README step for the setup reminder.
   - **Sponsor button**: one click opens GitHub's new-file page with `.github/FUNDING.yml` filled in, for the page's
-    project repo (or any of the creator's own) and, through their `.github` repository, all of them. The tab asks
-    GitHub whether the file is there and links to the page, and checks again when the creator comes back. Also a
-    `funding` field for `package.json`.
-  - Analytics shows the new links as their own sources: *Supporter wall*, *GitHub Sponsor button* and *npm package*
-    (`?ref=wall`, `?ref=sponsor`, `?ref=npm`).
+    project repo (or any of the creator's own) and, through their `.github` repository, all of them. GitHub only shows
+    the button once Sponsorships is turned on in the repo's settings, so the tab reads the repo's page to see whether
+    the button is really there, and links to the settings until it is. It checks again when the creator comes back.
+    The FUNDING.yml link has no `?ref=` tag, because GitHub prints it as is under "Sponsor this project"; those
+    visits count as GitHub. Also a `funding` field for `package.json`.
+  - Analytics shows the new links as their own sources: *Supporter wall* (`?ref=wall`) and *npm package*
+    (`?ref=npm`). Links tagged `?ref=sponsor` by hand show as *GitHub Sponsor button*.
 
 - **Support emails.** A creator gets an email when someone supports them, with each supporter's name, amount, payment
   method and message, and a button to say thanks from the dashboard ([#19](https://github.com/Renanuya/buymeatokens-oss/issues/19)).

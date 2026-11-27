@@ -1,13 +1,23 @@
 // GitHub's Sponsor button and package funding links that point at a creator's page. Pure, so the dashboard can build
 // the links in the browser; src/lib/sponsor-status.ts asks GitHub whether they're already in place.
 //
-// GitHub shows a Sponsor button at the top of a repository that has .github/FUNDING.yml. A FUNDING.yml at the root of
-// the account's public `.github` repository applies to every repository of that account without its own file.
+// GitHub shows a Sponsor button at the top of a repository that has .github/FUNDING.yml AND has Sponsorships turned
+// on under Settings → General → Features (only an admin can). A FUNDING.yml at the root of the account's public
+// `.github` repository applies to every repository of that account without its own file; each repository still needs
+// Sponsorships on. Custom links are listed as plain links under "Sponsor this project"; only GitHub Sponsors accounts
+// get a button there.
 // https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/displaying-a-sponsor-button-in-your-repository
 
-/** Visits through these links show up as their own sources in Analytics (src/lib/visit-source.ts). */
-export const sponsorLink = (base: string, username: string) => `${base}/${username}?ref=sponsor`;
+/**
+ * The page link for FUNDING.yml, without a `?ref=` tag: GitHub prints it as is under "Sponsor this project". Visits
+ * from it still count, as GitHub (by referrer), in Analytics.
+ */
+export const sponsorLink = (base: string, username: string) => `${base}/${username}`;
+/** npm only shows the link in a terminal and on npmjs.com, so it carries a tag for Analytics. */
 export const npmLink = (base: string, username: string) => `${base}/${username}?ref=npm`;
+
+/** The repository's settings page, where Features → Sponsorships turns the button on. */
+export const repoSettingsUrl = (repo: string) => `https://github.com/${repo}/settings`;
 
 /** The line that adds a link to FUNDING.yml. */
 export const fundingLine = (link: string) => `custom: ["${link}"]`;
@@ -52,6 +62,13 @@ export type SponsorTarget = {
   /** False when the repository doesn't exist (or isn't public), null when GitHub didn't answer. */
   exists: boolean | null;
   state: FundingState;
+  /**
+   * Project repo only: whether github.com shows the Sponsor button on the repository's page right now, which also
+   * needs Sponsorships turned on. Null when it wasn't checked or couldn't be read.
+   */
+  shown: boolean | null;
+  /** Project repo only: it has no FUNDING.yml of its own, but the account's `.github` one links to the page. */
+  covered: boolean;
 };
 
 export type SponsorStatus = {
