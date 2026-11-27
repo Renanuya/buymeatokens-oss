@@ -1,0 +1,75 @@
+{
+  "$schema": "https://fundingjson.org/schema/v1.1.0.json",
+  "version": "v1.1.0",
+  "entity": {
+    "type": "individual",
+    "role": "owner",
+    "name": "Renanuya",
+    "email": "hello@buymeatokens.com",
+    "phone": "",
+    "description": "Independent developer who builds and maintains buymeatokens, an open source support page for developers that is paid in AI tokens.",
+    "webpageUrl": {
+      "url": "https://buymeatokens.com",
+      "wellKnown": "https://buymeatokens.com/.well-known/funding-manifest-urls"
+    }
+  },
+  "projects": [
+    {
+      "guid": "buymeatokens",
+      "name": "buymeatokens",
+      "description": "buymeatokens is Buy Me a Coffee for AI tokens: an open source support page for developers. Supporters buy a developer 1M-token bundles, and the money goes straight to the developer's own Stripe, PayPal or USDC wallet with a 0% platform fee; buymeatokens never holds the funds. Developers get a public page, token goals, README badges, a supporter wall, a website button and cookieless analytics. It is built with Next.js and Postgres and licensed under AGPL-3.0.",
+      "webpageUrl": {
+        "url": "https://buymeatokens.com",
+        "wellKnown": "https://buymeatokens.com/.well-known/funding-manifest-urls"
+      },
+      "repositoryUrl": {
+        "url": "https://github.com/Renanuya/buymeatokens-oss",
+        "wellKnown": "https://github.com/Renanuya/buymeatokens-oss/blob/main/.well-known/funding-manifest-urls"
+      },
+      "licenses": ["spdx:AGPL-3.0"],
+      "tags": ["donations", "crowdfunding", "payments", "developer-tools", "ai", "open-source", "nextjs", "typescript"]
+    }
+  ],
+  "funding": {
+    "channels": [
+      {
+        "guid": "buymeatokens",
+        "type": "payment-provider",
+        "address": "https://buymeatokens.com/renanuya",
+        "description": "The maintainer's own buymeatokens page. Pay with PayPal or USDC; the money goes straight to the maintainer with a 0% platform fee."
+      }
+    ],
+    "plans": [
+      {
+        "guid": "tokens-1m",
+        "status": "active",
+        "name": "1M AI tokens",
+        "description": "Buy the maintainer 1M AI tokens to spend on building buymeatokens.",
+        "amount": 3,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["buymeatokens"]
+      },
+      {
+        "guid": "tokens-3m",
+        "status": "active",
+        "name": "3M AI tokens",
+        "description": "Buy the maintainer 3M AI tokens to spend on building buymeatokens.",
+        "amount": 9,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["buymeatokens"]
+      },
+      {
+        "guid": "tokens-5m",
+        "status": "active",
+        "name": "5M AI tokens",
+        "description": "Buy the maintainer 5M AI tokens to spend on building buymeatokens.",
+        "amount": 15,
+        "currency": "USD",
+        "frequency": "one-time",
+        "channels": ["buymeatokens"]
+      }
+    ]
+  }
+}
