@@ -22,6 +22,9 @@
   { "name": "status: needs design", "color": "d4c5f9", "description": "Needs UX or technical design before building" },
   { "name": "status: blocked", "color": "e99695", "description": "Waiting on something else; see the issue" },
 
+  { "name": "roadmap", "color": "5b6cf2", "description": "Shown on buymeatokens.com/roadmap" },
+  { "name": "roadmap: now", "color": "cdd2fb", "description": "The current priority on buymeatokens.com/roadmap" },
+
   { "name": "good first issue", "color": "7057ff", "description": "Small, well-described, good for newcomers" },
   { "name": "help wanted", "color": "008672", "description": "Maintainers would welcome a contribution" }
 ]

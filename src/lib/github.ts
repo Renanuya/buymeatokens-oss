@@ -222,3 +222,52 @@ export async function repoBrief(repo: string): Promise<RepoBrief | null> {
     readme: readme ?? "",
   };
 }
+
+export type GithubIssue = {
+  number: number;
+  title: string;
+  body: string;
+  state: "open" | "closed";
+  /** "completed" or "not_planned" for closed issues. */
+  stateReason: string | null;
+  closedAt: number | null;
+  url: string;
+  labels: string[];
+};
+
+/**
+ * Every issue in `repo` with `label`, open and closed (pull requests left out). Null when GitHub didn't answer, so
+ * callers can tell "none" from "couldn't ask". Cached for five minutes.
+ */
+export async function labelledIssues(repo: string, label: string): Promise<GithubIssue[] | null> {
+  const res = await ghFetch(`/repos/${repo}/issues?labels=${encodeURIComponent(label)}&state=all&per_page=100`, 300);
+  if (!res?.ok) return null;
+  try {
+    const data = (await res.json()) as {
+      number: number;
+      title: string;
+      body: string | null;
+      state: string;
+      state_reason?: string | null;
+      closed_at: string | null;
+      html_url: string;
+      labels: ({ name?: string } | string)[];
+      pull_request?: unknown;
+    }[];
+    if (!Array.isArray(data)) return null;
+    return data
+      .filter((issue) => !issue.pull_request)
+      .map((issue) => ({
+        number: issue.number,
+        title: issue.title,
+        body: issue.body ?? "",
+        state: issue.state === "closed" ? "closed" : "open",
+        stateReason: issue.state_reason ?? null,
+        closedAt: issue.closed_at ? Date.parse(issue.closed_at) : null,
+        url: issue.html_url,
+        labels: issue.labels.map((l) => (typeof l === "string" ? l : l.name ?? "")).filter(Boolean),
+      }));
+  } catch {
+    return null;
+  }
+}
