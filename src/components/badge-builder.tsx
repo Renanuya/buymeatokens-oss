@@ -71,7 +71,7 @@ export function BadgeBuilder({
         onReadme={setReadme}
         copyValue={markdown}
         copyLabel="Copy Markdown"
-        badgeStyle={style === "button" ? "button" : "compact"}
+        badgeStyle={style === "flat" || style === "pill" ? "compact" : "button"}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
