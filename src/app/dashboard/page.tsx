@@ -7,6 +7,7 @@ import { SupportItem, goalPercent } from "@/components/creator-profile";
 import { ReadmeTools } from "@/components/readme-tools";
 import { CreatorBadges } from "@/components/early-supporter-badge";
 import { EarningsCard } from "./earnings-card";
+import { AlertsCard } from "./alerts-card";
 import { Glyph, PaymentMark } from "@/components/glyph";
 import { ArrowUpRight, CheckDot } from "@/components/icons";
 import { Reveal } from "@/components/reveal";
@@ -16,7 +17,7 @@ import { referralStats } from "@/lib/applications";
 import { planState } from "@/lib/billing";
 import { appUrl } from "@/lib/config";
 import { isContributor } from "@/lib/contributors";
-import { earningsHistory, getStats, listRecentPaid, unitsSince } from "@/lib/donations";
+import { earningsHistory, getStats, goalReached as progressOf, listRecentPaid } from "@/lib/donations";
 import { visitorsSince } from "@/lib/page-visits";
 import { formatTokens, formatUsd, shortName } from "@/lib/format";
 import { storedStripeKeyLast4 } from "@/lib/payment-secrets";
@@ -38,7 +39,7 @@ export default async function DashboardPage() {
   const [stats, recent, goalReached, history, referrals, contributor, visitors] = await Promise.all([
     getStats(user.id, mode),
     listRecentPaid(user.id, null, 5),
-    hasGoal ? unitsSince(user.id, mode, user.goalStartedAt!) : Promise.resolve(0),
+    progressOf(user),
     earningsHistory(user.id, mode),
     referralStats(user.id),
     isContributor(user.login),
@@ -145,10 +146,14 @@ export default async function DashboardPage() {
           <Reveal delay={90}>
             <div className="card p-6 sm:p-7">
               <CardHead title="Token goal">
-                <Link href="/dashboard/settings" className="text-[13px] font-semibold text-muted transition hover:text-ink">
-                  {hasGoal ? "Edit" : "Set a goal"}
-                </Link>
+                {hasGoal && (
+                  <Link href="/dashboard/settings" className="text-[13px] font-semibold text-muted transition hover:text-ink">
+                    Edit
+                  </Link>
+                )}
               </CardHead>
+              {/* Both states share one layout, so the card keeps its height and the Your page card below doesn't
+                  stretch into an empty block when there is no goal. */}
               {hasGoal ? (
                 <div className="mt-5 flex items-center gap-5 max-[360px]:gap-3.5">
                   <GoalRing percent={goalPercent(goalReached, user.goalUnits!)} />
@@ -158,6 +163,7 @@ export default async function DashboardPage() {
                     </p>
                     <p className="mt-1 text-sm text-muted">
                       {formatUsd(user.goalUnits! * user.unitPriceCents)} at {formatUsd(user.unitPriceCents)} per 1M
+                      {user.goalPeriod === "monthly" && ", this month"}
                     </p>
                     <p className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-paper px-2.5 py-1 text-xs font-semibold text-ink/75">
                       <Glyph name="trending" className="size-3.5 text-iris" />
@@ -166,11 +172,19 @@ export default async function DashboardPage() {
                   </div>
                 </div>
               ) : (
-                <div className="mt-4 flex items-center gap-4">
-                  <span className="grid size-11 shrink-0 place-items-center rounded-[13px] bg-lilac text-ink">
-                    <Glyph name="goal" className="size-5" />
-                  </span>
-                  <p className="text-sm text-muted">No goal yet. A goal adds a progress bar to your page.</p>
+                <div className="mt-5 flex items-center gap-5 max-[360px]:gap-3.5">
+                  <GoalRing percent={null} />
+                  <div className="min-w-0">
+                    <p className="font-display text-2xl font-semibold tracking-[-0.03em] max-[360px]:text-xl">No goal yet</p>
+                    <p className="mt-1 text-sm text-muted">A goal adds a progress bar to your page.</p>
+                    <Link
+                      href="/dashboard/settings"
+                      className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-lilac px-2.5 py-1 text-xs font-semibold text-ink transition hover:text-iris"
+                    >
+                      Set a goal
+                      <Glyph name="arrow-right" strokeWidth={2} className="size-3.5" />
+                    </Link>
+                  </div>
                 </div>
               )}
             </div>
@@ -276,6 +290,13 @@ export default async function DashboardPage() {
             </div>
           </Reveal>
 
+          <Reveal delay={285}>
+            <div className="card h-full p-6 sm:p-7">
+              <CardHead title="Stream alerts" />
+              <AlertsCard enabled={user.alertsEnabled} />
+            </div>
+          </Reveal>
+
           {signupsGated() && (
             <Reveal delay={300}>
               <div className="card h-full p-6 sm:p-7">
@@ -314,13 +335,13 @@ function CardHead({ title, id, children }: { title: string; id?: string; childre
   );
 }
 
-/** A progress ring in iris, filling in on load. */
-function GoalRing({ percent }: { percent: number }) {
+/** A progress ring in iris, filling in on load. Without a goal (`null`) it is the empty track with the goal mark. */
+function GoalRing({ percent }: { percent: number | null }) {
   return (
     <div className="relative size-28 shrink-0 max-[360px]:size-24">
       <svg viewBox="0 0 120 120" className="size-full -rotate-90" aria-hidden>
         <circle cx="60" cy="60" r="50" fill="none" strokeWidth="11" className="stroke-ink/[0.07]" />
-        {percent > 0 && (
+        {percent !== null && percent > 0 && (
           <circle
             cx="60"
             cy="60"
@@ -334,9 +355,15 @@ function GoalRing({ percent }: { percent: number }) {
           />
         )}
       </svg>
-      <p className="absolute inset-0 grid place-items-center font-display text-2xl font-semibold tracking-[-0.04em] tabular-nums">
-        {percent}%
-      </p>
+      {percent === null ? (
+        <span className="absolute inset-0 grid place-items-center text-iris">
+          <Glyph name="goal" className="size-7" />
+        </span>
+      ) : (
+        <p className="absolute inset-0 grid place-items-center font-display text-2xl font-semibold tracking-[-0.04em] tabular-nums">
+          {percent}%
+        </p>
+      )}
     </div>
   );
 }

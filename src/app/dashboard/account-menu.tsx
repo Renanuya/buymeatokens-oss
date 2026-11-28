@@ -5,7 +5,9 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { logout } from "@/app/actions/auth";
 import { Avatar } from "@/components/avatar";
 import { Glyph, type GlyphName } from "@/components/glyph";
+import { SocialIcon } from "@/components/social-icons";
 import { forgetSignedIn } from "@/components/signed-in";
+import { DISCORD_URL } from "@/lib/config";
 
 function Item({ href, icon, children, onPick }: { href: string; icon: GlyphName; children: ReactNode; onPick: () => void }) {
   return (
@@ -20,7 +22,7 @@ function Item({ href, icon, children, onPick }: { href: string; icon: GlyphName;
   );
 }
 
-/** The creator's avatar; opens a small menu with their page, settings and log out. */
+/** The creator's avatar; opens a small menu with their page, settings, the community Discord and log out. */
 export function AccountMenu({ name, username, avatarUrl }: { name: string; username: string; avatarUrl: string | null }) {
   const [open, setOpen] = useState(false);
   const root = useRef<HTMLDivElement>(null);
@@ -80,6 +82,16 @@ export function AccountMenu({ name, username, avatarUrl }: { name: string; usern
           <Item href="/dashboard/account" icon="user" onPick={close}>
             Account &amp; data
           </Item>
+          <a
+            href={DISCORD_URL}
+            target="_blank"
+            rel="noopener noreferrer"
+            onClick={close}
+            className="flex items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-ink transition hover:bg-paper"
+          >
+            <SocialIcon network="discord" className="size-4 text-ink/60" />
+            Community on Discord
+          </a>
         </div>
         <div className="mx-1.5 h-px bg-line" />
         <form action={logout} onSubmit={forgetSignedIn} className="pt-1">

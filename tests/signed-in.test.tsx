@@ -50,9 +50,14 @@ describe("calls to action", () => {
     expect(out).toContain('href="/login"');
     expect(out).toContain("Create your page");
     expect(inn).toContain('href="/dashboard"');
-    expect(inn).toContain('href="/dashboard/settings"');
-    expect(inn).toContain("Edit page");
+    expect(inn).not.toMatch(/Edit page|\/dashboard\/settings/);
     expect(inn).not.toMatch(/Create your page|Log in|\/apply|\/login/);
+    for (const navigation of [html.split("</nav>")[0], out, inn]) {
+      expect(navigation).toContain('href="/roadmap"');
+      expect(navigation).toContain('href="/directory"');
+      expect(navigation).toContain('href="/leaderboard"');
+      expect(navigation).not.toMatch(/For creators|FAQs/);
+    }
   });
 
   it("sends signed-in visitors on the home page to their dashboard", () => {

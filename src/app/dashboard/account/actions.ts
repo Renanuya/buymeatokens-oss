@@ -1,12 +1,15 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { assertConsent } from "@/lib/consent";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import type { ActionState } from "@/components/form-message";
 import { deleteAccount } from "@/lib/account-deletion";
 import { SESSION_COOKIE, requireCreator } from "@/lib/session";
-import { setSupportEmails } from "@/lib/users";
+import { connectDiscordWebhook, sendDiscordTest } from "@/lib/discord-notifications";
+import { reportError } from "@/lib/ops";
+import { setDiscordWebhook, setLeaderboardOptIn, setSupportEmails } from "@/lib/users";
 import { SIGNED_IN_HINT } from "@/lib/signed-in-hint";
 import { deletionConfirmationName, matchesConfirmation } from "./confirm";
 
@@ -28,6 +31,8 @@ export async function deleteAccountAction(_prev: ActionState, formData: FormData
   revalidatePath(`/${user.username}`);
   revalidatePath("/");
   revalidatePath("/sitemap.xml");
+  revalidatePath("/directory");
+  revalidatePath("/leaderboard", "layout");
   redirect("/login?deleted=1");
 }
 
@@ -40,5 +45,54 @@ export async function setSupportEmailsAction(on: boolean): Promise<{ ok: boolean
   if (typeof on !== "boolean") return { ok: false };
   await setSupportEmails(user.id, on);
   revalidatePath("/dashboard/account");
+  return { ok: true };
+}
+
+/**
+ * Connects or replaces the Discord webhook. The URL is a credential: it is checked, encrypted and never sent back.
+ * Allowed without accepting the current Terms, like the rest of this page.
+ */
+export async function connectDiscordAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireCreator();
+  const result = await connectDiscordWebhook(user.id, String(formData.get("webhook") ?? ""));
+  if (!result.ok) return { error: result.error };
+  revalidatePath("/dashboard/account");
+  return { message: "Connected. New support will show up in your channel." };
+}
+
+const DISCORD_TEST_ANSWERS = {
+  sent: { message: "Test message sent. Check your channel." },
+  not_connected: { error: "Connect a webhook first." },
+  limited: { error: "That's a lot of tries in a row. Wait a few minutes, then try again." },
+  gone: { error: "Discord says this webhook no longer exists. Paste a new one." },
+  rate_limited: { error: "Discord asked us to slow down. Try again in a minute." },
+  unreachable: { error: "Couldn't reach Discord. Try again in a minute." },
+} satisfies Record<string, ActionState>;
+
+/** Posts one marked test message to the connected webhook. Like the rest of this page, allowed without the current Terms. */
+export async function testDiscordAction(): Promise<ActionState> {
+  const user = await requireCreator();
+  const result = await sendDiscordTest(user.id).catch(async (error) => {
+    await reportError("[discord] test message", error).catch(() => undefined);
+    return "unreachable" as const;
+  });
+  return DISCORD_TEST_ANSWERS[result];
+}
+
+export async function disconnectDiscordAction(): Promise<void> {
+  const user = await requireCreator();
+  await setDiscordWebhook(user.id, null);
+  revalidatePath("/dashboard/account");
+}
+
+/** Lists or unlists the creator's project on the public leaderboard. It only ever changes the signed-in creator. */
+export async function setLeaderboardAction(on: boolean): Promise<{ ok: boolean }> {
+  const user = await requireCreator();
+  if (typeof on !== "boolean") return { ok: false };
+  // Joining a public list needs the current Terms; leaving it never does.
+  if (on) assertConsent(user);
+  await setLeaderboardOptIn(user.id, on);
+  revalidatePath("/dashboard/account");
+  revalidatePath("/leaderboard", "layout");
   return { ok: true };
 }

@@ -5,12 +5,17 @@ import { PageTitle } from "@/components/page-title";
 import { Glyph } from "@/components/glyph";
 import { PaymentExportLink } from "@/components/payment-export-link";
 import { hasCurrentConsent } from "@/lib/consent";
+import { storedDiscordHint } from "@/lib/discord";
 import { formatDate } from "@/lib/format";
 import { contactEmail, legalValue } from "@/lib/legal/config";
 import { requireCreator } from "@/lib/session";
+import { listEndpoints } from "@/lib/webhooks";
 import { deletionConfirmationName } from "./confirm";
 import { DeleteAccountForm } from "./delete-account-form";
+import { DiscordWebhookForm } from "./discord-webhook-form";
+import { LeaderboardToggle } from "./leaderboard-toggle";
 import { SupportEmailToggle } from "./support-email-toggle";
+import { WebhooksCard } from "./webhooks-card";
 
 export const metadata: Metadata = { title: { absolute: "Account · buymeatokens" }, robots: { index: false, follow: false } };
 
@@ -29,6 +34,7 @@ export default async function AccountPage() {
   const user = await requireCreator();
   const accepted = hasCurrentConsent(user);
   const email = contactEmail();
+  const endpoints = await listEndpoints(user.id);
 
   return (
     <div className="max-w-3xl space-y-10">
@@ -52,6 +58,51 @@ export default async function AccountPage() {
             </p>
           </div>
           <SupportEmailToggle on={user.supportEmails} />
+        </div>
+      </Section>
+
+      <Section id="discord" title="Discord">
+        <div className="rounded-2xl border border-line bg-white p-4 sm:p-5">
+          <div className="flex items-center gap-4">
+            <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+              <Glyph name="webhook" strokeWidth={2} className="size-5" />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="font-semibold text-ink">Post in my Discord channel when someone supports me</p>
+              <p className="mt-0.5 break-words text-[13px] leading-snug text-muted">
+                Optional. Paste a webhook URL from your channel&apos;s settings. We post the supporter&apos;s name, tokens and message, as
+                your page shows them, never the amount. The URL is stored encrypted and never shown again.
+              </p>
+            </div>
+          </div>
+          <div className="mt-4">
+            <DiscordWebhookForm hint={storedDiscordHint(user.discordWebhookEnc)} stopped={user.discordFailedAt !== null} />
+          </div>
+        </div>
+      </Section>
+
+      <Section id="webhooks" title="Webhooks">
+        <p>
+          We send a signed event to your server when a payment is confirmed or reversed (up to 3 HTTPS endpoints). It has
+          the supporter&apos;s name (if given), message, amount and method, never an email or a transaction id.
+        </p>
+        <WebhooksCard endpoints={endpoints} />
+      </Section>
+
+      <Section id="leaderboard" title="Leaderboard">
+        <div className="flex items-center gap-4 rounded-2xl border border-line bg-white p-4 sm:p-5">
+          <span className="grid size-11 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+            <Glyph name="trophy" strokeWidth={2} className="size-5" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <p className="font-semibold text-ink">Show my project on the leaderboard</p>
+            <p className="mt-0.5 break-words text-[13px] leading-snug text-muted">
+              Off by default. Your name, avatar, tokens received and supporter count are listed on the{" "}
+              <a href="/leaderboard" className="underline underline-offset-2">public leaderboard</a>, for the last day, week,
+              month and all time. With your public price, those tokens tell roughly what you received in each.
+            </p>
+          </div>
+          <LeaderboardToggle on={user.leaderboardOptIn} />
         </div>
       </Section>
 

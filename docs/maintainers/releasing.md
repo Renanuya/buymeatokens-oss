@@ -1,27 +1,45 @@
 # Releasing and deploying
 
-buymeatokens.com deploys continuously: whatever is on `main` can go to production. Versions are milestones that
+buymeatokens.com deploys continuously: whatever is merged to `main` goes to production. Versions are milestones that
 group the changes in between.
 
 ## Deploying
 
-1. Make sure `main` is green in CI.
-2. Deploy from a **clean checkout of `main`**, never from a working copy with uncommitted changes:
+Merging to `main` deploys. When CI passes for the push, [`.github/workflows/deploy.yml`](../../.github/workflows/deploy.yml)
+deploys that exact commit to Vercel and checks that the home page and a badge answer 200. It runs for pushes to `main`
+only, never for pull requests. If a newer push has already landed, it skips the older commit. *Actions → Deploy → Run
+workflow* redeploys the current `main`.
 
-   ```bash
-   git switch main && git pull --ff-only && git status --short   # must print nothing
-   npx vercel deploy --prod
-   ```
+The workflow needs three secrets in the repository's `production` environment (Settings → Environments → production),
+which only `main` can use:
 
-3. Smoke-test production: home page, a creator page, the dashboard, and `/api/badge/<username>`.
+| Secret | Value |
+|---|---|
+| `VERCEL_TOKEN` | A Vercel access token (Vercel → Account settings → Tokens), scoped to the team that owns the project |
+| `VERCEL_ORG_ID` | `orgId` from `.vercel/project.json` after `npx vercel link` |
+| `VERCEL_PROJECT_ID` | `projectId` from the same file |
+
+Without them the workflow deploys nothing and says so in a notice.
+
+To deploy by hand (if Actions is down, say), use a **clean checkout of `main`**, never a working copy with uncommitted
+changes:
+
+```bash
+git switch main && git pull --ff-only && git status --short   # must print nothing
+npx vercel deploy --prod
+```
+
+After a deploy:
+
+1. Smoke-test production: home page, a creator page, the dashboard, and `/api/badge/<username>`.
    If the deploy added or changed public pages (a blog post, say), tell search engines:
    `npx tsx scripts/indexnow.ts --apply /blog/<slug>` (or `--apply` alone for the whole sitemap).
-4. If anything is wrong, use **Vercel → Deployments → Instant Rollback** to go back to the previous deployment.
+2. If anything is wrong, use **Vercel → Deployments → Instant Rollback** to go back to the previous deployment.
    Rollbacks don't undo schema changes, which is why schema changes must be backward compatible.
 
 ### Deploying a schema change
 
-- Deploy it **on its own**, not bundled with unrelated changes.
+- Merge it **on its own**, not bundled with unrelated changes: merging is deploying.
 - The schema is applied by the first instance that connects after the deploy ([database.md](../database.md)).
   Watch the logs for the first minutes.
 - Never "test" a schema change by running a local dev server against production.

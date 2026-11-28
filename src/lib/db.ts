@@ -85,6 +85,12 @@ CREATE TABLE IF NOT EXISTS donations (
 );
 CREATE INDEX IF NOT EXISTS donations_creator_status ON donations(creator_id, status);
 CREATE INDEX IF NOT EXISTS donations_status_created ON donations(status, created_at);
+-- Confirmed support per creator and mode, by the time it was confirmed: public pages sum it and page through it.
+CREATE INDEX IF NOT EXISTS donations_paid_window
+  ON donations (creator_id, stripe_mode, (COALESCE(paid_at, created_at)), id) INCLUDE (units, paid_at, created_at)
+  WHERE status = 'paid';
+-- Postgres keeps no statistics for an expression in a partial index; without these it misjudges a window's size.
+CREATE STATISTICS IF NOT EXISTS donations_paid_at_stats ON (COALESCE(paid_at, created_at)) FROM donations;
 
 -- USDC on Base: creators add a wallet address, supporters pay on-chain.
 -- method is 'stripe' or 'usdc'; tx_hash makes each transfer count once.
@@ -172,8 +178,11 @@ ALTER TABLE waitlist ENABLE ROW LEVEL SECURITY;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_url TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS project_name TEXT;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS token_use TEXT NOT NULL DEFAULT '';
+ALTER TABLE users ADD COLUMN IF NOT EXISTS thank_you TEXT NOT NULL DEFAULT '';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_units INTEGER;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_started_at BIGINT;
+-- goal_period is 'one-time' (counts since goal_started_at) or 'monthly' (counts the current UTC month, computed on read).
+ALTER TABLE users ADD COLUMN IF NOT EXISTS goal_period TEXT NOT NULL DEFAULT 'one-time';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS socials TEXT NOT NULL DEFAULT '{}';
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_progress INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE users ADD COLUMN IF NOT EXISTS setup_done_at BIGINT;
@@ -278,6 +287,31 @@ INSERT INTO schema_migrations (id, applied_at)
 VALUES ('support-notifications-v1', (EXTRACT(EPOCH FROM CURRENT_TIMESTAMP) * 1000)::bigint)
 ON CONFLICT (id) DO NOTHING;
 
+-- Discord notifications (src/lib/discord-notifications.ts): an optional message in the creator's own Discord channel,
+-- through a webhook URL they paste under Account. The URL is a credential, so it is stored encrypted and never shown.
+-- discord_connected_at: only support paid after it is announced. discord_failed_at: Discord said the webhook is gone.
+-- Its own claim table, so this channel can never block or duplicate the email one. One row per payment.
+-- failed with retry_at set is retried at that time; failed without it is final.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_webhook_enc TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_connected_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_failed_at BIGINT;
+CREATE TABLE IF NOT EXISTS discord_notifications (
+  donation_id TEXT PRIMARY KEY REFERENCES donations(id) ON DELETE CASCADE,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  status TEXT NOT NULL CHECK (status IN ('sending', 'sent', 'failed', 'unknown', 'skipped')),
+  attempt_count INTEGER NOT NULL DEFAULT 1,
+  attempted_at BIGINT NOT NULL,
+  retry_at BIGINT,
+  sent_at BIGINT
+);
+CREATE INDEX IF NOT EXISTS discord_notifications_creator ON discord_notifications(creator_id, attempted_at);
+-- The minute worker only looks at creators who connected a webhook.
+CREATE INDEX IF NOT EXISTS users_discord_hooked ON users(id) INCLUDE (discord_connected_at) WHERE discord_webhook_enc IS NOT NULL;
+-- Checking a pasted webhook is a request to Discord from the operator's address: a few per creator per 10 minutes.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks_since BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS discord_checks INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE discord_notifications ENABLE ROW LEVEL SECURITY;
+
 -- Operator alerts (src/lib/ops.ts): server errors and payment problems, grouped by what went wrong. The minute email
 -- worker mails new groups to the operator. Details are redacted one-line messages; rows go after 30 days.
 CREATE TABLE IF NOT EXISTS ops_events (
@@ -292,6 +326,106 @@ CREATE TABLE IF NOT EXISTS ops_events (
 );
 CREATE INDEX IF NOT EXISTS ops_events_last ON ops_events(last_at);
 ALTER TABLE ops_events ENABLE ROW LEVEL SECURITY;
+
+-- Signed webhooks (src/lib/webhooks.ts, docs/webhooks.md). A creator has up to 3 HTTPS endpoints; slot (1-3) makes the
+-- limit hold under concurrent adds. Secrets are encrypted (they must be recoverable to sign); the previous one stays
+-- valid until prev_expires_at after a rotation.
+CREATE TABLE IF NOT EXISTS webhook_endpoints (
+  id TEXT PRIMARY KEY,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  slot SMALLINT NOT NULL CHECK (slot BETWEEN 1 AND 3),
+  url TEXT NOT NULL,
+  secret_enc TEXT NOT NULL,
+  prev_secret_enc TEXT,
+  prev_expires_at BIGINT,
+  enabled BOOLEAN NOT NULL DEFAULT true,
+  fail_streak INTEGER NOT NULL DEFAULT 0,
+  disabled_at BIGINT,
+  created_at BIGINT NOT NULL,
+  UNIQUE (creator_id, slot)
+);
+ALTER TABLE webhook_endpoints ENABLE ROW LEVEL SECURITY;
+-- The outbox: one row per (endpoint, event), written in the same statement that confirms or reverses a payment.
+-- payload is the exact JSON text that is signed and sent, snapshotted at enqueue time.
+CREATE TABLE IF NOT EXISTS webhook_deliveries (
+  id TEXT PRIMARY KEY,
+  endpoint_id TEXT NOT NULL REFERENCES webhook_endpoints(id) ON DELETE CASCADE,
+  event_id TEXT NOT NULL,
+  event_type TEXT NOT NULL,
+  payload TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending', 'sending', 'delivered', 'dead')),
+  attempt_count INTEGER NOT NULL DEFAULT 0,
+  next_attempt_at BIGINT NOT NULL,
+  attempted_at BIGINT,
+  last_status INTEGER,
+  created_at BIGINT NOT NULL,
+  UNIQUE (endpoint_id, event_id)
+);
+CREATE INDEX IF NOT EXISTS webhook_deliveries_due ON webhook_deliveries(next_attempt_at) WHERE status = 'pending';
+-- Serves the claim's "left in sending by a worker that died" branch, so an idle tick doesn't scan the table.
+CREATE INDEX IF NOT EXISTS webhook_deliveries_sending ON webhook_deliveries(attempted_at) WHERE status = 'sending';
+CREATE INDEX IF NOT EXISTS webhook_deliveries_created ON webhook_deliveries(created_at);
+ALTER TABLE webhook_deliveries ENABLE ROW LEVEL SECURITY;
+-- "Send a test event" rate limit: one fixed window per creator.
+CREATE TABLE IF NOT EXISTS webhook_test_limits (
+  creator_id TEXT PRIMARY KEY REFERENCES users(id) ON DELETE CASCADE,
+  window_start BIGINT NOT NULL,
+  count INTEGER NOT NULL
+);
+ALTER TABLE webhook_test_limits ENABLE ROW LEVEL SECURITY;
+-- USDC payment records (src/lib/usdc-payments.ts): one row per submitted transaction, written before the chain is asked,
+-- so an RPC outage leaves something to re-check. status: sent -> verifying -> confirmed | failed | expired.
+-- A verifying row older than its lease is taken over (the process holding it died). The counted payment is still the
+-- donations row; its unique tx_hash is what keeps a transfer from counting twice.
+CREATE TABLE IF NOT EXISTS usdc_payments (
+  id TEXT PRIMARY KEY,
+  creator_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  address TEXT NOT NULL,
+  network TEXT NOT NULL DEFAULT 'base',
+  tx_hash TEXT NOT NULL,
+  status TEXT NOT NULL DEFAULT 'sent' CHECK (status IN ('sent', 'verifying', 'confirmed', 'failed', 'expired')),
+  amount_cents INTEGER,
+  reason TEXT,
+  supporter_name TEXT NOT NULL DEFAULT '',
+  message TEXT NOT NULL DEFAULT '',
+  visit_source TEXT,
+  attempts INTEGER NOT NULL DEFAULT 0,
+  created_at BIGINT NOT NULL,
+  expires_at BIGINT NOT NULL,
+  last_checked_at BIGINT,
+  confirmed_at BIGINT,
+  -- Hashes are public: a record is per creator, so submitting someone's hash on another page can't block the right one.
+  UNIQUE (creator_id, tx_hash)
+);
+CREATE INDEX IF NOT EXISTS usdc_payments_open ON usdc_payments(status, last_checked_at);
+ALTER TABLE usdc_payments ENABLE ROW LEVEL SECURITY;
+-- Stream alerts (src/lib/stream-alerts.ts): SHA-256 of the secret in the creator's browser source URL. NULL = off.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS alerts_token_hash TEXT;
+CREATE UNIQUE INDEX IF NOT EXISTS users_alerts_token_hash ON users(alerts_token_hash);
+-- Project directory (src/lib/directory.ts): a creator opts in (listed_at, Unix ms) and picks one category and one
+-- language from fixed lists. The index serves the unfiltered listing, newest first.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS listed_at BIGINT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_category TEXT;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS project_language TEXT;
+CREATE INDEX IF NOT EXISTS users_directory ON users(listed_at DESC, id) WHERE listed_at IS NOT NULL;
+-- Directory search (src/lib/directory.ts, SEARCH_DOC): word-prefix full-text search over listed creators only.
+CREATE INDEX IF NOT EXISTS users_directory_search ON users USING GIN (to_tsvector('simple',
+  coalesce(project_name, '') || ' ' || coalesce(display_name, '') || ' ' || coalesce(username, '') || ' ' || coalesce(bio, '')))
+  WHERE listed_at IS NOT NULL;
+-- Leaderboard (src/lib/leaderboard.ts): a creator appears only after turning this on under Account. The short
+-- windows are range scans on the donations_paid_at index above.
+ALTER TABLE users ADD COLUMN IF NOT EXISTS leaderboard_opt_in BOOLEAN NOT NULL DEFAULT false;
+-- Page address changes (src/lib/users.ts, changeUsername): for 10 days an old handle still leads to its creator, so
+-- they have time to update shared links and README badges, then anyone can take it. One row per handle, for whoever
+-- left it last. username_changed_at limits changes to one per 90 days.
+CREATE TABLE IF NOT EXISTS username_redirects (
+  old_username TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  created_at BIGINT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS username_redirects_user ON username_redirects(user_id);
+ALTER TABLE username_redirects ENABLE ROW LEVEL SECURITY;
+ALTER TABLE users ADD COLUMN IF NOT EXISTS username_changed_at BIGINT;
 
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 ALTER TABLE donations ENABLE ROW LEVEL SECURITY;

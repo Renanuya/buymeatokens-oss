@@ -18,9 +18,11 @@ import {
   PriceField,
   ProjectFields,
   SocialFields,
+  ThankYouField,
   TokenUseField,
 } from "@/components/profile-fields";
 import type { RepoSuggestion } from "@/lib/github";
+import type { GoalPeriod } from "@/lib/profile";
 import type { SetupSlug } from "@/lib/setup";
 import type { Socials } from "@/lib/socials";
 import {
@@ -468,11 +470,12 @@ export function DescriptionStep({
 
 // ---------- 6. Token use ----------
 
-export function TokensStep({ defaultValue, nav }: { defaultValue: string; nav: StepNav }) {
+export function TokensStep({ defaultValue, thankYou, nav }: { defaultValue: string; thankYou: string; nav: StepNav }) {
   const [state, action] = useStepAction(saveTokenUseAction);
   return (
     <form action={action} className="stagger mt-8 space-y-6">
       <TokenUseField defaultValue={defaultValue} />
+      <ThankYouField defaultValue={thankYou} />
       <FormMessage state={state} />
       <StepFooter step="tokens" nav={nav} submitLabel="Continue" skipLabel="Skip" />
     </form>
@@ -481,11 +484,11 @@ export function TokensStep({ defaultValue, nav }: { defaultValue: string; nav: S
 
 // ---------- 7. Goal ----------
 
-export function GoalStep({ defaultValue, priceUsd, nav }: { defaultValue: number | null; priceUsd: number; nav: StepNav }) {
+export function GoalStep({ defaultValue, defaultPeriod, priceUsd, nav }: { defaultValue: number | null; defaultPeriod: GoalPeriod; priceUsd: number; nav: StepNav }) {
   const [state, action] = useStepAction(saveGoalAction);
   return (
     <form action={action} className="stagger mt-8 space-y-6">
-      <GoalField defaultValue={defaultValue} priceUsd={priceUsd} />
+      <GoalField defaultValue={defaultValue} defaultPeriod={defaultPeriod} priceUsd={priceUsd} />
       <FormMessage state={state} />
       <StepFooter step="goal" nav={nav} submitLabel="Continue" />
     </form>

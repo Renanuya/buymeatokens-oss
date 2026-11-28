@@ -6,6 +6,7 @@ import { ArrowUpRight, TokenTile } from "@/components/icons";
 import { LegalFooter } from "@/components/legal-footer";
 import { getDonationBySessionId } from "@/lib/donations";
 import { first, formatTokens, formatUsd } from "@/lib/format";
+import { redirectOldHandle } from "@/lib/handle-redirect";
 import { syncDonation } from "@/lib/reconcile";
 import { reportError } from "@/lib/ops";
 import { getUserByUsername } from "@/lib/users";
@@ -19,10 +20,13 @@ export default async function ThanksPage({
   params: Promise<{ username: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const creator = await getUserByUsername((await params).username);
+  const requested = (await params).username;
+  const creator = await getUserByUsername(requested);
   if (!creator?.username) notFound();
+  const query = await searchParams;
+  redirectOldHandle(requested, creator.username, "/thanks", query);
 
-  const sessionId = first((await searchParams).session_id);
+  const sessionId = first(query.session_id);
   const found = sessionId ? await getDonationBySessionId(sessionId) : null;
   const donation = found && found.creatorId === creator.id ? found : null;
 

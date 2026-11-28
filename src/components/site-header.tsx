@@ -7,16 +7,16 @@ import { SignedInSwitch } from "./signed-in-switch";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
-  { href: "/#makers", label: "For creators" },
-  { href: "/#faq", label: "FAQs" },
   { href: "/roadmap", label: "Roadmap" },
+  { href: "/directory", label: "Directory" },
+  { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Blog" },
 ];
 
 const CTA =
   "btn-dark hidden gap-2.5 whitespace-nowrap py-2 pl-4 pr-3 text-[12px] min-[400px]:inline-flex md:gap-4 md:py-2.5 md:pl-5 md:pr-4 md:text-[13px]";
 
-/** The marketing header. Signed-in visitors get "Edit page" and "Dashboard" instead of "Log in" and "Create your page". */
+/** The marketing header. Signed-in visitors get a single Dashboard action. */
 export function SiteHeader() {
   return (
     <header className="border-b border-line print:hidden">
@@ -46,13 +46,10 @@ export function SiteHeader() {
               }
               signedIn={
                 <>
-                  <Link href="/dashboard/settings" className="hidden text-[13px] font-medium transition hover:opacity-60 md:block">
-                    Edit page
-                  </Link>
                   <Link href="/dashboard" className={CTA}>
                     Dashboard <ArrowUpRight className="size-3" />
                   </Link>
-                  <MobileMenu links={[...LINKS, { href: "/dashboard", label: "Dashboard" }, { href: "/dashboard/settings", label: "Edit page" }]} />
+                  <MobileMenu links={[...LINKS, { href: "/dashboard", label: "Dashboard" }]} />
                 </>
               }
             />

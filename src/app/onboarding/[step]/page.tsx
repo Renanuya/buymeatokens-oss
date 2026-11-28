@@ -64,9 +64,9 @@ function socialsToStart(user: User): Socials {
   return decided || !user.login ? user.socials : { github: `https://github.com/${user.login}` };
 }
 
-/** "Write with AI" reads the saved project link; it only shows when that is a GitHub repo and AI drafts are on. */
+/** "Write with AI" shows whenever AI drafts are on: from the saved GitHub repo's README, else from the saved project details. */
 function aiSource(user: User) {
-  return aiDraftEnabled() && user.projectUrl && githubRepo(user.projectUrl) ? { projectUrl: user.projectUrl } : undefined;
+  return aiDraftEnabled() ? { projectUrl: user.projectUrl ?? "" } : undefined;
 }
 
 /** What goes in a step's form the first time: saved values, else the application, else GitHub. */
@@ -125,9 +125,9 @@ async function stepForm(step: SetupSlug, user: User, nav: StepNav, host: string)
       return <DescriptionStep defaultValue={value} note={note} ai={aiSource(user)} nav={nav} />;
     }
     case "tokens":
-      return <TokensStep defaultValue={user.tokenUse || application?.tokenUse || ""} nav={nav} />;
+      return <TokensStep defaultValue={user.tokenUse || application?.tokenUse || ""} thankYou={user.thankYou} nav={nav} />;
     case "goal":
-      return <GoalStep defaultValue={user.goalUnits} priceUsd={Math.round(user.unitPriceCents / 100)} nav={nav} />;
+      return <GoalStep defaultValue={user.goalUnits} defaultPeriod={user.goalPeriod} priceUsd={Math.round(user.unitPriceCents / 100)} nav={nav} />;
     case "socials":
       return <SocialsStep defaultValue={socialsToStart(user)} nav={nav} />;
   }

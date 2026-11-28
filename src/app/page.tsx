@@ -1,9 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Fragment } from "react";
+import { CommunityCard } from "@/components/community-card";
 import { DemoSupportCard } from "@/components/demo-support-card";
 import { HowItWorks } from "@/components/how-it-works";
 import { MakersCollage } from "@/components/makers-collage";
+import { MostSupported } from "@/components/most-supported";
 import { Preloader } from "@/components/preloader";
 import { Reveal, RevealLines } from "@/components/reveal";
 import { ArrowUpRight, PlusIcon, TokenTile } from "@/components/icons";
@@ -13,6 +15,7 @@ import { StartCta } from "@/components/start-cta";
 import { listRecentCreators } from "@/lib/applications";
 import { accessCopy } from "@/lib/access-copy";
 import { categoryOf, getPost, type Post } from "@/lib/blog";
+import { DISCORD_URL, IDEAS_URL } from "@/lib/config";
 import { faqJsonLd, jsonLdScript, organizationJsonLd, softwareJsonLd, websiteJsonLd } from "@/lib/seo";
 import { SignedInSwitch } from "@/components/signed-in-switch";
 
@@ -76,16 +79,12 @@ export default async function Home() {
       <main>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
         <section className="wrap pt-12 md:pt-24">
-          <Reveal afterLoad className="flex items-start justify-between gap-6">
-            <p className="eyebrow">Community support for your AI tools</p>
-            <p className="eyebrow hidden md:block">Support open source. Keep shipping.</p>
-          </Reveal>
           <RevealLines
             as="h1"
             afterLoad
             delay={120}
             stagger={140}
-            className="display mt-8 text-[clamp(1.75rem,8vw,8rem)] md:mt-12"
+            className="display text-[clamp(1.75rem,8vw,8rem)]"
             lines={[
               "Coffee is nice.",
               <Fragment key="ship">
@@ -99,7 +98,7 @@ export default async function Home() {
           </Reveal>
           <Reveal afterLoad delay={450} className="pb-20 pt-10 md:pb-32 md:pt-16">
             <div id="early-access" className="scroll-mt-6 rounded-[18px] bg-lilac p-6 max-[360px]:p-5 sm:p-8 md:p-12 lg:p-14">
-              <p className="eyebrow flex items-center gap-2 text-ink/60">
+              <p className="eyebrow flex items-baseline gap-2 text-ink/60">
                 <span className="size-1.5 rounded-full bg-iris" />
                 <SignedInSwitch signedOut={copy.label} signedIn="You're signed in" />
               </p>
@@ -171,7 +170,7 @@ export default async function Home() {
                 </Reveal>
               </div>
               <div className="relative flex items-center md:justify-center">
-                <p className="eyebrow absolute -top-12 right-0 hidden text-white/35 md:block">Live style demo / 001</p>
+                <p className="eyebrow absolute -top-12 right-0 hidden text-white/35 lg:block">Live style demo / 001</p>
                 <DemoSupportCard />
               </div>
             </div>
@@ -193,6 +192,8 @@ export default async function Home() {
           <HowItWorks />
           <p className="mt-6 text-sm text-muted">Payment provider and network fees may apply.</p>
         </section>
+
+        <MostSupported />
 
         <section id="makers" className="flex min-h-dvh scroll-mt-0 items-center overflow-hidden bg-lilac">
           <div className="wrap grid grid-cols-1 items-center gap-12 py-20 md:py-24 lg:grid-cols-2 lg:gap-16">
@@ -222,8 +223,11 @@ export default async function Home() {
           </div>
         </section>
 
-        <section id="faq" className="wrap scroll-mt-6 py-28 md:py-44">
-          <div className="max-w-2xl">
+        <section
+          id="faq"
+          className="wrap grid scroll-mt-6 grid-cols-1 py-28 md:py-44 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)] lg:gap-16"
+        >
+          <div className="max-w-2xl lg:sticky lg:top-12 lg:self-start">
             <RevealLines className="display text-[clamp(2.75rem,5vw,4.5rem)]" lines={["The little", "details."]} />
             <Reveal delay={250}>
               <p className="mt-6 max-w-md text-[15px] leading-relaxed text-muted md:text-base">
@@ -232,7 +236,7 @@ export default async function Home() {
               </p>
             </Reveal>
           </div>
-          <div className="mt-14 border-b border-line md:mt-24">
+          <div className="mt-14 border-b border-line md:mt-24 lg:mt-0">
             {faqs.map((faq) => (
               <details key={faq.q} className="group border-t border-line">
                 <summary className="flex cursor-pointer list-none items-center justify-between gap-6 py-7 text-lg font-semibold tracking-[-0.02em] md:py-8 md:text-xl [&::-webkit-details-marker]:hidden">
@@ -274,6 +278,20 @@ export default async function Home() {
             </ul>
           </section>
         )}
+
+        <section id="community" className="wrap scroll-mt-6 pb-28 md:pb-44">
+          <Reveal>
+            <CommunityCard
+              eyebrow="Community"
+              title="Meet the builders on Discord."
+              text="Give feedback, show what you're building, and meet other open source developers and the people who support them."
+              links={[
+                { href: DISCORD_URL, label: "Join the Discord" },
+                { href: IDEAS_URL, label: "Vote on ideas" },
+              ]}
+            />
+          </Reveal>
+        </section>
       </main>
       <SiteFooter />
     </>
