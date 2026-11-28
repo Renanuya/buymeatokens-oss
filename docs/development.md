@@ -94,6 +94,21 @@ npm run dev
 
 Open http://localhost:3000. The first request creates the tables.
 
+## Seed demo data
+
+Run `npm run db:seed` to fill a fresh local database with demo data: three demo creators (`demo-ada`, `demo-grace` and `demo-alan`, each with a completed page) and two paid demo donations for each of them.
+
+The script is idempotent: every demo row has a stable id, so running it again inserts nothing new.
+
+Local databases only: the script reads `POSTGRES_URL` and refuses to run, before opening a connection, when it points at a non-local host. There is no override.
+
+To reset the demo data, throw the local database away and seed again:
+
+```bash
+docker compose down -v
+docker compose up -d db
+npm run db:seed
+```
 ## 4. Try the whole flow
 
 1. **Log in → "Continue without GitHub".**
