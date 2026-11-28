@@ -77,6 +77,14 @@ can be as messy as you like.
   Controls in a row share one height. Please don't add step lists, big side headlines, decorative previews or
   mockups; they have been tried and rejected.
 - All product copy is in English. Keep it short and plain.
+- UI icons must be filled, including small labels and pinned notes. Use `SolidGlyph` and extend its filled
+  silhouettes as needed; do not introduce outline icons or fill stroke-only geometry. Outline icon additions
+  are grounds for rejection in review.
+- The tiny, all-caps, widely spaced label treatment is prohibited throughout the product, including emails.
+  Labels use sentence case, normal letter spacing and at least 14px. Creator profile section headings are 24px
+  on mobile and 28px on desktop. Inter remains the body font; the prohibited treatment is not a separate font.
+  Run `npm run check:typography`. Reintroducing Tailwind `uppercase`, CSS `text-transform: uppercase` or the
+  equivalent inline style fails the required **Typecheck, test, build** CI check and must be rejected in review.
 
 ## Areas that need extra care
 

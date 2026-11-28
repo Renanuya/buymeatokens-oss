@@ -6,6 +6,7 @@
     "node": "26.x"
   },
   "scripts": {
+    "check:typography": "node scripts/check-typography.mjs",
     "test": "vitest run",
     "dev": "next dev",
     "build": "next build",

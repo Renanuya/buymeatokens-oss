@@ -81,7 +81,7 @@ body {
     @apply font-display font-semibold leading-[0.98] tracking-[-0.045em];
   }
   .eyebrow {
-    @apply text-[11px] font-semibold uppercase tracking-[0.14em] text-muted;
+    @apply text-sm font-medium normal-case tracking-normal text-muted;
   }
   .card {
     @apply rounded-2xl border border-line bg-white;
@@ -150,6 +150,57 @@ body {
 @media (prefers-reduced-motion: reduce) {
   .early-supporter-badge { animation: none; transition: none; }
   .early-supporter-badge::after { display: none; }
+}
+
+/* Thread connectors share a rail under the 40px avatar: half its width + the 14px column gap.
+   :has follows live reply creation/deletion without measuring the DOM or leaving an empty rail. */
+.support-item { --support-rail-offset: 34px; }
+.support-message,
+.support-thread-lead,
+.support-reply-meta,
+.support-reply-message { position: relative; }
+.support-item:has([data-support-reply]) .support-message::before,
+.support-item:has([data-support-reply]) .support-message::after,
+.support-item:has([data-support-reply]) .support-thread-lead::before,
+.support-reply-meta::before,
+.support-reply-message::before {
+  content: "";
+  position: absolute;
+  pointer-events: none;
+  border-color: var(--color-line);
+  border-style: solid;
+  border-width: 0 0 0 1px;
+}
+.support-item:has([data-support-reply]) .support-message::before {
+  left: calc(-1 * var(--support-rail-offset));
+  top: -6px;
+  bottom: 0;
+}
+.support-item:has([data-support-reply]) .support-message::after {
+  left: calc(-1 * var(--support-rail-offset));
+  top: -6px;
+  width: calc(var(--support-rail-offset) - 8px);
+  height: calc(50% + 6px);
+  border-bottom-width: 1px;
+  border-bottom-left-radius: 10px;
+}
+.support-item:has([data-support-reply]) .support-thread-lead::before {
+  left: calc(-1 * var(--support-rail-offset));
+  top: 0;
+  bottom: -12px;
+}
+.support-reply-meta::before {
+  left: calc(-1 * (var(--support-rail-offset) + 20px));
+  top: -12px;
+  bottom: -4px;
+}
+.support-reply-message::before {
+  left: calc(-1 * (var(--support-rail-offset) + 20px));
+  top: -4px;
+  width: calc(var(--support-rail-offset) + 12px);
+  height: 16px;
+  border-bottom-width: 1px;
+  border-bottom-left-radius: 10px;
 }
 
 .profile-markdown > :first-child { margin-top: 0; }

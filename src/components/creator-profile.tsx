@@ -1,10 +1,10 @@
 // Pieces of a creator's public page, some shared with the dashboard. No hooks, so they render on the server.
 
-import { Glyph, type GlyphName } from "@/components/glyph";
-import { ArrowUpRight, GitHubIcon, LinkIcon, TokenTile } from "@/components/icons";
+import { Glyph, SolidGlyph, type GlyphName, type SolidGlyphName } from "@/components/glyph";
+import { ArrowUpRight, GitHubIcon, LinkIcon } from "@/components/icons";
 import { SocialIcon } from "@/components/social-icons";
 import { SupportThread, type ThreadCreator } from "@/components/support-thread";
-import { compactNumber, formatTokens, formatUsd, initials, timeAgo } from "@/lib/format";
+import { compactNumber, formatTokens, formatUsd, initials, shortName, timeAgo } from "@/lib/format";
 import type { RepoStats } from "@/lib/github";
 import { displayUrl, githubRepo, type GoalPeriod } from "@/lib/profile";
 import { socialEntries, type Socials } from "@/lib/socials";
@@ -208,6 +208,15 @@ export function SupporterAvatar({ name, className = "size-10 text-[13px]" }: { n
   );
 }
 
+function SupportReaction({ creatorName, className = "" }: { creatorName: string; className?: string }) {
+  const label = `Liked by ${shortName(creatorName) || creatorName}`;
+  return (
+    <span role="img" aria-label={label} title={label} className={`inline-grid size-5 shrink-0 place-items-center rounded-full border border-line bg-white text-iris ${className}`}>
+      <SolidGlyph name="heart" className="size-3" />
+    </span>
+  );
+}
+
 /**
  * One payment with its message. The public page shows the tokens; the dashboard (`amountCents`) also shows the
  * money, like the landing page's payment cards.
@@ -234,7 +243,7 @@ export function SupportItem({
   thread?: { donationId: string; reply: string | null; repliedAt: number | null; liked: boolean; creator: ThreadCreator; owner: boolean };
 }) {
   return (
-    <li className={`flex items-start gap-3.5 ${compact ? "py-3.5" : "py-4"}`}>
+    <li className={`support-item flex items-start gap-3.5 ${compact ? "py-3.5" : "py-4"}`}>
       <SupporterAvatar name={name} />
       <div className="min-w-0 flex-1">
         <div className="flex items-start justify-between gap-3">
@@ -252,14 +261,18 @@ export function SupportItem({
             </span>
           ) : null}
         </div>
-        <p className="mt-0.5 text-xs text-muted">{timeAgo(at)}</p>
+        <div className="mt-0.5 flex items-center gap-2">
+          <p className="text-xs text-muted">{timeAgo(at)}</p>
+          {!message && thread?.liked && !thread.owner && <SupportReaction creatorName={thread.creator.name} />}
+        </div>
         {message && (
           <p
-            className={`mt-2 w-fit max-w-full break-words rounded-2xl rounded-tl-md bg-paper leading-relaxed text-ink/85 [overflow-wrap:anywhere] ${
+            className={`support-message mt-2 w-fit max-w-full break-words rounded-2xl rounded-tl-md bg-paper leading-relaxed text-ink/85 [overflow-wrap:anywhere] ${
               compact ? "px-3 py-2 text-sm" : "px-3.5 py-2.5 text-[15px]"
             }`}
           >
             {message}
+            {thread?.liked && !thread.owner && <SupportReaction creatorName={thread.creator.name} className="absolute -bottom-1 -right-1" />}
           </p>
         )}
         {thread && <SupportThread supporterName={name} {...thread} />}
@@ -268,14 +281,19 @@ export function SupportItem({
   );
 }
 
-/** A small token tile and a number, for headers ("21M AI tokens received"). */
-export function TokenCount({ units, label }: { units: number; label: string }) {
+/** Shared appearance for public profile statistics. */
+export function ProfileStat({ icon, value, label }: { icon: SolidGlyphName; value: string | number; label: string }) {
   return (
     <span className="inline-flex items-center gap-2 text-sm text-muted">
-      <TokenTile className="h-6 w-7 rounded-md" />
+      <SolidGlyph name={icon} className="size-4 shrink-0" />
       <span>
-        <span className="font-semibold text-ink">{formatTokens(units)}</span> {label}
+        <span className="font-semibold text-ink">{value}</span> {label}
       </span>
     </span>
   );
+}
+
+/** Token total for headers ("21M AI tokens received"). */
+export function TokenCount({ units, label }: { units: number; label: string }) {
+  return <ProfileStat icon="token" value={formatTokens(units)} label={label} />;
 }

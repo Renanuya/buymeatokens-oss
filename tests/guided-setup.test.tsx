@@ -612,7 +612,7 @@ describe("thank-you note", () => {
     expect(html).not.toContain('href="javascript');
     expect(html.length).toBeGreaterThan(without.length);
     // Signed with the creator's name, so it doesn't read like a notice from the site.
-    expect(html).toContain("A note from Maker");
+    expect(html).toContain("Pinned note from Maker");
     expect(without).toContain("No supporters yet");
   });
 

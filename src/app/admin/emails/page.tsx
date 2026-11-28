@@ -70,7 +70,7 @@ export default async function EmailPreview({ searchParams }: {
           {TEMPLATES.map(([value, label, when], i) => (
             <Link key={value} href={`/admin/emails?user=${encodeURIComponent(recipient.id)}&kind=${value}`} aria-current={kind === value ? "page" : undefined}
               className={`rounded-2xl border px-4 py-3 transition ${kind === value ? "border-ink bg-ink text-white" : "border-line bg-white hover:border-ink/40"}`}>
-              <span className={`block text-[11px] font-semibold uppercase tracking-[0.12em] ${kind === value ? "text-white/60" : "text-muted"}`}>
+              <span className={`block text-sm font-medium ${kind === value ? "text-white/60" : "text-muted"}`}>
                 {i === 0 ? "Email 1" : "Email 2"} · {when}
               </span>
               <span className="mt-1 block text-sm font-semibold">{label}</span>

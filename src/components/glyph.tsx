@@ -318,6 +318,36 @@ const LINE = {
 
 export type GlyphName = keyof typeof LINE;
 
+// Original filled marks for the public profile statistics, on the same 24px grid.
+const SOLID = {
+  heart: LINE.heart,
+  reply: <path d="M10 3 2 10l8 7v-5h3a6 6 0 0 1 6 6v3h3v-3a9 9 0 0 0-9-9h-3V3Z" />,
+  pin: <path d="M7 2h10v3h-1v5l3 4v3h-6v4l-1 1-1-1v-4H5v-3l3-4V5H7Z" />,
+  token: (
+    <>
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 6v12M15 8H10.5a2 2 0 0 0 0 4h3a2 2 0 0 1 0 4H9" fill="none" stroke="var(--color-paper)" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    </>
+  ),
+  users: (
+    <>
+      <circle cx="9" cy="7" r="4" />
+      <circle cx="18" cy="8" r="3" />
+      <path d="M2 21v-2a7 7 0 0 1 14 0v2H2ZM18 13a4 4 0 0 1 4 4v4h-4v-2a9 9 0 0 0-2.3-6H18Z" />
+    </>
+  ),
+} satisfies Record<string, ReactNode>;
+
+export type SolidGlyphName = keyof typeof SOLID;
+
+export function SolidGlyph({ name, className = "size-4" }: { name: SolidGlyphName; className?: string }) {
+  return (
+    <svg viewBox="2 2 20 20" fill="currentColor" aria-hidden className={className}>
+      {SOLID[name]}
+    </svg>
+  );
+}
+
 /** Whether `value` names one of the icons, for names that come from outside the code (e.g. roadmap issues). */
 export function isGlyphName(value: unknown): value is GlyphName {
   return typeof value === "string" && Object.prototype.hasOwnProperty.call(LINE, value);
