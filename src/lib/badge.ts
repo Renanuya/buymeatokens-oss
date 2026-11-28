@@ -32,7 +32,6 @@ const THEMES = {
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
 export const esc = (value: string) => value.replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);
-
 export const n = (value: number) => String(Math.round(value * 100) / 100);
 
 export type Run = { width: number; svg: (x: number, baseline: number, fill: string) => string };
@@ -66,7 +65,6 @@ export function icon(path: string, x: number, y: number, size: number, color: st
   return `<path transform="translate(${n(x)} ${n(y)}) scale(${n(size / 16)})" d="${path}" fill="none" stroke="${color}" stroke-width="${strokeWidth}" stroke-linecap="round" stroke-linejoin="round"/>`;
 }
 
-/** Wrap `body` in the outer `<svg>` with a `<title>` (the accessible name; the text itself is paths). */
 export function wrap(width: number, height: number, title: string, body: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${height}" viewBox="0 0 ${n(width)} ${height}" role="img" aria-label="${title}"><title>${title}</title>${body}</svg>`;
 }
@@ -88,6 +86,7 @@ function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): stri
   const pad = 6;
   const label = run(INTER_TIGHT_600, "Buy me AI tokens", 14, -0.005);
   const labelX = pad + tile + 10;
+
   let width: number;
   let tail: string;
   if (count) {
@@ -103,6 +102,7 @@ function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): stri
     width = arrowX + 11 + 15;
     tail = icon(ARROW_PATH, arrowX, h / 2 - 5.5, 11, t.fg, 1.9);
   }
+
   const title = esc(count ? `Buy me AI tokens: ${count}` : "Buy me AI tokens");
   return wrap(
     width,
@@ -117,7 +117,7 @@ function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): stri
 }
 
 /**
- * Shields-height badge for badge rows: [ </> buy me AI tokens | 12M tokens ]. It always shows a count,
+ * Shields-height badge for badge rows: [ </> buy me AI tokens | 12M tokens ]. It always shows a count, starting at
  * "0M tokens" before the first support.
  */
 function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
@@ -128,6 +128,7 @@ function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string
   const labelX = 4 + 12 + 5;
   const split = labelX + label.width + 7;
   const width = split + value.width + 14;
+
   const title = esc(`buy me AI tokens: ${shown}`);
   return wrap(
     width,
@@ -153,6 +154,7 @@ function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string
   const value = count ? run(INTER_TIGHT_700, count.replace(/ tokens$/, ""), 12.5, -0.005) : null;
   const dividerX = labelX + label.width + 10;
   const width = value ? dividerX + 1 + 10 + value.width + 12 : labelX + label.width + 12;
+
   const title = esc(count ? `Buy me AI tokens: ${count}` : "Buy me AI tokens");
   return wrap(
     width,

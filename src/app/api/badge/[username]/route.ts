@@ -6,7 +6,7 @@ import { getUserByUsername } from "@/lib/users";
 
 /**
  * README badge. `?style=flat` gives a 20px shields-style badge that always shows the count ("0M tokens" before
- * the first support), and `?style=pill` a medium pill;`?style=goal` progress
+ * the first support), and `?style=pill` a medium pill; `?style=goal` progress
  * toward the funding goal, and `?style=supporters` the supporter count; the default is a larger button. `?theme=light|iris|lilac`
  * picks the colours (default dark).
  */

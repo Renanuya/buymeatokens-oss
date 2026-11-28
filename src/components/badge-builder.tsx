@@ -27,13 +27,16 @@ export function BadgeBuilder({
   username,
   pageUrl,
   base,
-  className = "", hasGoal = true,
+  hasGoal,
+  className = "",
 }: {
   username: string;
   pageUrl: string;
   base: string;
+  /** Whether the creator has a token goal. Without one the goal badge shows the button, so the builder says so. */
+  hasGoal: boolean;
   /** `flex flex-col` lets the preview area grow to fill a taller card. */
-  className?: string; hasGoal?: boolean;
+  className?: string;
 }) {
   const [style, setStyle] = useState<BadgeStyle>("button");
   const [theme, setTheme] = useState<BadgeTheme>("dark");
@@ -75,7 +78,11 @@ export function BadgeBuilder({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
       </ReadmePreview>
-      {style === "goal" && !hasGoal && <p className="mt-2.5 text-xs text-muted">Set a token goal on your Overview to show progress</p>}<p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
+      <p className="mt-2.5 text-xs text-muted">
+        {style === "goal" && !hasGoal
+          ? "No token goal yet, so this badge shows the button. Set a goal on your Overview and it shows your progress."
+          : "Copy the Markdown into your README. The count updates by itself."}
+      </p>
     </div>
   );
 }

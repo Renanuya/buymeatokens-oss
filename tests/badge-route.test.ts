@@ -142,7 +142,8 @@ describe("GET /api/badge/[username]", () => {
     expect(svg).toContain("<title>Buy me AI tokens: 1 supporter</title>");
   });
 
-  it("keeps every badge style at its declared height", async () => { await setGoal("maker", 50, NOW - 60_000);
+  it("keeps every badge style at its declared height", async () => {
+    await setGoal("maker", 50, NOW - 60_000);
     const cases: [string, number][] = [
       ["", 36],
       ["?style=flat", 20],
@@ -163,6 +164,4 @@ describe("GET /api/badge/[username]", () => {
     expect(svg).toContain("&lt;script&gt;");
     expect(svg).toContain("&amp; friends");
   });
-
-  
 });
