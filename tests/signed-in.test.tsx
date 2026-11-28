@@ -53,9 +53,10 @@ describe("calls to action", () => {
     expect(inn).not.toMatch(/Edit page|\/dashboard\/settings/);
     expect(inn).not.toMatch(/Create your page|Log in|\/apply|\/login/);
     for (const navigation of [html.split("</nav>")[0], out, inn]) {
+      expect(navigation).toContain('href="/roadmap"');
       expect(navigation).toContain('href="/directory"');
       expect(navigation).toContain('href="/leaderboard"');
-      expect(navigation).not.toMatch(/For creators|FAQs|Roadmap/);
+      expect(navigation).not.toMatch(/For creators|FAQs/);
     }
   });
 

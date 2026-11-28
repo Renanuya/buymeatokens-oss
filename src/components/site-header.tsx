@@ -7,6 +7,7 @@ import { SignedInSwitch } from "./signed-in-switch";
 
 const LINKS = [
   { href: "/#how", label: "How it works" },
+  { href: "/roadmap", label: "Roadmap" },
   { href: "/directory", label: "Directory" },
   { href: "/leaderboard", label: "Leaderboard" },
   { href: "/blog", label: "Blog" },
