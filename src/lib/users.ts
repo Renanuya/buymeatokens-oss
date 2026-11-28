@@ -57,6 +57,8 @@ export type User = {
   projectLanguage: string | null;
   /** Whether the creator's project is listed on the public leaderboard (src/lib/leaderboard.ts). Off by default. */
   leaderboardOptIn: boolean;
+  /** When the creator last changed their page address (Unix ms), or null (see changeUsername). */
+  usernameChangedAt: number | null;
   createdAt: number;
 };
 
@@ -102,6 +104,7 @@ function mapUser(r: Row): User {
     projectCategory: str(r.project_category),
     projectLanguage: str(r.project_language),
     leaderboardOptIn: r.leaderboard_opt_in === true,
+    usernameChangedAt: num(r.username_changed_at),
     createdAt: num(r.created_at) ?? 0,
   };
 }
@@ -120,8 +123,78 @@ export function getUserById(id: string) {
   return findOne("SELECT * FROM users WHERE id = ?", [id]);
 }
 
-export function getUserByUsername(username: string) {
-  return findOne("SELECT * FROM users WHERE username = ?", [username.toLowerCase()]);
+const DAY_MS = 24 * 60 * 60 * 1000;
+/** A creator can change their page address once every this many days. */
+export const USERNAME_CHANGE_COOLDOWN_DAYS = 90;
+export const USERNAME_CHANGE_COOLDOWN_MS = USERNAME_CHANGE_COOLDOWN_DAYS * DAY_MS;
+/** For this many days after a change the old handle still leads to its creator. After that anyone can take it. */
+export const USERNAME_REDIRECT_DAYS = 10;
+export const USERNAME_REDIRECT_MS = USERNAME_REDIRECT_DAYS * DAY_MS;
+
+/**
+ * Finds a creator by their current handle, or by a handle they left in the last 10 days (see changeUsername). The
+ * current one wins.
+ */
+export function getUserByUsername(username: string, now = Date.now()) {
+  const name = username.toLowerCase();
+  return findOne(
+    `SELECT * FROM users
+     WHERE username = ? OR id = (SELECT user_id FROM username_redirects WHERE old_username = ? AND created_at > ?)
+     ORDER BY (username = ?) DESC LIMIT 1`,
+    [name, name, now - USERNAME_REDIRECT_MS, name],
+  );
+}
+
+/** Until when a handle the creator left at `changedAt` still leads to them, or null once it's free. */
+export function oldHandleRedirectsUntil(changedAt: number | null, now = Date.now()): number | null {
+  if (changedAt === null) return null;
+  const until = changedAt + USERNAME_REDIRECT_MS;
+  return until > now ? until : null;
+}
+
+/** When the creator may change their page address again, or null if they may now. */
+export function nextUsernameChangeAt(user: Pick<User, "usernameChangedAt">, now = Date.now()): number | null {
+  if (user.usernameChangedAt === null) return null;
+  const next = user.usernameChangedAt + USERNAME_CHANGE_COOLDOWN_MS;
+  return next > now ? next : null;
+}
+
+/**
+ * Moves the creator's page to a new handle in one statement. For 10 days the old handle still leads to them, then
+ * anyone can take it. Refused (null) when the new handle is someone else's current handle or one they left in the
+ * last 10 days, or the last change was under 90 days ago. Returns the old handle on success.
+ *
+ * username_redirects keeps one row per handle: whoever left it last. A handle that was freed and taken again gets
+ * its row overwritten when its new owner leaves it in turn.
+ */
+export async function changeUsername(id: string, username: string, now = Date.now()): Promise<string | null> {
+  try {
+    const rs = await query(
+      `WITH me AS (
+         SELECT id, username AS old FROM users
+         WHERE id = ? AND username IS NOT NULL AND username <> ?
+           AND (username_changed_at IS NULL OR username_changed_at <= ?)
+           AND NOT EXISTS (
+             SELECT 1 FROM username_redirects WHERE old_username = ? AND user_id <> ? AND created_at > ?
+           )
+         FOR UPDATE
+       ),
+       moved AS (
+         UPDATE users u SET username = ?, username_changed_at = ? FROM me WHERE u.id = me.id RETURNING me.old
+       ),
+       logged AS (
+         INSERT INTO username_redirects (old_username, user_id, created_at)
+         SELECT old, ?, ? FROM moved
+         ON CONFLICT (old_username) DO UPDATE SET user_id = EXCLUDED.user_id, created_at = EXCLUDED.created_at
+       )
+       SELECT old FROM moved`,
+      [id, username, now - USERNAME_CHANGE_COOLDOWN_MS, username, id, now - USERNAME_REDIRECT_MS, username, now, id, now],
+    );
+    return str(rs.rows[0]?.old);
+  } catch (error) {
+    if (isUniqueViolation(error)) return null;
+    throw error;
+  }
 }
 
 /** Creates the user on first login, refreshes profile basics afterwards. */
@@ -172,8 +245,19 @@ export async function claimUsername(id: string, username: string, displayName: s
        lifetime_free_granted_at = COALESCE(lifetime_free_granted_at, ?),
        setup_progress = GREATEST(setup_progress, 1),
        terms_accepted_at = ?, terms_version = ?, age_confirmed_at = ?
-       WHERE id = ? AND username IS NULL`,
-      [username, displayName, earlyAccessOpen() ? Date.now() : null, consent.acceptedAt, consent.version, consent.acceptedAt, id],
+       WHERE id = ? AND username IS NULL
+         AND NOT EXISTS (SELECT 1 FROM username_redirects WHERE old_username = ? AND created_at > ?)`,
+      [
+        username,
+        displayName,
+        earlyAccessOpen() ? Date.now() : null,
+        consent.acceptedAt,
+        consent.version,
+        consent.acceptedAt,
+        id,
+        username,
+        Date.now() - USERNAME_REDIRECT_MS,
+      ],
     );
     return changed > 0;
   } catch (error) {

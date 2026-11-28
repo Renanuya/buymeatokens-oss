@@ -8,6 +8,7 @@ import { LegalFooter } from "@/components/legal-footer";
 import { LogoMark } from "@/components/logo";
 import { loadCreatorPage } from "@/lib/creator-page-data";
 import { first } from "@/lib/format";
+import { redirectOldHandle } from "@/lib/handle-redirect";
 import { getCurrentUser } from "@/lib/session";
 import { getUserByUsername } from "@/lib/users";
 import { VisitBeacon } from "./visit-beacon";
@@ -40,12 +41,14 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 export default async function CreatorPage({ params, searchParams }: Props) {
-  const creator = await getUserByUsername((await params).username);
+  const requested = (await params).username;
+  const creator = await getUserByUsername(requested);
   if (!creator?.username) notFound();
+  const query = await searchParams;
+  redirectOldHandle(requested, creator.username, "", query);
 
   const [page, viewer] = await Promise.all([loadCreatorPage(creator), getCurrentUser().catch(() => null)]);
   const mode = creator.stripeMode ?? "live";
-  const query = await searchParams;
   const error = ERRORS[first(query.error) ?? ""];
   const paypalThanks = first(query.paid) === "paypal";
 

@@ -1,17 +1,28 @@
 import Link from "next/link";
 import { PageTitle } from "@/components/page-title";
 import { aiDraftEnabled } from "@/lib/ai-draft";
+import { appUrl } from "@/lib/config";
 import { CATEGORIES, LANGUAGES, languageFromGitHub } from "@/lib/directory";
 import { loadCreatorPage } from "@/lib/creator-page-data";
+import { formatDate } from "@/lib/format";
 import { topRepos } from "@/lib/github";
 import { requireCreator } from "@/lib/session";
-import { hasPaymentMethod } from "@/lib/users";
+import {
+  hasPaymentMethod,
+  nextUsernameChangeAt,
+  oldHandleRedirectsUntil,
+  USERNAME_CHANGE_COOLDOWN_DAYS,
+  USERNAME_REDIRECT_DAYS,
+} from "@/lib/users";
 import { DirectoryCard } from "./directory-card";
+import { HandleCard } from "./handle-card";
 import { ProfileForm } from "./profile-form";
 
 export default async function SettingsPage() {
   const user = await requireCreator();
   const [repos, page] = await Promise.all([user.login ? topRepos(user.login) : Promise.resolve([]), loadCreatorPage(user)]);
+  const nextChange = nextUsernameChangeAt(user);
+  const redirectsUntil = oldHandleRedirectsUntil(user.usernameChangedAt);
 
   return (
     <div className="space-y-10">
@@ -45,6 +56,14 @@ export default async function SettingsPage() {
           language: user.projectLanguage ?? languageFromGitHub(page.repo?.language),
         }}
         ready={hasPaymentMethod(user) && Boolean(user.projectName?.trim() || user.bio.trim())}
+      />
+      <HandleCard
+        host={new URL(appUrl()).host}
+        current={user.username}
+        nextChange={nextChange === null ? null : formatDate(nextChange)}
+        redirectsUntil={redirectsUntil === null ? null : formatDate(redirectsUntil)}
+        cooldownDays={USERNAME_CHANGE_COOLDOWN_DAYS}
+        redirectDays={USERNAME_REDIRECT_DAYS}
       />
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-6 text-sm">
         <p className="text-muted">Download your payment history, or delete your account and your page.</p>
