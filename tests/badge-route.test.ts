@@ -165,4 +165,4 @@ describe("GET /api/badge/[username]", () => {
   });
 
   
-})
+});
