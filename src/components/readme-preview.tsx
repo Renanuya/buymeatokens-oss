@@ -97,7 +97,7 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex max-w-full flex-wrap rounded-full bg-paper p-1">
+    <div role="radiogroup" aria-label={label} className="grid max-w-full grid-cols-3 gap-1 rounded-2xl bg-paper p-1 sm:flex sm:flex-nowrap sm:gap-0 sm:rounded-full">
       {options.map((o) => (
         <button
           key={o.key}
