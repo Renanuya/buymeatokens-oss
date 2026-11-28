@@ -46,6 +46,10 @@ jobs:
         if: steps.app.outputs.present == 'true'
         run: npm ci
 
+      - name: Typography policy
+        if: steps.app.outputs.present == 'true'
+        run: npm run check:typography
+
       - name: Typecheck
         if: steps.app.outputs.present == 'true'
         run: npm run typecheck

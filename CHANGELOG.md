@@ -134,6 +134,12 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Changed
 
+- Creator profile sections now have clear 24px / 28px headings. Replaced the tiny all-caps labels across
+  the site and emails with readable sentence-case text; a typography policy check prevents their return in CI.
+- Creator profiles align badges below their statistics, justify the full-width bio, and use matching filled
+  icons. Supporter sections have an external heading, a pinned creator note, connected minimal replies and
+  compact heart reactions with an accessible creator label.
+
 - **Merging to `main` deploys production.** `.github/workflows/deploy.yml` deploys a commit to Vercel once CI passes for
   its push to `main`, then checks the home page and a badge. It skips a commit that `main` has already moved past, never
   runs for pull requests, and keeps the token in the `production` environment, which only `main` can use. See

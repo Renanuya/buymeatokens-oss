@@ -26,7 +26,7 @@ export function welcomeEmail(a: ApplicationWithUser) {
   ].join("\n");
   const html = `<!doctype html><html><body style="margin:0;background:#f5f5f0;padding:32px 16px;font-family:Inter,Helvetica,Arial,sans-serif;color:#1c1c1e">
 <div style="max-width:480px;margin:0 auto;background:#ffffff;border:1px solid #e4e4dc;border-radius:16px;padding:32px">
-<p style="margin:0 0 8px;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#71717a">Early access</p>
+<p style="margin:0 0 8px;font-size:14px;line-height:20px;font-weight:500;color:#71717a">Early access</p>
 <h1 style="margin:0 0 20px;font-size:32px;line-height:1.05;letter-spacing:-0.04em">You're in.</h1>
 <p style="margin:0 0 16px;font-size:15px;line-height:1.6">Hi ${esc(name)}, your buymeatokens page is ready to claim.</p>
 <p style="margin:0 0 24px;font-size:15px;line-height:1.6">It takes about a minute: pick your page name and add PayPal, USDC or Stripe so people can start buying you tokens.</p>

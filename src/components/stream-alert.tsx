@@ -36,7 +36,7 @@ export function AlertCard({ alert, options }: { alert: StreamAlert; options: Pic
     <div
       className={`rise-in max-w-[90vw] overflow-hidden rounded-2xl px-6 py-4 text-center shadow-lg ${dark ? "bg-ink text-white" : "bg-white text-ink"}`}
     >
-      {alert.test && <p className="mb-1 text-xs font-semibold uppercase tracking-wide opacity-70">Test payment</p>}
+      {alert.test && <p className="mb-1 text-sm font-medium opacity-70">Test payment</p>}
       <p className="font-display text-2xl font-semibold tracking-[-0.02em] [overflow-wrap:anywhere]">
         {/* <bdi> and dir="auto": a supporter's text can't reorder the sentence around it. */}
         <bdi>{alert.name}</bdi> supported you with <span className={dark ? "text-fuel" : "text-iris"}>{formatTokens(alert.units)} tokens</span>!

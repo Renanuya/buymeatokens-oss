@@ -93,7 +93,7 @@ export function chipPanel(label: string, chips: string[], caption: string) {
   const chip = (text: string) => `<span class="chip" style="display:inline-block;margin:0 6px 8px 0;padding:6px 13px;border:1px solid ${LINE};border-radius:999px;background-color:${WHITE};font-size:13px;line-height:18px;font-weight:600;color:${INK};white-space:nowrap">${esc(text)}</span>`;
   return block(`<table ${TABLE} width="100%" class="bg-panel" bgcolor="${PAPER}" style="background-color:${PAPER};border-radius:14px">
 <tr><td style="padding:18px 20px 16px;font-family:${SANS}">
-<p class="t-muted" style="margin:0 0 12px;font-size:11px;line-height:16px;font-weight:700;letter-spacing:1.2px;text-transform:uppercase;color:${MUTED}">${esc(label)}</p>
+<p class="t-muted" style="margin:0 0 12px;font-size:14px;line-height:20px;font-weight:600;color:${MUTED}">${esc(label)}</p>
 <div style="font-size:0;line-height:0">${chips.map(chip).join("")}</div>
 <p class="t-muted" style="margin:4px 0 0;font-size:13px;line-height:20px;color:${MUTED}">${esc(caption)}</p>
 </td></tr></table>`, 20, 30);
@@ -187,7 +187,7 @@ export function renderEmail(e: EmailLayout): string {
 </tr></table>
 </td></tr>
 <tr><td class="card bg-card" bgcolor="${WHITE}" style="padding:40px 40px 34px;border:1px solid ${LINE};border-radius:20px;background-color:${WHITE};word-wrap:break-word">
-<p class="t-accent" style="margin:0 0 14px;font-family:${SANS};font-size:11px;line-height:16px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:${IRIS}">${esc(e.eyebrow)}</p>
+<p class="t-accent" style="margin:0 0 14px;font-family:${SANS};font-size:14px;line-height:20px;font-weight:600;color:${IRIS}">${esc(e.eyebrow)}</p>
 <h1 class="h1 t-ink" style="margin:0 0 22px;font-family:${DISPLAY};font-size:32px;line-height:37px;font-weight:700;letter-spacing:-.9px;color:${INK}">${noOrphan(e.heading)}</h1>
 <p class="t-ink" style="margin:0 0 10px;font-family:${SANS};font-size:16px;line-height:26px;color:${INK}">${esc(e.greeting)}</p>
 ${e.paragraphs.map((p, i) => paragraph(p, i === e.paragraphs.length - 1)).join("\n")}

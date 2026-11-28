@@ -11,7 +11,6 @@ export function EarlySupporterBadge({ grantedAt }: { grantedAt: number | null })
     >
       <svg aria-hidden viewBox="0 0 20 20" fill="none" className="size-4 shrink-0">
         <path d="m10 2 2.25 5.75L18 10l-5.75 2.25L10 18l-2.25-5.75L2 10l5.75-2.25L10 2Z" fill="currentColor" />
-        <path d="m10 6 1.1 2.9L14 10l-2.9 1.1L10 14l-1.1-2.9L6 10l2.9-1.1L10 6Z" fill="white" fillOpacity=".8" />
       </svg>
       <span>Early supporter</span>
     </Link>

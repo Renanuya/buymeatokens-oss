@@ -45,6 +45,11 @@ Go through this part in detail for anything in the [sensitive areas](../../CONTR
 - [ ] The UI matches the design language: headline left, white card right, no decorative extras. Screenshots
       are attached for desktop and mobile.
 - [ ] The docs and `.env.example` are updated, and user-facing copy is clear, short English.
+- [ ] All added or changed UI icons use filled silhouettes. Reject outline/hollow icon additions, including
+      in small labels, pinned notes and controls; shared icons use `SolidGlyph`.
+- [ ] Reject the old tiny, all-caps, widely spaced label typography anywhere, including emails. Labels are
+      sentence case with normal spacing and at least 14px; creator section headings are 24px / 28px.
+      `npm run check:typography` passes in the required CI job.
 
 ## 5. Can we ship it?
 

@@ -5,9 +5,9 @@
 import type { ReactNode } from "react";
 import { SupportForm } from "@/app/[username]/support-form";
 import { Avatar } from "@/components/avatar";
-import { GoalProgress, ProjectCard, SocialLinks, SupportItem, TokenCount, TokenUse } from "@/components/creator-profile";
+import { GoalProgress, ProfileStat, ProjectCard, SocialLinks, SupportItem, TokenCount, TokenUse } from "@/components/creator-profile";
 import { CreatorBadges } from "@/components/early-supporter-badge";
-import { Glyph } from "@/components/glyph";
+import { Glyph, SolidGlyph } from "@/components/glyph";
 import { ProfileMarkdown } from "@/components/profile-markdown";
 import { Reveal } from "@/components/reveal";
 import { shortName } from "@/lib/format";
@@ -49,7 +49,7 @@ export type CreatorPageModel = {
 function Section({ title, children }: { title: string; children: ReactNode }) {
   return (
     <section>
-      <h2 className="eyebrow text-ink">{title}</h2>
+      <h2 className="text-2xl font-semibold leading-tight tracking-tight text-ink sm:text-[28px]">{title}</h2>
       <div className="mt-4">{children}</div>
     </section>
   );
@@ -70,25 +70,18 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
     <div className="grid grid-cols-1 gap-10 pt-8 md:pt-12 lg:grid-cols-[minmax(0,1fr)_420px] lg:grid-rows-[auto_1fr] lg:gap-x-16 xl:gap-x-24">
       <section className="min-w-0 lg:col-start-1 lg:row-start-1">
         <Reveal>
-          <div className="flex items-center gap-4 sm:gap-6">
-            <Avatar name={page.name} url={page.avatarUrl} className="size-20 rounded-[20px]! text-2xl max-[360px]:size-16 max-[360px]:rounded-2xl! max-[360px]:text-xl sm:size-28 sm:rounded-[26px]! sm:text-[32px]" />
+          <div className="flex items-center gap-4 sm:gap-6 lg:gap-4 xl:gap-6">
+            <Avatar name={page.name} url={page.avatarUrl} className="size-20 rounded-[20px]! text-2xl max-[360px]:size-16 max-[360px]:rounded-2xl! max-[360px]:text-xl sm:size-32 sm:rounded-[26px]! sm:text-[32px]" />
             <div className="min-w-0">
-              <h1 className="display text-[clamp(2.5rem,5.2vw,4.75rem)] [overflow-wrap:anywhere] max-[360px]:text-[2rem]">{page.name}.</h1>
-              <p className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
+              <h1 className="display text-[clamp(2rem,3vw,3rem)] [overflow-wrap:anywhere]">{page.name}.</h1>
+              <div className="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1">
                 <TokenCount units={page.stats.units} label="AI tokens received" />
-                <span className="inline-flex items-center gap-1.5 text-sm text-muted">
-                  <Glyph name="users" className="size-4" />
-                  <span>
-                    <span className="font-semibold text-ink">{page.stats.supporters}</span>{" "}
-                    {page.stats.supporters === 1 ? "supporter" : "supporters"}
-                  </span>
-                </span>
-              </p>
+                <ProfileStat icon="users" value={page.stats.supporters} label={page.stats.supporters === 1 ? "supporter" : "supporters"} />
+              </div>
+              <div className="mt-2.5 empty:hidden">
+                <CreatorBadges lifetimeFreeAt={page.lifetimeFreeAt} contributor={page.contributor} />
+              </div>
             </div>
-          </div>
-          {/* Earned badges get their own row; links to other sites live further down. */}
-          <div className="mt-6 empty:hidden">
-            <CreatorBadges lifetimeFreeAt={page.lifetimeFreeAt} contributor={page.contributor} />
           </div>
         </Reveal>
       </section>
@@ -126,7 +119,7 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
         {page.bio.trim() && (
           <Reveal>
             <Section title="About">
-              <div className="max-w-2xl text-lg leading-relaxed text-ink/85">
+              <div className="text-lg leading-relaxed text-ink/85 [&_p]:text-justify">
                 <ProfileMarkdown>{page.bio}</ProfileMarkdown>
               </div>
             </Section>
@@ -148,54 +141,56 @@ export function CreatorPageBody({ page, owner = false, preview = false }: { page
         )}
 
         <Reveal>
-          <section id="supporters" className="scroll-mt-8 rounded-[18px] border border-line bg-white p-5 sm:p-7">
-            <div className="flex flex-wrap items-end justify-between gap-3 border-b border-line pb-4">
-              <h2 className="font-display text-2xl font-semibold leading-none tracking-[-0.035em]">
-                Supporters <span className="text-muted">{page.stats.supporters}</span>
-              </h2>
-              <p className="eyebrow">Good work deserves fuel</p>
+          <section id="supporters" className="scroll-mt-8">
+            <h2 className="text-2xl font-semibold leading-tight tracking-tight sm:text-[28px]">
+              Supporters <span className="text-muted">{page.stats.supporters}</span>
+            </h2>
+            <div className="mt-4 rounded-[18px] border border-line bg-white p-5 sm:p-7">
+              {page.thankYou && (
+                // The creator's own words, with their face and name on it, so it can't pass for a message from the site.
+                <div className="flex items-start gap-3 rounded-2xl border border-lilac/60 bg-lilac-soft/50 p-4 sm:p-5">
+                  <Avatar name={page.name} url={page.avatarUrl} className="size-10 shrink-0 rounded-xl! text-sm" />
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-start gap-2 text-sm font-semibold leading-5 text-ink">
+                      <SolidGlyph name="pin" className="mt-0.5 size-4 shrink-0 text-muted" />
+                      <span>Pinned note from {firstName}</span>
+                    </p>
+                    <p className="mt-2 text-sm leading-relaxed text-ink/85 [overflow-wrap:anywhere]">{page.thankYou}</p>
+                  </div>
+                </div>
+              )}
+              {page.supporters.length === 0 ? (
+                <div className={`flex items-center gap-4 rounded-2xl bg-paper p-5 ${page.thankYou ? "mt-5" : ""}`}>
+                  <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
+                    <Glyph name="heart" strokeWidth={2} className="size-5" />
+                  </span>
+                  <div>
+                    <p className="font-semibold">No supporters yet</p>
+                    <p className="mt-0.5 text-sm text-muted">Be the first to fuel {firstName}&apos;s work.</p>
+                  </div>
+                </div>
+              ) : (
+                <ul className="-mb-2 divide-y divide-line">
+                  {page.supporters.map((d) => (
+                    <SupportItem
+                      key={d.id}
+                      name={d.name}
+                      units={d.units}
+                      message={d.message}
+                      at={d.at}
+                      thread={{
+                        donationId: d.id,
+                        reply: d.reply,
+                        repliedAt: d.repliedAt,
+                        liked: d.likedAt !== null,
+                        creator,
+                        owner: owner && !preview,
+                      }}
+                    />
+                  ))}
+                </ul>
+              )}
             </div>
-            {page.thankYou && (
-              // The creator's own words, with their face and name on it, so it can't pass for a message from the site.
-              <div className="mt-5 flex items-start gap-4 overflow-hidden rounded-2xl bg-paper p-5">
-                <Avatar name={page.name} url={page.avatarUrl} className="size-12 shrink-0 rounded-[14px]! text-base" />
-                <div className="min-w-0">
-                  <p className="text-xs font-semibold text-muted">A note from {firstName}</p>
-                  <p className="mt-1 text-sm leading-relaxed [overflow-wrap:anywhere]">{page.thankYou}</p>
-                </div>
-              </div>
-            )}
-            {page.supporters.length === 0 ? (
-              <div className="mt-5 flex items-center gap-4 rounded-2xl bg-paper p-5">
-                <span className="grid size-12 shrink-0 place-items-center rounded-[14px] bg-lilac text-ink">
-                  <Glyph name="heart" strokeWidth={2} className="size-5" />
-                </span>
-                <div>
-                  <p className="font-semibold">No supporters yet</p>
-                  <p className="mt-0.5 text-sm text-muted">Be the first to fuel {firstName}&apos;s work.</p>
-                </div>
-              </div>
-            ) : (
-              <ul className="-mb-2 divide-y divide-line">
-                {page.supporters.map((d) => (
-                  <SupportItem
-                    key={d.id}
-                    name={d.name}
-                    units={d.units}
-                    message={d.message}
-                    at={d.at}
-                    thread={{
-                      donationId: d.id,
-                      reply: d.reply,
-                      repliedAt: d.repliedAt,
-                      liked: d.likedAt !== null,
-                      creator,
-                      owner: owner && !preview,
-                    }}
-                  />
-                ))}
-              </ul>
-            )}
           </section>
         </Reveal>
       </div>

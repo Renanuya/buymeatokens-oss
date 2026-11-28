@@ -25,7 +25,7 @@ const COLUMNS = [
 ];
 
 const LINK = "text-sm text-white/70 transition hover:text-white";
-const HEADING = "text-[11px] font-semibold uppercase tracking-[0.14em] text-white/40";
+const HEADING = "text-sm font-medium text-white/60";
 
 /**
  * The dark footer of marketing pages: the wordmark, then the payments notice beside three link columns

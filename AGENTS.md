@@ -36,7 +36,19 @@ POSTGRES_URL=postgres://x:y@127.0.0.1:9/none npm run build   # an unreachable UR
   Controls in a row share one height. Don't add step lists, big side headlines, decorative previews, fake mockups or
   rotated cards; they have been tried and rejected. All copy is in English.
 - **Keep diffs small** and focused on the task. Don't reformat files you aren't otherwise changing.
+- **Typography:** the old tiny, all-caps, widely spaced label style is banned everywhere, including emails.
+  Use sentence case, normal letter spacing and labels of at least 14px. Creator profile section headings are
+  24px on mobile and 28px on desktop; supporting copy stays subordinate. Do not add Tailwind `uppercase`, CSS
+  `text-transform: uppercase`, or equivalent inline styles. Inter is also the body font; this ban targets the
+  label treatment, not the Inter family. Run `npm run check:typography`; violations fail the required CI job.
 - Timestamps are Unix milliseconds stored as `BIGINT`.
+- **Profile statistics:** use `ProfileStat` for header statistics. Icons share the `SolidGlyph` filled set,
+  16px size, identical visible horizontal bounds, inherited muted color and 8px text gap. Do not give individual
+  statistics a separate icon color, background tile or size.
+- **Filled icons only:** outline/hollow UI icons are prohibited. Every added or changed icon must use a proper
+  filled silhouette from `SolidGlyph` (extend the set when needed). This applies to pins, labels, controls and
+  decorative icons too. Never use the outline `Glyph` component for new UI or fake a filled icon by setting
+  `fill` on stroke-only geometry. Reject PRs that introduce outline icons.
 
 ## Next.js
 
