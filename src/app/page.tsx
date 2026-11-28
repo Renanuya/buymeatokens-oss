@@ -79,16 +79,12 @@ export default async function Home() {
       <main>
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: jsonLdScript(jsonLd) }} />
         <section className="wrap pt-12 md:pt-24">
-          <Reveal afterLoad className="flex items-start justify-between gap-6">
-            <p className="eyebrow">Community support for your AI tools</p>
-            <p className="eyebrow hidden md:block">Support open source. Keep shipping.</p>
-          </Reveal>
           <RevealLines
             as="h1"
             afterLoad
             delay={120}
             stagger={140}
-            className="display mt-8 text-[clamp(1.75rem,8vw,8rem)] md:mt-12"
+            className="display text-[clamp(1.75rem,8vw,8rem)]"
             lines={[
               "Coffee is nice.",
               <Fragment key="ship">
