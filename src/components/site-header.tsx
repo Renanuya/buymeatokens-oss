@@ -6,9 +6,9 @@ import { SignedInHint } from "./signed-in";
 import { SignedInSwitch } from "./signed-in-switch";
 
 const LINKS = [
+  { href: "/#how", label: "How it works" },
   { href: "/directory", label: "Directory" },
   { href: "/leaderboard", label: "Leaderboard" },
-  { href: "/#how", label: "How it works" },
   { href: "/blog", label: "Blog" },
 ];
 
