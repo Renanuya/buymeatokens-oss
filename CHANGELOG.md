@@ -8,8 +8,8 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
-- **README badges:** three new styles (`outline`, `goal`, `supporters`) in the dashboard badge picker and at
-  `/api/badge/<username>?style=outline|goal|supporters`. The goal badge shows progress toward the creator's funding
+- **README badges:** two new styles (`goal`, `supporters`) in the dashboard badge picker and at
+  `/api/badge/<username>?style=goal|supporters`. The goal badge shows progress toward the creator's funding
   goal ([#23](https://github.com/Renanuya/buymeatokens-oss/issues/23)).
 - **Website button** (`public/widget.js`): one script tag puts a *Buy me AI tokens* button on any website, floating in
   a corner (`data-position="left"` for the left) or in place (`data-mode="inline"`), in the badge colours
