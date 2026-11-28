@@ -97,7 +97,7 @@ export function Segmented<T extends string>({
   onChange: (value: T) => void;
 }) {
   return (
-    <div role="radiogroup" aria-label={label} className="flex rounded-full bg-paper p-1">
+    <div role="radiogroup" aria-label={label} className="grid max-w-full grid-cols-3 gap-1 rounded-2xl bg-paper p-1 sm:flex sm:flex-nowrap sm:gap-0 sm:rounded-full">
       {options.map((o) => (
         <button
           key={o.key}
@@ -105,7 +105,7 @@ export function Segmented<T extends string>({
           role="radio"
           aria-checked={value === o.key}
           onClick={() => onChange(o.key)}
-          className={`rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
+          className={`whitespace-nowrap rounded-full px-3.5 py-1.5 text-xs font-semibold transition ${
             value === o.key ? "bg-white text-ink shadow-[0_1px_3px_rgba(28,28,30,0.12)]" : "text-muted hover:text-ink"
           }`}
         >

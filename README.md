@@ -40,7 +40,7 @@ Payments go straight to the creator's own Stripe, PayPal or USDC wallet. The pla
 | **Stripe** | Checkout runs on the creator's own *restricted* key (Checkout Sessions: write only), stored encrypted with AES-256-GCM. No webhooks needed; pending sessions are reconciled. |
 | **PayPal** | Classic "Buy Now" links straight to the creator, confirmed through verified IPN messages. |
 | **USDC on Base** | Wallet-to-wallet payments verified from on-chain `Transfer` logs. *Experimental:* see [known limitations](docs/payments.md#usdc-on-base-experimental). |
-| **README badges** | `/api/badge/<username>` renders an SVG with the tokens raised, in three styles and four themes, drawn from glyph outlines so it needs no web fonts. |
+| **README badges** | `/api/badge/<username>` renders an SVG with the tokens raised, in five styles and four themes, drawn from glyph outlines so it needs no web fonts. |
 | **Creator emails** | One welcome and at most one setup reminder, sent by a minute worker with atomic delivery claims. |
 | **Fair pricing** | Free today, with no subscriptions. Pages created during early access keep lifetime free access. |
 | **Creators' data** | Terms and privacy consent with versioning, a payment history CSV, one-click account deletion, and logs that redact anything shaped like a key. |

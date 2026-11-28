@@ -8,6 +8,9 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **README badges:** two new styles (`goal`, `supporters`) in the dashboard badge picker and at
+  `/api/badge/<username>?style=goal|supporters`. The goal badge shows progress toward the creator's funding
+  goal ([#23](https://github.com/Renanuya/buymeatokens-oss/issues/23)).
 - **Change your page address.** A *Page address* card under Settings moves the page to a new handle, with a live
   availability check and a confirmation, once every 90 days. For 10 days the old handle still leads to its creator:
   the page and its thank-you page redirect (temporarily, with the query string), and README badges, the supporter

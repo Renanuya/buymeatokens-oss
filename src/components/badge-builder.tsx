@@ -8,6 +8,8 @@ const STYLES: { key: BadgeStyle; label: string }[] = [
   { key: "button", label: "Button" },
   { key: "pill", label: "Pill" },
   { key: "flat", label: "Compact" },
+  { key: "goal", label: "Goal" },
+  { key: "supporters", label: "Supporters" },
 ];
 
 const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
@@ -19,17 +21,20 @@ const THEMES: { key: BadgeTheme; label: string; swatch: string }[] = [
 
 /**
  * Pick a README badge: shape and colours, previewed on a light or a dark README (GitHub's dark background), then
- * copy its Markdown. The badge always shows the live token count.
+ * copy its Markdown. Button and supporters show the live count; goal shows progress toward the funding goal.
  */
 export function BadgeBuilder({
   username,
   pageUrl,
   base,
+  hasGoal,
   className = "",
 }: {
   username: string;
   pageUrl: string;
   base: string;
+  /** Whether the creator has a token goal. Without one the goal badge shows the button, so the builder says so. */
+  hasGoal: boolean;
   /** `flex flex-col` lets the preview area grow to fill a taller card. */
   className?: string;
 }) {
@@ -68,12 +73,16 @@ export function BadgeBuilder({
         onReadme={setReadme}
         copyValue={markdown}
         copyLabel="Copy Markdown"
-        badgeStyle={style === "button" ? "button" : "compact"}
+        badgeStyle={style === "flat" || style === "pill" ? "compact" : "button"}
       >
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
       </ReadmePreview>
-      <p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
+      <p className="mt-2.5 text-xs text-muted">
+        {style === "goal" && !hasGoal
+          ? "No token goal yet, so this badge shows the button. Set a goal on your Overview and it shows your progress."
+          : "Copy the Markdown into your README. The count updates by itself."}
+      </p>
     </div>
   );
 }

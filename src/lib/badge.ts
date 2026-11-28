@@ -19,13 +19,15 @@ export const ARROW_PATH = "M4.5 11.5 11.5 4.5M5.5 4.5h6v6";
 
 /**
  * Colour sets. `bg`/`fg` are the badge and its label; `tile`/`tileInk` the round logo tile; `chip`/`chipInk` the
- * token count; `edge` a hairline that keeps the shape visible on backgrounds of the same colour.
+ * token count; `edge` a hairline that keeps the shape visible on backgrounds of the same colour. `goal` is the
+ * fill of the goal bar: a colour in its own right per theme, so the bar stays visible on a white badge as well
+ * as on a dark one (the chip colour is too pale on white).
  */
 const THEMES = {
-  dark: { bg: INK, fg: WHITE, tile: LILAC, tileInk: INK, chip: LILAC, chipInk: INK, edge: WHITE, edgeOpacity: 0.14 },
-  light: { bg: WHITE, fg: INK, tile: LILAC, tileInk: INK, chip: LILAC_SOFT, chipInk: IRIS, edge: INK, edgeOpacity: 0.14 },
-  iris: { bg: IRIS, fg: WHITE, tile: WHITE, tileInk: IRIS, chip: WHITE, chipInk: IRIS, edge: WHITE, edgeOpacity: 0.2 },
-  lilac: { bg: LILAC, fg: INK, tile: INK, tileInk: WHITE, chip: INK, chipInk: WHITE, edge: INK, edgeOpacity: 0.1 },
+  dark: { bg: INK, fg: WHITE, tile: LILAC, tileInk: INK, chip: LILAC, chipInk: INK, edge: WHITE, edgeOpacity: 0.14, goal: LILAC },
+  light: { bg: WHITE, fg: INK, tile: LILAC, tileInk: INK, chip: LILAC_SOFT, chipInk: IRIS, edge: INK, edgeOpacity: 0.14, goal: IRIS },
+  iris: { bg: IRIS, fg: WHITE, tile: WHITE, tileInk: IRIS, chip: WHITE, chipInk: IRIS, edge: WHITE, edgeOpacity: 0.2, goal: WHITE },
+  lilac: { bg: LILAC, fg: INK, tile: INK, tileInk: WHITE, chip: INK, chipInk: WHITE, edge: INK, edgeOpacity: 0.1, goal: IRIS },
 } as const satisfies Record<BadgeTheme, unknown>;
 
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
@@ -173,4 +175,48 @@ function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string
 export function renderBadge(count: string | null, style: BadgeStyle = "button", theme: BadgeTheme = "dark"): string {
   const t = THEMES[theme];
   return style === "flat" ? flatBadge(count, t) : style === "pill" ? pillBadge(count, t) : buttonBadge(count, t);
+}
+
+/**
+ * Goal progress, in the button layout: [ </>  Buy me AI tokens  (12M / 50M) ] with a progress bar under
+ * the chip. `reached` and `goal` are millions of tokens; with no goal the badge falls back to the regular
+ * button badge (with the token count). The percentage lives in the title, where it is always exact, and the
+ * bar uses the theme's own `goal` colour, so it stays visible on a white badge as well as on a dark one.
+ */
+export function goalBadge(reached: number, goal: number, theme: BadgeTheme = "dark", count: string | null = null): string {
+  const t = THEMES[theme];
+  if (goal <= 0) return buttonBadge(count, t);
+  const h = 44;
+  const tile = 24;
+  const pad = 6;
+  const percent = Math.min(100, Math.floor((reached / goal) * 100));
+  const label = run(INTER_TIGHT_600, "Buy me AI tokens", 14, -0.005);
+  const chipText = run(INTER_TIGHT_700, `${formatTokens(reached)} / ${formatTokens(goal)}`, 12.5, -0.005);
+  const labelX = pad + tile + 10;
+  const chipX = labelX + label.width + 12;
+  const chipW = chipText.width + 22;
+  const width = chipX + chipW + pad;
+  const barY = 34;
+  const title = esc(`Buy me AI tokens: ${percent}% of goal (${formatTokens(reached)} / ${formatTokens(goal)} tokens)`);
+  return wrap(
+    width,
+    h,
+    title,
+    shape(width, h, h / 2, t) +
+      `<circle cx="${pad + tile / 2}" cy="18" r="${tile / 2}" fill="${t.tile}"/>` +
+      icon(LOGO_PATH, pad + tile / 2 - 7, 11, 14, t.tileInk, 1.8) +
+      label.svg(labelX, baselineFor(INTER_TIGHT_600, 14, 18), t.fg) +
+      `<rect x="${n(chipX)}" y="${pad}" width="${n(chipW)}" height="${tile}" rx="${tile / 2}" fill="${t.chip}"/>` +
+      chipText.svg(chipX + 11, baselineFor(INTER_TIGHT_700, 12.5, 18), t.chipInk) +
+      `<rect x="${n(chipX)}" y="${barY}" width="${n(chipW)}" height="4" rx="2" fill="${t.fg}" fill-opacity="0.18"/>` +
+      (percent > 0
+        ? `<rect x="${n(chipX)}" y="${barY}" width="${n((chipW * percent) / 100)}" height="4" rx="2" fill="${t.goal}"/>`
+        : ""),
+  );
+}
+
+/** Button layout with a supporter count in the chip: [ </>  Buy me AI tokens  (12 supporters) ]. */
+export function supportersBadge(supporters: number, theme: BadgeTheme = "dark"): string {
+  const t = THEMES[theme];
+  return buttonBadge(`${supporters} supporter${supporters === 1 ? "" : "s"}`, t);
 }

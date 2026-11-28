@@ -19,6 +19,7 @@ vi.mock("../src/lib/db", async (importOriginal) => {
 
 import { SCHEMA, query } from "../src/lib/db";
 import { GET } from "../src/app/api/badge/[username]/route";
+import { renderBadge } from "../src/lib/badge";
 
 const NOW = Date.now();
 
@@ -36,6 +37,14 @@ async function paidDonation(creatorId: string, units: number) {
      VALUES (?, ?, 'live', ?, ?, 'Ada', 'Thanks!', 'paid', 'stripe', ?)`,
     [`don-${units}`, creatorId, units, units * 500, NOW],
   );
+}
+
+async function setGoal(creatorId: string, goalUnits: number, startedAt: number) {
+  await query(`UPDATE users SET goal_units = ?, goal_started_at = ? WHERE id = ?`, [
+    goalUnits,
+    startedAt,
+    creatorId,
+  ]);
 }
 
 async function getBadge(username: string, search = ""): Promise<Response> {
@@ -110,5 +119,49 @@ describe("GET /api/badge/[username]", () => {
     const themed = await (await getBadge("maker", "?theme=bogus")).text();
 
     expect(themed).toBe(plain);
+  });
+
+  it("shows goal progress on the goal badge", async () => {
+    await setGoal("maker", 50, NOW - 60_000);
+    const svg = await (await getBadge("maker", "?style=goal")).text();
+
+    expect(svg).toMatch(/^<svg[^>]* height="44"/);
+    expect(svg).toContain("24% of goal");
+    expect(svg).toContain("12M / 50M");
+  });
+
+  it("falls back to the regular button badge when there is no goal", async () => {
+    const svg = await (await getBadge("maker", "?style=goal")).text();
+
+    expect(svg).toContain("Buy me AI tokens: 12M tokens");
+  });
+
+  it("shows the supporter count on the supporters badge", async () => {
+    const svg = await (await getBadge("maker", "?style=supporters")).text();
+
+    expect(svg).toContain("<title>Buy me AI tokens: 1 supporter</title>");
+  });
+
+  it("keeps every badge style at its declared height", async () => {
+    await setGoal("maker", 50, NOW - 60_000);
+    const cases: [string, number][] = [
+      ["", 36],
+      ["?style=flat", 20],
+      ["?style=pill", 28],
+      ["?style=goal", 44],
+      ["?style=supporters", 36],
+    ];
+    for (const [search, height] of cases) {
+      const svg = await (await getBadge("maker", search)).text();
+      expect(svg).toMatch(new RegExp(`^<svg[^>]* height="${height}"`));
+    }
+  });
+
+  it("escapes user-supplied text in the badge", () => {
+    const svg = renderBadge('<script>alert("x")</script> & friends', "button", "dark");
+
+    expect(svg).not.toContain("<script>");
+    expect(svg).toContain("&lt;script&gt;");
+    expect(svg).toContain("&amp; friends");
   });
 });
