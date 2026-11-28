@@ -415,9 +415,9 @@ CREATE INDEX IF NOT EXISTS users_directory_search ON users USING GIN (to_tsvecto
 -- Leaderboard (src/lib/leaderboard.ts): a creator appears only after turning this on under Account. The short
 -- windows are range scans on the donations_paid_at index above.
 ALTER TABLE users ADD COLUMN IF NOT EXISTS leaderboard_opt_in BOOLEAN NOT NULL DEFAULT false;
--- Page address changes (src/lib/users.ts, changeUsername): an old handle keeps pointing at its creator for good, so
--- shared links and README badges keep working and nobody else can take it over. Doubles as the change log.
--- username_changed_at limits changes to one per 30 days.
+-- Page address changes (src/lib/users.ts, changeUsername): for 10 days an old handle still leads to its creator, so
+-- they have time to update shared links and README badges, then anyone can take it. One row per handle, for whoever
+-- left it last. username_changed_at limits changes to one per 90 days.
 CREATE TABLE IF NOT EXISTS username_redirects (
   old_username TEXT PRIMARY KEY,
   user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,

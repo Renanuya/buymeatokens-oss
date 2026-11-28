@@ -33,6 +33,8 @@ import {
   setStripeKey,
   setUsdcAddress,
   updateProfile,
+  USERNAME_CHANGE_COOLDOWN_DAYS,
+  USERNAME_REDIRECT_MS,
   type Creator,
   type ProfileUpdate,
 } from "@/lib/users";
@@ -116,11 +118,13 @@ async function handleProblem(user: Creator, username: string): Promise<string | 
   if (username === user.username) return "That's your current address.";
   const invalid = validateUsername(username);
   if (invalid) return invalid;
-  // An old handle resolves to its owner, so someone else's old handle counts as taken; the creator's own is fine.
+  // A handle someone left in the last 10 days still resolves to them, so it counts as taken until it's free.
   const owner = await getUserByUsername(username);
   if (owner && owner.id !== user.id) return "That name is taken. Try another one.";
   const next = nextUsernameChangeAt(user);
-  if (next !== null) return `You can change your address once every 30 days. Next change: ${formatDate(next)}.`;
+  if (next !== null) {
+    return `You can change your address once every ${USERNAME_CHANGE_COOLDOWN_DAYS} days. Next change: ${formatDate(next)}.`;
+  }
   return null;
 }
 
@@ -131,7 +135,7 @@ export async function checkHandleAction(input: string): Promise<{ available: boo
   return problem ? { available: false, message: problem } : { available: true, message: "Available" };
 }
 
-/** Moves the page to a new address. The old one keeps redirecting to it. */
+/** Moves the page to a new address. The old one leads there for 10 days, then anyone can take it. */
 export async function changeHandleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireCreator();
   assertConsent(user);
@@ -141,13 +145,18 @@ export async function changeHandleAction(_prev: ActionState, formData: FormData)
   if (formData.get("confirm") !== "on") return { error: "Please confirm that you want to change your address." };
 
   // Refused when someone took the name, or another change landed, since the checks above.
-  const old = await changeUsername(user.id, username);
+  const now = Date.now();
+  const old = await changeUsername(user.id, username, now);
   if (!old) return { error: "That name is taken. Try another one." };
 
   refresh(old);
   revalidatePath(`/${username}`);
   revalidatePath("/sitemap.xml");
-  return { message: `Done. Your page now lives at /${username}, and /${old} sends visitors there.` };
+  return {
+    message:
+      `Done. Your page now lives at /${username}. Until ${formatDate(now + USERNAME_REDIRECT_MS)}, /${old} sends ` +
+      "visitors there; after that anyone can take it.",
+  };
 }
 
 export async function saveStripeKeyAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

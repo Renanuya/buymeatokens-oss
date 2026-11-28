@@ -7,8 +7,25 @@ import { CheckDot } from "@/components/icons";
 import { SubmitButton } from "@/components/submit-button";
 import { changeHandleAction, checkHandleAction } from "../actions";
 
-/** "Page address": moves the page to a new handle. The old one keeps redirecting, so shared links don't break. */
-export function HandleCard({ host, current, nextChange }: { host: string; current: string; nextChange: string | null }) {
+/**
+ * "Page address": moves the page to a new handle. The old one leads there for `redirectDays`, so the creator has time
+ * to update their links and README badges, then anyone can take it.
+ */
+export function HandleCard({
+  host,
+  current,
+  nextChange,
+  redirectsUntil,
+  cooldownDays,
+  redirectDays,
+}: {
+  host: string;
+  current: string;
+  nextChange: string | null;
+  redirectsUntil: string | null;
+  cooldownDays: number;
+  redirectDays: number;
+}) {
   const [state, action] = useActionState<ActionState, FormData>(changeHandleAction, {});
   const [username, setUsername] = useState("");
   const [confirmed, setConfirmed] = useState(false);
@@ -41,14 +58,19 @@ export function HandleCard({ host, current, nextChange }: { host: string; curren
           <span className="font-semibold text-ink [overflow-wrap:anywhere]">
             {host}/{current}
           </span>
-          . You can change it once every 30 days.
+          . You can change it once every {cooldownDays} days.
         </p>
       </div>
       {nextChange ? (
         <>
           {/* Right after a change the page re-renders here, so the success message stays in view. */}
           <FormMessage state={state} />
-          <p className="text-sm text-muted">You changed it recently. You can change it again on {nextChange}.</p>
+          <p className="text-sm text-muted">
+            You changed it recently. You can change it again on {nextChange}.
+            {redirectsUntil && !state.message
+              ? ` Your old address sends visitors here until ${redirectsUntil}; update your links and README badges before then.`
+              : null}
+          </p>
         </>
       ) : (
         <form action={action} className="space-y-4">
@@ -111,8 +133,8 @@ export function HandleCard({ host, current, nextChange }: { host: string; curren
               className="mt-0.5 size-4 shrink-0 accent-iris"
             />
             <span>
-              I understand my page moves to the new address. Links to /{current}, including README badges, keep working
-              and send visitors there.
+              I understand my page moves to the new address. /{current} sends visitors there for {redirectDays} days,
+              then anyone can take it, so I&apos;ll update my links and README badges.
             </span>
           </label>
           <FormMessage state={state} />

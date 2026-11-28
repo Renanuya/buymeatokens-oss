@@ -48,14 +48,17 @@ import { redirectOldHandle } from "../src/lib/handle-redirect";
 import { TERMS_VERSION } from "../src/lib/legal/config";
 import {
   USERNAME_CHANGE_COOLDOWN_MS,
+  USERNAME_REDIRECT_MS,
   changeUsername,
   claimUsername,
   getUserByUsername,
   nextUsernameChangeAt,
+  oldHandleRedirectsUntil,
 } from "../src/lib/users";
 
 const DAY = 86_400_000;
-const NOW = Date.UTC(2026, 10, 28, 12);
+// The real clock: signup and the Settings actions check the 10-day window against Date.now().
+const NOW = Date.now();
 const consent = { version: TERMS_VERSION, acceptedAt: 1 };
 
 async function creator(id: string, username: string | null = id) {
@@ -66,7 +69,7 @@ async function creator(id: string, username: string | null = id) {
   );
 }
 
-const owner = async (handle: string) => (await getUserByUsername(handle))?.id ?? null;
+const owner = async (handle: string, now?: number) => (await getUserByUsername(handle, now))?.id ?? null;
 
 function form(fields: Record<string, string>) {
   const data = new FormData();
@@ -93,7 +96,7 @@ describe("changing the page address", () => {
     expect(await changeUsername("a", "ada-dev", NOW)).toBe("ada");
   });
 
-  it("moves the page and keeps the old handle pointing at its creator", async () => {
+  it("moves the page, and the old handle still leads to its creator", async () => {
     await creator("a", "ada");
     expect(await changeUsername("a", "ada-dev", NOW)).toBe("ada");
     const moved = await getUserByUsername("ada-dev");
@@ -103,22 +106,62 @@ describe("changing the page address", () => {
     expect(await getUserByUsername("nobody")).toBeNull();
   });
 
-  it("allows one change per 30 days", async () => {
+  it("allows one change per 90 days", async () => {
     await creator("a", "ada");
     expect(await changeUsername("a", "ada-one", NOW)).toBe("ada");
-    expect(await changeUsername("a", "ada-two", NOW + 29 * DAY)).toBeNull();
-    expect((await getUserByUsername("ada-one"))?.username).toBe("ada-one");
+    expect(await changeUsername("a", "ada-two", NOW + 89 * DAY)).toBeNull();
+    expect((await getUserByUsername("ada-one", NOW + 89 * DAY))?.username).toBe("ada-one");
     expect(await changeUsername("a", "ada-two", NOW + USERNAME_CHANGE_COOLDOWN_MS)).toBe("ada-one");
-    // Every old handle keeps working.
-    expect([await owner("ada"), await owner("ada-one"), await owner("ada-two")]).toEqual(["a", "a", "a"]);
+    expect(await owner("ada-one", NOW + USERNAME_CHANGE_COOLDOWN_MS + DAY)).toBe("a");
   });
 
-  it("lets a creator switch back to their own old handle", async () => {
+  it("keeps an old handle for 10 days, then lets it go", async () => {
+    await creator("a", "ada");
+    await creator("c", null);
+    const left = NOW - 9 * DAY;
+    await changeUsername("a", "ada-dev", left);
+
+    expect(await owner("ada")).toBe("a");
+    expect(await claimUsername("c", "ada", "Cy", consent)).toBe(false);
+    expect(oldHandleRedirectsUntil(left, NOW)).toBe(left + 10 * DAY);
+
+    expect(await owner("ada", left + 10 * DAY)).toBeNull();
+    expect(oldHandleRedirectsUntil(left, left + 10 * DAY)).toBeNull();
+    expect(oldHandleRedirectsUntil(null, NOW)).toBeNull();
+  });
+
+  it("lets anyone take a handle that was let go, at signup or in a change", async () => {
+    await creator("a", "ada");
+    await creator("b", "bob");
+    await creator("c", null);
+    await creator("d", "dan");
+    const left = NOW - USERNAME_REDIRECT_MS - DAY; // 11 days ago
+    await changeUsername("a", "ada-dev", left);
+    await changeUsername("d", "dan-dev", left);
+
+    mocks.userId = "c";
+    expect((await checkUsernameAction("ada")).available).toBe(true);
+    expect(await claimUsername("c", "ada", "Cy", consent)).toBe(true);
+    expect(await owner("ada")).toBe("c");
+
+    mocks.userId = "b";
+    expect((await checkHandleAction("dan")).available).toBe(true);
+    expect(await changeUsername("b", "dan", NOW)).toBe("bob");
+    expect([await owner("dan"), await owner("bob"), await owner("dan-dev")]).toEqual(["b", "b", "d"]);
+
+    // When its new owner leaves it in turn, the handle leads to them for 10 days, not to its first owner.
+    const later = NOW + USERNAME_CHANGE_COOLDOWN_MS;
+    expect(await changeUsername("b", "bob-two", later)).toBe("dan");
+    expect(await owner("dan", later + DAY)).toBe("b");
+  });
+
+  it("lets a creator take their old handle back once they may change again, if it's still free", async () => {
     await creator("a", "ada");
     await changeUsername("a", "ada-dev", NOW);
-    expect(await changeUsername("a", "ada", NOW + USERNAME_CHANGE_COOLDOWN_MS)).toBe("ada-dev");
-    expect((await getUserByUsername("ada"))?.username).toBe("ada");
-    expect((await getUserByUsername("ada-dev"))?.username).toBe("ada");
+    const later = NOW + USERNAME_CHANGE_COOLDOWN_MS;
+    expect(await changeUsername("a", "ada", later)).toBe("ada-dev");
+    expect((await getUserByUsername("ada", later))?.username).toBe("ada");
+    expect((await getUserByUsername("ada-dev", later))?.username).toBe("ada");
   });
 
   it("refuses someone else's current or old handle, in a rename and at signup", async () => {
@@ -158,17 +201,18 @@ describe("changing the page address", () => {
     expect(await changeHandleAction({}, form({ username: "ada-dev" }))).toEqual({
       error: "Please confirm that you want to change your address.",
     });
-    expect(await changeHandleAction({}, form({ username: "ada-dev", confirm: "on" }))).toEqual({
-      message: "Done. Your page now lives at /ada-dev, and /ada sends visitors there.",
-    });
+    const done = await changeHandleAction({}, form({ username: "ada-dev", confirm: "on" }));
+    expect(done.message).toMatch(
+      /^Done\. Your page now lives at \/ada-dev\. Until [A-Z][a-z]{2} \d{1,2}, \d{4}, \/ada sends visitors there; after that anyone can take it\.$/,
+    );
     const paths = vi.mocked(revalidatePath).mock.calls.map((call) => call[0]);
     expect(paths).toEqual(expect.arrayContaining(["/ada", "/ada-dev", "/sitemap.xml", "/directory", "/leaderboard"]));
 
     // The cooldown is spelled out, both in the check and on a second try.
     const check = await checkHandleAction("ada-new");
     expect(check.available).toBe(false);
-    expect(check.message).toMatch(/once every 30 days/);
-    expect((await changeHandleAction({}, form({ username: "ada-new", confirm: "on" }))).error).toMatch(/once every 30 days/);
+    expect(check.message).toMatch(/once every 90 days/);
+    expect((await changeHandleAction({}, form({ username: "ada-new", confirm: "on" }))).error).toMatch(/once every 90 days/);
   });
 
   it("says when the next change is allowed", () => {
@@ -179,12 +223,14 @@ describe("changing the page address", () => {
 });
 
 describe("redirecting an old handle", () => {
-  it("moves permanently to the current handle and keeps the query string", () => {
-    expect(() => redirectOldHandle("ada", "ada-dev", "", { ref: "badge" })).toThrow("MOVED /ada-dev?ref=badge");
+  // A temporary redirect (redirect, not permanentRedirect): the old handle is let go after 10 days, and browsers
+  // keep permanent redirects for good.
+  it("sends a temporary redirect to the current handle and keeps the query string", () => {
+    expect(() => redirectOldHandle("ada", "ada-dev", "", { ref: "badge" })).toThrow("REDIRECT /ada-dev?ref=badge");
     expect(() => redirectOldHandle("ada", "ada-dev", "/thanks", { session_id: "cs_test_1", x: ["1", "2"] })).toThrow(
-      "MOVED /ada-dev/thanks?session_id=cs_test_1&x=1&x=2",
+      "REDIRECT /ada-dev/thanks?session_id=cs_test_1&x=1&x=2",
     );
-    expect(() => redirectOldHandle("ada", "ada-dev", "", {})).toThrow("MOVED /ada-dev");
+    expect(() => redirectOldHandle("ada", "ada-dev", "", {})).toThrow("REDIRECT /ada-dev");
   });
 
   it("serves the current handle in place, whatever its case", () => {
