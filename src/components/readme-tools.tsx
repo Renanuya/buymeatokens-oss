@@ -17,7 +17,7 @@ const TABS: { key: Tab; label: string; hash: string }[] = [
  * What brings people to the creator's page, as three tabs: the README badge, the README supporter wall and a button
  * for their own website. `/dashboard#supporter-wall` and `#website-button` open their tab.
  */
-export function ReadmeTools({ username, pageUrl, base }: { username: string; pageUrl: string; base: string }) {
+export function ReadmeTools({ username, pageUrl, base, hasGoal = true }: { username: string; pageUrl: string; base: string; hasGoal?: boolean }) {
   const [tab, setTab] = useState<Tab>("badge");
 
   useEffect(() => {
@@ -57,7 +57,7 @@ export function ReadmeTools({ username, pageUrl, base }: { username: string; pag
         key={tab}
         className="rise-in mt-4 flex flex-1 flex-col"
       >
-        {tab === "badge" && <BadgeBuilder username={username} pageUrl={pageUrl} base={base} className="flex flex-1 flex-col" />}
+        {tab === "badge" && <BadgeBuilder username={username} pageUrl={pageUrl} base={base} hasGoal={hasGoal} className="flex flex-1 flex-col" />}
         {tab === "wall" && <WallBuilder username={username} pageUrl={pageUrl} base={base} />}
         {tab === "website" && <WebsiteBuilder username={username} pageUrl={pageUrl} base={base} />}
       </div>
