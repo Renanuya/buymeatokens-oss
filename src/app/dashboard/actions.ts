@@ -24,7 +24,19 @@ import {
 } from "@/lib/profile";
 import { SOCIAL_NETWORKS, socialsFromForm } from "@/lib/socials";
 import { disableAlerts, rotateAlertsToken } from "@/lib/stream-alerts";
-import { setPaypalEmail, setStripeKey, setUsdcAddress, updateProfile, type ProfileUpdate } from "@/lib/users";
+import { formatDate } from "@/lib/format";
+import {
+  changeUsername,
+  getUserByUsername,
+  nextUsernameChangeAt,
+  setPaypalEmail,
+  setStripeKey,
+  setUsdcAddress,
+  updateProfile,
+  type Creator,
+  type ProfileUpdate,
+} from "@/lib/users";
+import { normalizeUsername, validateUsername } from "@/lib/validation";
 
 function refresh(username: string) {
   revalidatePath("/dashboard", "layout");
@@ -97,6 +109,45 @@ export async function setDirectoryAction(input: { listed: boolean; category: str
   const ok = await setListing(user.id, { listed: input?.listed, category: input?.category, language: input?.language });
   if (ok) revalidatePath("/directory");
   return { ok };
+}
+
+/** Why the creator can't move their page to `username` right now, or null when they can. Same rules as signup. */
+async function handleProblem(user: Creator, username: string): Promise<string | null> {
+  if (username === user.username) return "That's your current address.";
+  const invalid = validateUsername(username);
+  if (invalid) return invalid;
+  // An old handle resolves to its owner, so someone else's old handle counts as taken; the creator's own is fine.
+  const owner = await getUserByUsername(username);
+  if (owner && owner.id !== user.id) return "That name is taken. Try another one.";
+  const next = nextUsernameChangeAt(user);
+  if (next !== null) return `You can change your address once every 30 days. Next change: ${formatDate(next)}.`;
+  return null;
+}
+
+/** Live check while typing a new page address. */
+export async function checkHandleAction(input: string): Promise<{ available: boolean; message: string }> {
+  const user = await requireCreator();
+  const problem = await handleProblem(user, normalizeUsername(String(input ?? "").slice(0, 64)));
+  return problem ? { available: false, message: problem } : { available: true, message: "Available" };
+}
+
+/** Moves the page to a new address. The old one keeps redirecting to it. */
+export async function changeHandleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireCreator();
+  assertConsent(user);
+  const username = normalizeUsername(String(formData.get("username") ?? "").slice(0, 64));
+  const problem = await handleProblem(user, username);
+  if (problem) return { error: problem };
+  if (formData.get("confirm") !== "on") return { error: "Please confirm that you want to change your address." };
+
+  // Refused when someone took the name, or another change landed, since the checks above.
+  const old = await changeUsername(user.id, username);
+  if (!old) return { error: "That name is taken. Try another one." };
+
+  refresh(old);
+  revalidatePath(`/${username}`);
+  revalidatePath("/sitemap.xml");
+  return { message: `Done. Your page now lives at /${username}, and /${old} sends visitors there.` };
 }
 
 export async function saveStripeKeyAction(_prev: ActionState, formData: FormData): Promise<ActionState> {

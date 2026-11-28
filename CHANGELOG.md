@@ -8,6 +8,11 @@ The hosted service deploys continuously from `main`. Versions mark milestones, a
 
 ### Added
 
+- **Change your page address.** A *Page address* card under Settings moves the page to a new handle, with a live
+  availability check and a confirmation, once every 30 days. The old handle keeps pointing at its creator for good:
+  the page and its thank-you page redirect permanently with the query string, and README badges, the supporter wall,
+  preview images and referral links keep working. Nobody else can take an old handle, at signup or in a change
+  ([#108](https://github.com/Renanuya/buymeatokens-oss/issues/108)).
 - **The leaderboard on the home page, and no more empty board.** A "Most supported" row after *How it works* shows
   the all-time top four with their tokens and rank. While fewer than four have support, it is filled with creators to
   discover, without ranks or tokens ("Projects to discover" when nobody has support yet). A board view with no support

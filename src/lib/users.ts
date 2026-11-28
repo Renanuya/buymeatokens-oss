@@ -57,6 +57,8 @@ export type User = {
   projectLanguage: string | null;
   /** Whether the creator's project is listed on the public leaderboard (src/lib/leaderboard.ts). Off by default. */
   leaderboardOptIn: boolean;
+  /** When the creator last changed their page address (Unix ms), or null (see changeUsername). */
+  usernameChangedAt: number | null;
   createdAt: number;
 };
 
@@ -102,6 +104,7 @@ function mapUser(r: Row): User {
     projectCategory: str(r.project_category),
     projectLanguage: str(r.project_language),
     leaderboardOptIn: r.leaderboard_opt_in === true,
+    usernameChangedAt: num(r.username_changed_at),
     createdAt: num(r.created_at) ?? 0,
   };
 }
@@ -120,8 +123,58 @@ export function getUserById(id: string) {
   return findOne("SELECT * FROM users WHERE id = ?", [id]);
 }
 
+/** Finds a creator by their current handle or one of their old ones (see changeUsername). The current one wins. */
 export function getUserByUsername(username: string) {
-  return findOne("SELECT * FROM users WHERE username = ?", [username.toLowerCase()]);
+  const name = username.toLowerCase();
+  return findOne(
+    `SELECT * FROM users
+     WHERE username = ? OR id = (SELECT user_id FROM username_redirects WHERE old_username = ?)
+     ORDER BY (username = ?) DESC LIMIT 1`,
+    [name, name, name],
+  );
+}
+
+export const USERNAME_CHANGE_COOLDOWN_MS = 30 * 24 * 60 * 60 * 1000;
+
+/** When the creator may change their page address again, or null if they may now. */
+export function nextUsernameChangeAt(user: Pick<User, "usernameChangedAt">, now = Date.now()): number | null {
+  if (user.usernameChangedAt === null) return null;
+  const next = user.usernameChangedAt + USERNAME_CHANGE_COOLDOWN_MS;
+  return next > now ? next : null;
+}
+
+/**
+ * Moves the creator's page to a new handle in one statement. The old handle is kept as a redirect to them for good.
+ * Refused (null) when the new handle is someone else's current or old handle, or the last change was under 30 days
+ * ago. Switching back to one of the creator's own old handles is allowed. Returns the old handle on success.
+ */
+export async function changeUsername(id: string, username: string, now = Date.now()): Promise<string | null> {
+  try {
+    const rs = await query(
+      `WITH me AS (
+         SELECT id, username AS old FROM users
+         WHERE id = ? AND username IS NOT NULL AND username <> ?
+           AND (username_changed_at IS NULL OR username_changed_at <= ?)
+           AND NOT EXISTS (SELECT 1 FROM username_redirects WHERE old_username = ? AND user_id <> ?)
+         FOR UPDATE
+       ),
+       moved AS (
+         UPDATE users u SET username = ?, username_changed_at = ? FROM me WHERE u.id = me.id RETURNING me.old
+       ),
+       logged AS (
+         INSERT INTO username_redirects (old_username, user_id, created_at)
+         SELECT old, ?, ? FROM moved
+         ON CONFLICT (old_username) DO UPDATE SET created_at = EXCLUDED.created_at
+           WHERE username_redirects.user_id = EXCLUDED.user_id
+       )
+       SELECT old FROM moved`,
+      [id, username, now - USERNAME_CHANGE_COOLDOWN_MS, username, id, username, now, id, now],
+    );
+    return str(rs.rows[0]?.old);
+  } catch (error) {
+    if (isUniqueViolation(error)) return null;
+    throw error;
+  }
 }
 
 /** Creates the user on first login, refreshes profile basics afterwards. */
@@ -172,8 +225,9 @@ export async function claimUsername(id: string, username: string, displayName: s
        lifetime_free_granted_at = COALESCE(lifetime_free_granted_at, ?),
        setup_progress = GREATEST(setup_progress, 1),
        terms_accepted_at = ?, terms_version = ?, age_confirmed_at = ?
-       WHERE id = ? AND username IS NULL`,
-      [username, displayName, earlyAccessOpen() ? Date.now() : null, consent.acceptedAt, consent.version, consent.acceptedAt, id],
+       WHERE id = ? AND username IS NULL
+         AND NOT EXISTS (SELECT 1 FROM username_redirects WHERE old_username = ?)`,
+      [username, displayName, earlyAccessOpen() ? Date.now() : null, consent.acceptedAt, consent.version, consent.acceptedAt, id, username],
     );
     return changed > 0;
   } catch (error) {
