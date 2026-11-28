@@ -125,7 +125,8 @@ describe("GET /api/badge/[username]", () => {
     await setGoal("maker", 50, NOW - 60_000);
     const svg = await (await getBadge("maker", "?style=goal")).text();
 
-    expect(svg).toMatch(/^<svg[^>]* height="44"/);
+    expect(svg).toMatch(/^<svg[^>]* height="36"/);
+    expect(svg).not.toContain('height="4"');
     expect(svg).toContain("24% of goal");
     expect(svg).toContain("12M / 50M");
   });
@@ -148,7 +149,7 @@ describe("GET /api/badge/[username]", () => {
       ["", 36],
       ["?style=flat", 20],
       ["?style=pill", 28],
-      ["?style=goal", 44],
+      ["?style=goal", 36],
       ["?style=supporters", 36],
     ];
     for (const [search, height] of cases) {
