@@ -6,7 +6,7 @@ import { getUserByUsername } from "@/lib/users";
 
 /**
  * README badge. `?style=flat` gives a 20px shields-style badge that always shows the count ("0M tokens" before
- * the first support), and `?style=pill` a medium pill; `?style=outline` a transparent button, `?style=goal` progress
+ * the first support), and `?style=pill` a medium pill;`?style=goal` progress
  * toward the funding goal, and `?style=supporters` the supporter count; the default is a larger button. `?theme=light|iris|lilac`
  * picks the colours (default dark).
  */
@@ -26,7 +26,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ username
         ? { id: creator.id, mode: creator.stripeMode ?? "live", units: creator.goalUnits, startedAt: creator.goalStartedAt }
         : null;
     const reached = goal ? await unitsSince(goal.id, goal.mode, goal.startedAt) : 0;
-    svg = goalBadge(reached, goal?.units ?? 0, theme);
+    svg = goalBadge(reached, goal?.units ?? 0, theme, count);
   } else if (style === "supporters") {
     svg = supportersBadge(stats?.supporters ?? 0, theme);
   } else {
