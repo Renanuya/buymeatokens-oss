@@ -1,5 +1,8 @@
 import { INTER_TIGHT_600, INTER_TIGHT_700, type BadgeFont } from "./badge-font";
 import type { BadgeStyle, BadgeTheme } from "./badge-options";
+import { formatTokens } from "./format";
+
+export type { BadgeStyle, BadgeTheme };
 
 // README badges. Text is drawn as Inter Tight outlines, so the badge looks the same on GitHub, npm and
 // everywhere else (SVGs shown as images can't load web fonts).
@@ -30,15 +33,11 @@ const THEMES = {
 const ESCAPES: Record<string, string> = { "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&apos;" };
 export const esc = (value: string) => value.replace(/[&<>"']/g, (c) => ESCAPES[c] ?? c);
 
-/** Two decimals, so coordinates stay short and the SVG stays byte-identical between renders. */
 export const n = (value: number) => String(Math.round(value * 100) / 100);
 
-export interface Run {
-  width: number;
-  svg: (x: number, baseline: number, fill: string) => string;
-}
+export type Run = { width: number; svg: (x: number, baseline: number, fill: string) => string };
 
-/** Lay `text` out in `font` at `size`, as vector paths. `tracking` is in ems, added between letters. */
+/** Lays out `text` with real glyph advances (+ kerning and tracking in em). */
 export function run(font: BadgeFont, text: string, size: number, tracking = 0): Run {
   const scale = size / font.unitsPerEm;
   const glyphs: { x: number; d: string }[] = [];
@@ -72,7 +71,7 @@ export function wrap(width: number, height: number, title: string, body: string)
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${n(width)}" height="${height}" viewBox="0 0 ${n(width)} ${height}" role="img" aria-label="${title}"><title>${title}</title>${body}</svg>`;
 }
 
-/** A filled badge: a background rounded rect, and a hairline so it reads on any background. */
+/** A rounded shape with its hairline edge. */
 function shape(width: number, height: number, radius: number, t: (typeof THEMES)[BadgeTheme]) {
   return (
     `<rect width="${n(width)}" height="${height}" rx="${radius}" fill="${t.bg}"/>` +
@@ -80,28 +79,21 @@ function shape(width: number, height: number, radius: number, t: (typeof THEMES)
   );
 }
 
-export function formatTokens(millions: number): string {
-  if (!Number.isFinite(millions)) return "0M";
-  return millions >= 1000 ? `${trim(millions / 1000)}B` : `${trim(millions)}M`;
-}
-
-function trim(value: number): string {
-  return Number.isInteger(value) ? String(value) : value.toFixed(1).replace(/\.?0+$/, "");
-}
-
-/** The button badge: [ </>  Buy me AI tokens  (12M tokens) ]. `count` is e.g. "12M tokens", or null. */
-export function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
-  const label = run(INTER_TIGHT_600, "Buy me AI tokens", 14, -0.005);
-  const chipText = count ? run(INTER_TIGHT_700, count, 12.5, -0.005) : null;
+/**
+ * Large pill button: [ </>  Buy me AI tokens  (12M tokens) ]  or  [ </>  Buy me AI tokens ↗ ] with no support yet.
+ */
+function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
   const h = 36;
   const tile = 24;
   const pad = 6;
+  const label = run(INTER_TIGHT_600, "Buy me AI tokens", 14, -0.005);
   const labelX = pad + tile + 10;
-  const chipX = labelX + label.width + 12;
-  const chipW = chipText ? chipText.width + 22 : 0;
   let width: number;
   let tail: string;
   if (count) {
+    const chipText = run(INTER_TIGHT_700, count, 12.5, -0.005);
+    const chipW = chipText.width + 22;
+    const chipX = labelX + label.width + 12;
     width = chipX + chipW + pad;
     tail =
       `<rect x="${n(chipX)}" y="${pad}" width="${n(chipW)}" height="${tile}" rx="${tile / 2}" fill="${t.chip}"/>` +
@@ -117,24 +109,25 @@ export function buttonBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]
     h,
     title,
     shape(width, h, h / 2, t) +
-      `<circle cx="${pad + tile / 2}" cy="18" r="${tile / 2}" fill="${t.tile}"/>` +
-      icon(LOGO_PATH, pad + tile / 2 - 7, 11, 14, t.tileInk, 1.8) +
-      label.svg(labelX, baselineFor(INTER_TIGHT_600, 14, 18), t.fg) +
+      `<circle cx="${pad + tile / 2}" cy="${h / 2}" r="${tile / 2}" fill="${t.tile}"/>` +
+      icon(LOGO_PATH, pad + tile / 2 - 7, h / 2 - 7, 14, t.tileInk, 1.8) +
+      label.svg(labelX, baselineFor(INTER_TIGHT_600, 14, h / 2), t.fg) +
       tail,
   );
 }
 
-/** The flat badge: [ </> buy me AI tokens | 12M tokens ] at 20px high, split down the middle. */
-export function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
-  const label = run(INTER_TIGHT_600, "buy me AI tokens", 11, 0.005);
-  const shown = count ?? `${formatTokens(0)} tokens`;
-  const value = run(INTER_TIGHT_700, shown, 11, 0.005);
+/**
+ * Shields-height badge for badge rows: [ </> buy me AI tokens | 12M tokens ]. It always shows a count,
+ * "0M tokens" before the first support.
+ */
+function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
   const h = 20;
-  const pad = 6;
-  const tile = 12;
-  const labelX = pad + tile + 6;
-  const split = labelX + label.width + 6;
-  const width = split + 7 + value.width + 8;
+  const shown = count ?? `${formatTokens(0)} tokens`;
+  const label = run(INTER_TIGHT_600, "buy me AI tokens", 11, 0.005);
+  const value = run(INTER_TIGHT_700, shown, 11, 0.005);
+  const labelX = 4 + 12 + 5;
+  const split = labelX + label.width + 7;
+  const width = split + value.width + 14;
   const title = esc(`buy me AI tokens: ${shown}`);
   return wrap(
     width,
@@ -150,14 +143,14 @@ export function flatBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]):
   );
 }
 
-/** The pill badge: [ </>  Buy me AI tokens | 12M ] at 28px high. The count loses its "tokens", as on the site. */
-export function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
-  const label = run(INTER_TIGHT_600, "Buy me AI tokens", 12.5, -0.005);
-  const value = count ? run(INTER_TIGHT_700, count.replace(/ tokens$/, ""), 12.5, -0.005) : null;
+/** Medium pill like the landing page's: [ (</>) Buy me AI tokens | 12M ]. */
+function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]): string {
   const h = 28;
   const tile = 20;
   const pad = 4;
+  const label = run(INTER_TIGHT_600, "Buy me AI tokens", 12.5, -0.005);
   const labelX = pad + tile + 8;
+  const value = count ? run(INTER_TIGHT_700, count.replace(/ tokens$/, ""), 12.5, -0.005) : null;
   const dividerX = labelX + label.width + 10;
   const width = value ? dividerX + 1 + 10 + value.width + 12 : labelX + label.width + 12;
   const title = esc(count ? `Buy me AI tokens: ${count}` : "Buy me AI tokens");
@@ -176,7 +169,7 @@ export function pillBadge(count: string | null, t: (typeof THEMES)[BadgeTheme]):
   );
 }
 
-/** `count` is e.g. "12M tokens", or null when the creator hasn't received support yet. "goal" and "supporters" need live data, so the badge route renders them with goalBadge/supportersBadge; here they fall back to the button. */
+/** `count` is e.g. "12M tokens", or null when the creator hasn't received support yet. */
 export function renderBadge(count: string | null, style: BadgeStyle = "button", theme: BadgeTheme = "dark"): string {
   const t = THEMES[theme];
   return style === "flat" ? flatBadge(count, t) : style === "pill" ? pillBadge(count, t) : buttonBadge(count, t);
