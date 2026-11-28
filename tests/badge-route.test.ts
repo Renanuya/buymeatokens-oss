@@ -125,7 +125,7 @@ describe("GET /api/badge/[username]", () => {
     await setGoal("maker", 50, NOW - 60_000);
     const svg = await (await getBadge("maker", "?style=goal")).text();
 
-    expect(svg).toContain('height="44"');
+    expect(svg).toMatch(/^<svg[^>]* height="44"/);
     expect(svg).toContain("24% of goal");
     expect(svg).toContain("12M / 50M");
   });
@@ -142,7 +142,7 @@ describe("GET /api/badge/[username]", () => {
     expect(svg).toContain("<title>Buy me AI tokens: 1 supporter</title>");
   });
 
-  it("keeps every badge style at its declared height", async () => {
+  it("keeps every badge style at its declared height", async () => { await setGoal("maker", 50, NOW - 60_000);
     const cases: [string, number][] = [
       ["", 36],
       ["?style=flat", 20],
@@ -152,7 +152,7 @@ describe("GET /api/badge/[username]", () => {
     ];
     for (const [search, height] of cases) {
       const svg = await (await getBadge("maker", search)).text();
-      expect(svg).toContain(`height="${height}"`);
+      expect(svg).toMatch(new RegExp(`^<svg[^>]* height="${height}"`));
     }
   });
 
@@ -164,4 +164,5 @@ describe("GET /api/badge/[username]", () => {
     expect(svg).toContain("&amp; friends");
   });
 
-  ;
+  
+})
