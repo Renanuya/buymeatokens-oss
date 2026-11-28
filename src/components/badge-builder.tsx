@@ -8,7 +8,6 @@ const STYLES: { key: BadgeStyle; label: string }[] = [
   { key: "button", label: "Button" },
   { key: "pill", label: "Pill" },
   { key: "flat", label: "Compact" },
-
   { key: "goal", label: "Goal" },
   { key: "supporters", label: "Supporters" },
 ];
@@ -28,13 +27,13 @@ export function BadgeBuilder({
   username,
   pageUrl,
   base,
-  className = "",
+  className = "", hasGoal = true,
 }: {
   username: string;
   pageUrl: string;
   base: string;
   /** `flex flex-col` lets the preview area grow to fill a taller card. */
-  className?: string;
+  className?: string; hasGoal?: boolean;
 }) {
   const [style, setStyle] = useState<BadgeStyle>("button");
   const [theme, setTheme] = useState<BadgeTheme>("dark");
@@ -76,7 +75,7 @@ export function BadgeBuilder({
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img key={src} src={src} alt="Your badge" className="rise-in h-auto max-w-full" />
       </ReadmePreview>
-      <p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
+      {style === "goal" && !hasGoal && <p className="mt-2.5 text-xs text-muted">Set a token goal on your Overview to show progress</p>}<p className="mt-2.5 text-xs text-muted">Copy the Markdown into your README. The count updates by itself.</p>
     </div>
   );
 }
